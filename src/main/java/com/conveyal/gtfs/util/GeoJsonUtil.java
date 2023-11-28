@@ -296,10 +296,7 @@ public class GeoJsonUtil {
      */
     public static List<Location> getLocationsFromGeoJson(ZipFile zipFile, ZipEntry entry, List<String> errors) {
         FeatureCollection features = getFeaturesFromGeoJson(zipFile, entry, errors);
-        if (features == null) {
-            return Collections.emptyList();
-        }
-        return GeoJsonUtil.unpackLocations(features, errors);
+        return (features == null) ? Collections.emptyList() : GeoJsonUtil.unpackLocations(features, errors);
     }
 
     /**
@@ -307,10 +304,7 @@ public class GeoJsonUtil {
      */
     public static List<LocationShape> getLocationShapesFromGeoJson(ZipFile zipFile, ZipEntry entry, List<String> errors) {
         FeatureCollection features = getFeaturesFromGeoJson(zipFile, entry, errors);
-        if (features == null) {
-            return Collections.emptyList();
-        }
-        return GeoJsonUtil.unpackLocationShapes(features, errors);
+        return (features == null) ? Collections.emptyList() : GeoJsonUtil.unpackLocationShapes(features, errors);
     }
 
     /**
