@@ -86,7 +86,7 @@ public class LocationShape extends Entity {
 
     /**
      * Required by {@link com.conveyal.gtfs.util.GeoJsonUtil#getCsvReaderFromGeoJson(String, ZipFile, ZipEntry, List)}
-     * as part of the unpacking of GeoJson data to CSV.
+     * as part of the unpacking of GeoJSON data to CSV.
      */
     public static String header() {
         return "location_id,geometry_id,geometry_pt_lat,geometry_pt_lon\n";
@@ -94,7 +94,7 @@ public class LocationShape extends Entity {
 
     /**
      * Required by {@link com.conveyal.gtfs.util.GeoJsonUtil#getCsvReaderFromGeoJson(String, ZipFile, ZipEntry, List)}
-     * as part of the unpacking of GeoJson data to CSV.
+     * as part of the unpacking of GeoJSON data to CSV.
      */
     public String toCsvRow() {
         return String.join(

@@ -45,7 +45,7 @@ public class Location extends Entity {
 
     /**
      * Required by {@link com.conveyal.gtfs.util.GeoJsonUtil#getCsvReaderFromGeoJson(String, ZipFile, ZipEntry, List)} as part
-     * of the unpacking of GeoJson data to CSV.
+     * of the unpacking of GeoJSON data to CSV.
      */
     public static String header() {
         return "location_id,stop_name,stop_desc,zone_id,stop_url,geometry_type\n";
@@ -53,7 +53,7 @@ public class Location extends Entity {
 
     /**
      * Required by {@link com.conveyal.gtfs.util.GeoJsonUtil#getCsvReaderFromGeoJson(String, ZipFile, ZipEntry, List)} as part
-     * of the unpacking of GeoJson data to CSV.
+     * of the unpacking of GeoJSON data to CSV.
      */
     public String toCsvRow() {
         String stopName = "", stopDesc = "";

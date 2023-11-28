@@ -1445,7 +1445,7 @@ public class GTFSTest {
         new PersistenceExpectation(
             "stop_areas",
             new RecordExpectation[]{
-                new RecordExpectation("area_id", "area1"),
+                new RecordExpectation("area_id", "area1")
             }
         ),
         new PersistenceExpectation(

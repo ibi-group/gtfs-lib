@@ -78,7 +78,7 @@
         "type" : "FLEX_FORBIDDEN_START_PICKUP_DROP_OFF_WINDOW"
       }, {
         "count" : 4,
-        "message" : "Unable to parse the locations.geojson file. Make sure the file conforms to the GeoJson standard and supported geometry types are used.",
+        "message" : "Unable to parse the locations.geojson file. Make sure the file conforms to the GeoJSON standard and supported geometry types are used.",
         "priority" : "HIGH",
         "type" : "GEO_JSON_PARSING"
       }, {

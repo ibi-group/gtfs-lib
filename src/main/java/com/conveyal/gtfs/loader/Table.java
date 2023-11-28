@@ -853,7 +853,7 @@ public class Table {
     }
 
     /**
-     * Create a CSV reader depending on the table to be loaded. If the table is "locations.geojson" unpack the GeoJson
+     * Create a CSV reader depending on the table to be loaded. If the table is "locations.geojson" unpack the GeoJSON
      * data first and load into a CSV reader, else, read the table contents directly into the CSV reader.
      */
     public static CsvReader getCsvReader(

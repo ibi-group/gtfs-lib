@@ -14,6 +14,7 @@ import com.conveyal.gtfs.model.Trip;
 import com.google.common.collect.Lists;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,8 +53,8 @@ public class FlexValidator extends FeedValidator {
 
         if (isFlexFeed(bookingRules, stopAreas, locations)) {
             List<NewGTFSError> errors = new ArrayList<>();
-            try {
-                List<StopTime> stopTimes = getFlexStopTimesForValidation(dataSource.getConnection(), feed.databaseSchemaPrefix);
+            try (Connection connection = dataSource.getConnection()) {
+                List<StopTime> stopTimes = getFlexStopTimesForValidation(connection, feed.databaseSchemaPrefix);
                 stopTimes.forEach(stopTime -> errors.addAll(validateStopTime(stopTime, stopAreas, locations)));
                 feed.trips.forEach(trip -> errors.addAll(validateTrip(trip, stopTimes, stopAreas, locations)));
             } catch (SQLException e) {
