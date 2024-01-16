@@ -31,7 +31,7 @@ class PatternFinderValidatorTest {
     private static DataSource testDataSource;
 
     @BeforeAll
-    public static void setUpClass() throws Exception {
+    public static void setUpClass() {
         // create a new database
         testDBName = TestUtils.generateNewDB();
         String dbConnectionUrl = String.format("jdbc:postgresql://localhost/%s", testDBName);
@@ -44,7 +44,7 @@ class PatternFinderValidatorTest {
     }
 
     @Test
-    void canUseFeedPatterns() throws SQLException, IOException {
+    void canUseFeedPatterns() throws SQLException {
         String fileName = getResourceFileName("real-world-gtfs-feeds/RABA.zip");
         FeedLoadResult feedLoadResult = load(fileName, testDataSource);
         String testNamespace = feedLoadResult.uniqueIdentifier;
