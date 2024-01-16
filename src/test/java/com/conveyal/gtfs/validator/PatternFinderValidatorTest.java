@@ -19,13 +19,12 @@ import java.sql.SQLException;
 
 import static com.conveyal.gtfs.GTFS.load;
 import static com.conveyal.gtfs.GTFS.validate;
+import static com.conveyal.gtfs.TestUtils.getResourceFileName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 
 
 class PatternFinderValidatorTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PatternFinderValidatorTest.class);
 
     private static String testDBName;
 
@@ -46,11 +45,11 @@ class PatternFinderValidatorTest {
 
     @Test
     void canUseFeedPatterns() throws SQLException, IOException {
-        String zipFileName = TestUtils.zipFolderFiles("real-world-gtfs-feeds/RABA", true);
-        FeedLoadResult feedLoadResult = load(zipFileName, testDataSource);
+        String fileName = getResourceFileName("real-world-gtfs-feeds/RABA.zip");
+        FeedLoadResult feedLoadResult = load(fileName, testDataSource);
         String testNamespace = feedLoadResult.uniqueIdentifier;
         validate(testNamespace, testDataSource);
-        checkPatternStops(zipFileName, testNamespace);
+        checkPatternStops(fileName, testNamespace);
     }
 
     @Test
