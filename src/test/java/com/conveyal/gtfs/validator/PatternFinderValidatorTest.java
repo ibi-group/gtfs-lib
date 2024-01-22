@@ -2,20 +2,21 @@ package com.conveyal.gtfs.validator;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.TestUtils;
+import com.conveyal.gtfs.loader.EntityPopulator;
 import com.conveyal.gtfs.loader.FeedLoadResult;
+import com.conveyal.gtfs.loader.JDBCTableReader;
 import com.conveyal.gtfs.loader.Table;
 import com.conveyal.gtfs.model.Pattern;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import static com.conveyal.gtfs.GTFS.load;
 import static com.conveyal.gtfs.GTFS.validate;
@@ -49,30 +50,58 @@ class PatternFinderValidatorTest {
         FeedLoadResult feedLoadResult = load(fileName, testDataSource);
         String testNamespace = feedLoadResult.uniqueIdentifier;
         validate(testNamespace, testDataSource);
-        checkPatternStops(fileName, testNamespace);
+        checkPatternStopsAgainstFeedPatterns(fileName, testNamespace);
+    }
+
+    /**
+     * Remove one pattern from the feed so that there is a mismatch between the patterns loaded and the patterns
+     * generated. This will result in the generated patterns taking precedence over the loaded patterns.
+     */
+    @Test
+    void canRevertToGeneratedPatterns() throws SQLException {
+        String fileName = getResourceFileName("real-world-gtfs-feeds/RABA.zip");
+        FeedLoadResult feedLoadResult = load(fileName, testDataSource);
+        String testNamespace = feedLoadResult.uniqueIdentifier;
+        String patternIdToExclude = "2k3j";
+        executeSqlStatement(String.format(
+            "delete from %s where pattern_id = '%s'",
+            String.format("%s.%s", testNamespace, Table.PATTERNS.name),
+            patternIdToExclude
+        ));
+        validate(testNamespace, testDataSource);
+        JDBCTableReader<Pattern> patterns = new JDBCTableReader(Table.PATTERNS,
+            testDataSource,
+            testNamespace + ".",
+            EntityPopulator.PATTERN
+        );
+        for (Pattern pattern : patterns.getAllOrdered()) {
+            assertThatSqlQueryYieldsRowCountGreaterThanZero(generateSql(testNamespace, pattern.pattern_id));
+        }
     }
 
     @Test
-    void canRevertToGeneratedPatterns() throws SQLException, IOException {
+    void canUseGeneratedPatterns() throws SQLException, IOException {
         String zipFileName = TestUtils.zipFolderFiles("fake-agency", true);
         FeedLoadResult feedLoadResult = load(zipFileName, testDataSource);
         String testNamespace = feedLoadResult.uniqueIdentifier;
         validate(testNamespace, testDataSource);
-        checkPatternStops(zipFileName, testNamespace);
+        checkPatternStopsAgainstFeedPatterns(zipFileName, testNamespace);
     }
 
-    private void checkPatternStops(String zipFileName, String testNamespace) throws SQLException {
+    private void checkPatternStopsAgainstFeedPatterns(String zipFileName, String testNamespace) throws SQLException {
         GTFSFeed feed = GTFSFeed.fromFile(zipFileName);
         for (String key : feed.patterns.keySet()) {
             Pattern pattern = feed.patterns.get(key);
-            assertThatSqlQueryYieldsRowCountGreaterThanZero(
-                String.format(
-                    "select * from %s where pattern_id = '%s'",
-                    String.format("%s.%s", testNamespace, Table.PATTERN_STOP.name),
-                    pattern.pattern_id
-                )
-            );
+            assertThatSqlQueryYieldsRowCountGreaterThanZero(generateSql(testNamespace, pattern.pattern_id));
         }
+    }
+
+    private String generateSql(String testNamespace, String patternId) {
+        return String.format(
+            "select * from %s where pattern_id = '%s'",
+            String.format("%s.%s", testNamespace, Table.PATTERN_STOP.name),
+            patternId
+        );
     }
 
     private void assertThatSqlQueryYieldsRowCountGreaterThanZero(String sql) throws SQLException {
@@ -80,5 +109,13 @@ class PatternFinderValidatorTest {
         ResultSet rs = testDataSource.getConnection().prepareStatement(sql).executeQuery();
         while (rs.next()) recordCount++;
         assertThat(recordCount, greaterThan(0));
+    }
+
+    private void executeSqlStatement(String sql) throws SQLException {
+        Connection connection = testDataSource.getConnection();
+        Statement statement = connection.createStatement();
+        statement.execute(sql);
+        statement.close();
+        connection.commit();
     }
 }

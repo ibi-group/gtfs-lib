@@ -105,7 +105,7 @@ public class PatternFinder {
             patternsFromFeedIndex++;
         }
         if (!usePatternsFromFeed) {
-            // Name patterns before storing in SQL database if they have not already been provided by via a feed.
+            // Name patterns before storing in SQL database if they have not already been provided with a feed.
             renamePatterns(patterns.values(), stopById);
         }
         LOG.info("Total patterns: {}", tripsForPattern.keySet().size());
@@ -116,7 +116,7 @@ public class PatternFinder {
      * If there is a difference in the number of patterns provided by a feed and the number of patterns generated here,
      * the patterns provided by the feed are rejected.
      */
-    private boolean canUsePatternsFromFeed(List<Pattern> patternsFromFeed) {
+    public boolean canUsePatternsFromFeed(List<Pattern> patternsFromFeed) {
         boolean usePatternsFromFeed = patternsFromFeed.size() == tripsForPattern.keySet().size();
         LOG.info("Using patterns from feed: {}",  usePatternsFromFeed);
         return usePatternsFromFeed;

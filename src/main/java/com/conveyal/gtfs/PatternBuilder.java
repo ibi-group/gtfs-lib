@@ -20,7 +20,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
-import java.util.Set;
 
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.copyFromFile;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
@@ -40,7 +39,7 @@ public class PatternBuilder {
         connection = feed.getConnection();
     }
 
-    public void create(Map<TripPatternKey, Pattern> patterns, boolean usePatternsFromFeed) {
+    public void create(Map<TripPatternKey, Pattern> patterns,  boolean usePatternsFromFeed) {
         String patternsTableName = feed.getTableNameWithSchemaPrefix("patterns");
         String tripsTableName = feed.getTableNameWithSchemaPrefix("trips");
         String patternStopsTableName = feed.getTableNameWithSchemaPrefix("pattern_stops");
@@ -54,7 +53,8 @@ public class PatternBuilder {
             Statement statement = connection.createStatement();
             statement.execute(String.format("alter table %s add column pattern_id varchar", tripsTableName));
             if (!usePatternsFromFeed) {
-                // No patterns were loaded from file so the pattern table has not previously been created.
+                // If no patterns were loaded from file, create the pattern table. Conversely, if the patterns loaded
+                // from file have been superseded by generated patterns, recreate the table to start afresh.
                 patternsTable.createSqlTable(connection, null, true);
             }
             patternStopsTable.createSqlTable(connection, null, true);
