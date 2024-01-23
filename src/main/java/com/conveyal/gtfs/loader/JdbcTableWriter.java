@@ -3,6 +3,7 @@ package com.conveyal.gtfs.loader;
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.LocationShape;
+import com.conveyal.gtfs.model.PatternStop;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.ScheduleException.ExemplarServiceDescriptor;
 import com.conveyal.gtfs.model.Shape;
@@ -39,8 +40,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.INSERT_BATCH_SIZE;
 import static com.conveyal.gtfs.util.Util.ensureValidNamespace;
@@ -314,6 +317,23 @@ public class JdbcTableWriter implements TableWriter {
             throw e;
         } finally {
             DbUtils.closeQuietly(connection);
+        }
+    }
+
+    /**
+     * For a given pattern id and starting stop sequence (inclusive), normalize all stop times to match the pattern
+     * stops' travel times.
+     *
+     * @return number of stop times updated
+     */
+    public int normalizeStopTimesForPattern(int id, int beginWithSequence, boolean interpolateStopTimes) throws SQLException {
+        if (!interpolateStopTimes) {
+            // Use the newer approach which can handle flex.
+            return normalizeStopTimesForPattern(id, beginWithSequence);
+        } else {
+            // Use the legacy approach which can handle only pattern stops (not flex), but can do interpolating.
+            StopTimeNormalization stopTimeNormalization = new StopTimeNormalization(dataSource, connection, tablePrefix);
+            return stopTimeNormalization.normalizeStopTimesForPattern(id, beginWithSequence, true);
         }
     }
 
@@ -1149,7 +1169,7 @@ public class JdbcTableWriter implements TableWriter {
             // Special case for schedule_exceptions where for exception type 10 and service_id is also a key.
             String calendarDateServiceKey = "custom_schedule";
             Field calendarDateServiceKeyField = table.getFieldForName(calendarDateServiceKey);
-            String calendarDateServiceKeyVal = jsonObject.get(calendarDateServiceKey).asText();
+            String calendarDateServiceKeyVal = jsonObject.get(calendarDateServiceKey).get(0).asText();
             TIntSet calendarDateServiceUniqueIds = getIdsForCondition(tableName, calendarDateServiceKey, calendarDateServiceKeyVal, connection);
             checkUniqueIdsAndUpdateReferencingTables(
                 calendarDateServiceUniqueIds,
@@ -1239,7 +1259,7 @@ public class JdbcTableWriter implements TableWriter {
     /**
      * For a given integer ID, return the value for the specified field name for that entity.
      */
-    private static String getValueForId(int id, String fieldName, String namespace, Table table, Connection connection) throws SQLException {
+    public static String getValueForId(int id, String fieldName, String namespace, Table table, Connection connection) throws SQLException {
         String tableName = String.join(".", namespace, table.name);
         String selectIdSql = String.format("select %s from %s where id = %d", fieldName, tableName, id);
         LOG.info(selectIdSql);
@@ -1372,7 +1392,7 @@ public class JdbcTableWriter implements TableWriter {
                                             connection.rollback();
                                             if (entityClass.getSimpleName().equals("Stop")) {
                                                 String patternStopLookup = String.format(
-                                                    "select distinct p.id, r.id " +
+                                                    "select distinct p.id, r.id, r.route_short_name, r.route_id  " +
                                                         "from %s.pattern_stops ps " +
                                                         "inner join " +
                                                         "%s.patterns p " +
