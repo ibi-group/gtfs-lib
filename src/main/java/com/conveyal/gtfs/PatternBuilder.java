@@ -39,7 +39,7 @@ public class PatternBuilder {
         connection = feed.getConnection();
     }
 
-    public void create(Map<TripPatternKey, Pattern> patterns,  boolean usePatternsFromFeed) {
+    public void create(Map<TripPatternKey, Pattern> patterns, boolean usePatternsFromFeed) {
         String patternsTableName = feed.getTableNameWithSchemaPrefix("patterns");
         String tripsTableName = feed.getTableNameWithSchemaPrefix("trips");
         String patternStopsTableName = feed.getTableNameWithSchemaPrefix("pattern_stops");
