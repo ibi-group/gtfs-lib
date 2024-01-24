@@ -375,7 +375,6 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     /**
-<<<<<<< HEAD
      * MapDB-based implementation to find patterns.
      *
      * FIXME: Remove and make pattern finding happen during validation? We want to share the pattern finder between the
@@ -396,6 +395,7 @@ public class GTFSFeed implements Cloneable, Closeable {
             null,
             null,
             null,
+            null,
             null
         );
         this.patterns.putAll(patternObjects.values().stream()
@@ -403,8 +403,6 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     /**
-=======
->>>>>>> dev
      * For the given trip ID, fetch all the stop times in order, and interpolate stop-to-stop travel times.
      */
     public Iterable<StopTime> getInterpolatedStopTimesForTrip (String trip_id) throws FirstAndLastStopsDoNotHaveTimes {

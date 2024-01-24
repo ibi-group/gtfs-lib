@@ -17,11 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Groups trips together into "patterns" that share the same sequence of stops.
@@ -63,9 +62,9 @@ public class PatternFinderValidator extends TripValidator {
      */
     @Override
     public void complete(ValidationResult validationResult) {
-        Set<String> patternIds = new HashSet<>();
+        List<Pattern> patternsFromFeed = new ArrayList<>();
         for(Pattern pattern :  feed.patterns) {
-            patternIds.add(pattern.pattern_id);
+            patternsFromFeed.add(pattern);
         }
         LOG.info("Finding patterns...");
         Map<String, Stop> stopById = new HashMap<>();
@@ -85,7 +84,7 @@ public class PatternFinderValidator extends TripValidator {
             areaById.put(area.area_id, area);
         }
         // Although patterns may have already been loaded from file, the trip patterns are still required.
-        Map<TripPatternKey, Pattern> patterns = patternFinder.createPatternObjects(stopById, locationById, stopAreaById, areaById, errorStorage);
-        patternBuilder.create(patterns, patternIds, stopById, locationById, stopAreaById);
+        Map<TripPatternKey, Pattern> patterns = patternFinder.createPatternObjects(stopById, locationById, stopAreaById, areaById, patternsFromFeed, errorStorage);
+        patternBuilder.create(patterns, patternFinder.canUsePatternsFromFeed(patternsFromFeed), stopById, locationById, stopAreaById);
     }
 }
