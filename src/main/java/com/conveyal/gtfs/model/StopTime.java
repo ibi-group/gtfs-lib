@@ -1,9 +1,7 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
-
 import org.mapdb.Fun;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.sql.Connection;

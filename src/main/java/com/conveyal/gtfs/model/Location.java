@@ -45,7 +45,7 @@ public class Location extends Entity {
 
     /**
      * Required by {@link com.conveyal.gtfs.util.GeoJsonUtil#getCsvReaderFromGeoJson(String, ZipFile, ZipEntry, List)} as part
-     * of the unpacking of GeoJson data to CSV.
+     * of the unpacking of GeoJSON data to CSV.
      */
     public static String header() {
         return "location_id,stop_name,stop_desc,zone_id,stop_url,geometry_type\n";
@@ -53,7 +53,7 @@ public class Location extends Entity {
 
     /**
      * Required by {@link com.conveyal.gtfs.util.GeoJsonUtil#getCsvReaderFromGeoJson(String, ZipFile, ZipEntry, List)} as part
-     * of the unpacking of GeoJson data to CSV.
+     * of the unpacking of GeoJSON data to CSV.
      */
     public String toCsvRow() {
         String stopName = "", stopDesc = "";
@@ -112,12 +112,12 @@ public class Location extends Entity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Location that = (Location) o;
-        return stop_name == that.stop_name &&
-                zone_id == that.zone_id &&
-                stop_desc == that.stop_desc &&
+        return Objects.equals(stop_name, that.stop_name) &&
+            Objects.equals(zone_id, that.zone_id) &&
+            Objects.equals(stop_desc, that.stop_desc) &&
                 Objects.equals(stop_url, that.stop_url) &&
                 Objects.equals(location_id, that.location_id) &&
-                geometry_type == that.geometry_type;
+            Objects.equals(geometry_type, that.geometry_type);
     }
 
     @Override
