@@ -4,7 +4,7 @@ import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.PatternHalt;
 import com.conveyal.gtfs.model.PatternLocation;
 import com.conveyal.gtfs.model.PatternStop;
-import com.conveyal.gtfs.model.PatternStopArea;
+import com.conveyal.gtfs.model.PatternLocationGroupStop;
 import com.google.common.collect.Iterators;
 import org.apache.commons.dbutils.DbUtils;
 import org.slf4j.Logger;
@@ -61,11 +61,11 @@ public class StopTimeNormalization {
             tablePrefix + ".",
             EntityPopulator.PATTERN_LOCATION
         );
-        JDBCTableReader<PatternStopArea> patternStopAreas = new JDBCTableReader(
-            Table.PATTERN_STOP_AREA,
+        JDBCTableReader<PatternLocationGroupStop> patternStopAreas = new JDBCTableReader(
+            Table.PATTERN_LOCATION_GROUP_STOP,
             dataSource,
             tablePrefix + ".",
-            EntityPopulator.PATTERN_STOP_AREA
+            EntityPopulator.PATTERN_LOCATION_GROUP_STOPS
         );
         List<PatternHalt> patternHaltsToNormalize = new ArrayList<>();
         Iterator<PatternHalt> patternHalts = Iterators.concat(

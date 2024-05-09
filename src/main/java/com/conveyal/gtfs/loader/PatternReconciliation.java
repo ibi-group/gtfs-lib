@@ -3,7 +3,7 @@ package com.conveyal.gtfs.loader;
 import com.conveyal.gtfs.model.PatternHalt;
 import com.conveyal.gtfs.model.PatternLocation;
 import com.conveyal.gtfs.model.PatternStop;
-import com.conveyal.gtfs.model.PatternStopArea;
+import com.conveyal.gtfs.model.PatternLocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.util.json.JsonManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,7 +37,7 @@ public class PatternReconciliation {
     private List<String> tripsForPattern;
     private List<GenericStop> newGenericStops;
     private List<PatternLocation> patternLocations = new ArrayList<>();
-    private List<PatternStopArea> patternStopAreas = new ArrayList<>();
+    private List<PatternLocationGroupStop> patternLocationGroupStops = new ArrayList<>();
     private List<PatternStop> patternStops = new ArrayList<>();
 
     /**
@@ -51,7 +51,7 @@ public class PatternReconciliation {
      * Enum containing available pattern types.
      */
     public enum PatternType {
-        LOCATION, STOP, STOP_AREA
+        LOCATION, LOCATION_GROUP_STOP, STOP
     }
 
     public PatternReconciliation(Connection connection, String tablePrefix) throws SQLException {
@@ -62,8 +62,8 @@ public class PatternReconciliation {
                     "select location_id, stop_sequence from %s.pattern_locations pl " +
                     "where pl.pattern_id = ? " +
                     "union " +
-                    "select area_id, stop_sequence from %s.pattern_stop_areas psa " +
-                    "where psa.pattern_id = ? " +
+                    "select location_group_id, stop_sequence from %s.pattern_location_group_stops plgs " +
+                    "where plgs.pattern_id = ? " +
                     "union " +
                     "select stop_id, stop_sequence from %s.pattern_stops ps " +
                     "where ps.pattern_id = ? " +
@@ -107,9 +107,9 @@ public class PatternReconciliation {
             // Accumulate new pattern location objects from JSON.
             patternLocations = JsonManager.read(mapper, subEntities, PatternLocation.class);
         }
-        if (Table.PATTERN_STOP_AREA.name.equals(subTable.name)) {
-            // Accumulate new pattern stop area objects from JSON.
-            patternStopAreas = JsonManager.read(mapper, subEntities, PatternStopArea.class);
+        if (Table.PATTERN_LOCATION_GROUP_STOP.name.equals(subTable.name)) {
+            // Accumulate new pattern location group stops objects from JSON.
+            patternLocationGroupStops = JsonManager.read(mapper, subEntities, PatternLocationGroupStop.class);
         }
     }
 
@@ -117,8 +117,8 @@ public class PatternReconciliation {
      * Reconcile pattern stops and pattern locations.
      */
     public boolean reconcile() throws SQLException {
-        if (patternLocations.isEmpty() && patternStops.isEmpty() && patternStopAreas.isEmpty()) {
-            LOG.info("No pattern stops, locations nor stop areas provided. Pattern reconciliation not required.");
+        if (patternLocations.isEmpty() && patternStops.isEmpty() && patternLocationGroupStops.isEmpty()) {
+            LOG.info("No pattern stops, locations nor location group stops provided. Pattern reconciliation not required.");
             return false;
         }
         tripsForPattern = getTripIdsForPatternId();
@@ -159,9 +159,9 @@ public class PatternReconciliation {
      * Return pattern stop area matching the provided reference id.
      */
     public PatternHalt getPatternStopArea(String referenceId) {
-        return patternStopAreas
+        return patternLocationGroupStops
             .stream()
-            .filter(patternStopArea -> patternStopArea.area_id.equals(referenceId))
+            .filter(patternLocationGroupStop -> patternLocationGroupStop.location_group_id.equals(referenceId))
             .findFirst()
             .get();
     }
@@ -183,7 +183,7 @@ public class PatternReconciliation {
     public List<GenericStop> getGenericStops() {
         List<GenericStop> genericStops = patternStops.stream().map(GenericStop::new).collect(Collectors.toList());
         genericStops.addAll(patternLocations.stream().map(GenericStop::new).collect(Collectors.toList()));
-        genericStops.addAll(patternStopAreas.stream().map(GenericStop::new).collect(Collectors.toList()));
+        genericStops.addAll(patternLocationGroupStops.stream().map(GenericStop::new).collect(Collectors.toList()));
         genericStops.sort(Comparator.comparingInt(genericStop -> genericStop.stopTime.stop_sequence));
         return genericStops;
     }
@@ -552,29 +552,21 @@ public class PatternReconciliation {
             stopTime.continuous_pickup = patternLocation.continuous_pickup;
             stopTime.pickup_booking_rule_id = patternLocation.pickup_booking_rule_id;
             stopTime.drop_off_booking_rule_id = patternLocation.drop_off_booking_rule_id;
-            stopTime.mean_duration_offset = patternLocation.mean_duration_offset;
-            stopTime.mean_duration_factor = patternLocation.mean_duration_factor;
-            stopTime.safe_duration_offset = patternLocation.safe_duration_offset;
-            stopTime.safe_duration_factor = patternLocation.safe_duration_factor;
         }
 
-        public GenericStop(PatternStopArea patternStopArea) {
-            patternType = PatternType.STOP_AREA;
-            referenceId = patternStopArea.area_id;
+        public GenericStop(PatternLocationGroupStop patternLocationGroupStop) {
+            patternType = PatternType.LOCATION_GROUP_STOP;
+            referenceId = patternLocationGroupStop.location_group_id;
             stopTime = new StopTime();
-            stopTime.stop_id = patternStopArea.area_id;
-            stopTime.stop_sequence = patternStopArea.stop_sequence;
-            stopTime.drop_off_type = patternStopArea.drop_off_type;
-            stopTime.pickup_type = patternStopArea.pickup_type;
-            stopTime.timepoint = patternStopArea.timepoint;
-            stopTime.continuous_drop_off = patternStopArea.continuous_drop_off;
-            stopTime.continuous_pickup = patternStopArea.continuous_pickup;
-            stopTime.pickup_booking_rule_id = patternStopArea.pickup_booking_rule_id;
-            stopTime.drop_off_booking_rule_id = patternStopArea.drop_off_booking_rule_id;
-            stopTime.mean_duration_offset = patternStopArea.mean_duration_offset;
-            stopTime.mean_duration_factor = patternStopArea.mean_duration_factor;
-            stopTime.safe_duration_offset = patternStopArea.safe_duration_offset;
-            stopTime.safe_duration_factor = patternStopArea.safe_duration_factor;
+            stopTime.stop_id = patternLocationGroupStop.location_group_id;
+            stopTime.stop_sequence = patternLocationGroupStop.stop_sequence;
+            stopTime.drop_off_type = patternLocationGroupStop.drop_off_type;
+            stopTime.pickup_type = patternLocationGroupStop.pickup_type;
+            stopTime.timepoint = patternLocationGroupStop.timepoint;
+            stopTime.continuous_drop_off = patternLocationGroupStop.continuous_drop_off;
+            stopTime.continuous_pickup = patternLocationGroupStop.continuous_pickup;
+            stopTime.pickup_booking_rule_id = patternLocationGroupStop.pickup_booking_rule_id;
+            stopTime.drop_off_booking_rule_id = patternLocationGroupStop.drop_off_booking_rule_id;
         }
 
         public GenericStop(PatternStop patternStop) {

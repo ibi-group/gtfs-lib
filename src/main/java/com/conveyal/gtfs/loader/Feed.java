@@ -30,22 +30,22 @@ public class Feed {
     // This may be the empty string if the feed is stored in the root ("public") schema.
     public final String databaseSchemaPrefix;
 
-    public final TableReader<Area>          areas;
-    public final TableReader<Agency>        agencies;
-    public final TableReader<BookingRule>   bookingRules;
-    public final TableReader<Calendar>      calendars;
-    public final TableReader<CalendarDate>  calendarDates;
+    public final TableReader<LocationGroup> locationGroups;
+    public final TableReader<Agency> agencies;
+    public final TableReader<BookingRule> bookingRules;
+    public final TableReader<Calendar> calendars;
+    public final TableReader<CalendarDate> calendarDates;
     public final TableReader<FareAttribute> fareAttributes;
-    public final TableReader<FareRule>      fareRules;
-    public final TableReader<Frequency>     frequencies;
-    public final TableReader<Location>      locations;
+    public final TableReader<FareRule> fareRules;
+    public final TableReader<Frequency> frequencies;
+    public final TableReader<Location> locations;
     public final TableReader<LocationShape> locationShapes;
-    public final TableReader<Route>         routes;
-    public final TableReader<StopArea>      stopAreas;
-    public final TableReader<Stop>          stops;
-    public final TableReader<Trip>          trips;
-    public final TableReader<StopTime>      stopTimes;
-    public final TableReader<Pattern>       patterns;
+    public final TableReader<Route> routes;
+    public final TableReader<LocationGroupStop> locationGroupStops;
+    public final TableReader<Stop> stops;
+    public final TableReader<Trip> trips;
+    public final TableReader<StopTime> stopTimes;
+    public final TableReader<Pattern> patterns;
 
     /**
      * Create a feed that reads tables over a JDBC connection. The connection should already be set to the right
@@ -57,7 +57,7 @@ public class Feed {
         // Ensure separator dot is present
         if (databaseSchemaPrefix != null && !databaseSchemaPrefix.endsWith(".")) databaseSchemaPrefix += ".";
         this.databaseSchemaPrefix = databaseSchemaPrefix == null ? "" : databaseSchemaPrefix;
-        areas = new JDBCTableReader(Table.AREA, dataSource, databaseSchemaPrefix, EntityPopulator.AREAS);
+        locationGroups = new JDBCTableReader(Table.LOCATION_GROUP, dataSource, databaseSchemaPrefix, EntityPopulator.LOCATION_GROUPS);
         agencies = new JDBCTableReader(Table.AGENCY, dataSource, databaseSchemaPrefix, EntityPopulator.AGENCY);
         bookingRules = new JDBCTableReader(Table.BOOKING_RULES, dataSource, databaseSchemaPrefix, EntityPopulator.BOOKING_RULE);
         fareAttributes = new JDBCTableReader(Table.FARE_ATTRIBUTES, dataSource, databaseSchemaPrefix, EntityPopulator.FARE_ATTRIBUTE);
@@ -68,7 +68,7 @@ public class Feed {
         calendars = new JDBCTableReader(Table.CALENDAR, dataSource, databaseSchemaPrefix, EntityPopulator.CALENDAR);
         calendarDates = new JDBCTableReader(Table.CALENDAR_DATES, dataSource, databaseSchemaPrefix, EntityPopulator.CALENDAR_DATE);
         routes = new JDBCTableReader(Table.ROUTES, dataSource, databaseSchemaPrefix, EntityPopulator.ROUTE);
-        stopAreas = new JDBCTableReader(Table.STOP_AREAS, dataSource, databaseSchemaPrefix, EntityPopulator.STOP_AREAS);
+        locationGroupStops = new JDBCTableReader(Table.LOCATION_GROUP_STOPS, dataSource, databaseSchemaPrefix, EntityPopulator.LOCATION_GROUP_STOPS);
         stops = new JDBCTableReader(Table.STOPS, dataSource, databaseSchemaPrefix, EntityPopulator.STOP);
         trips = new JDBCTableReader(Table.TRIPS, dataSource, databaseSchemaPrefix, EntityPopulator.TRIP);
         stopTimes = new JDBCTableReader(Table.STOP_TIMES, dataSource, databaseSchemaPrefix, EntityPopulator.STOP_TIME);

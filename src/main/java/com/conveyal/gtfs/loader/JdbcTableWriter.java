@@ -3,7 +3,6 @@ package com.conveyal.gtfs.loader;
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.LocationShape;
-import com.conveyal.gtfs.model.PatternStop;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.ScheduleException.ExemplarServiceDescriptor;
 import com.conveyal.gtfs.model.Shape;
@@ -40,10 +39,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.INSERT_BATCH_SIZE;
 import static com.conveyal.gtfs.util.Util.ensureValidNamespace;
@@ -176,7 +173,7 @@ public class JdbcTableWriter implements TableWriter {
                     // If a referencing table has the current table as its parent, update child elements.
                     JsonNode childEntities = jsonObject.get(referencingTable.name);
                     if ((referencingTable.name.equals(Table.PATTERN_LOCATION.name) ||
-                        referencingTable.name.equals(Table.PATTERN_STOP_AREA.name)) &&
+                        referencingTable.name.equals(Table.PATTERN_LOCATION_GROUP_STOP.name)) &&
                         (hasNoChildEntities(childEntities))
                     ) {
                         // This is a backwards hack to prevent the addition of pattern location breaking existing
@@ -588,7 +585,7 @@ public class JdbcTableWriter implements TableWriter {
         boolean isPatternTable =
                 Table.PATTERN_STOP.name.equals(subTable.name) ||
                 Table.PATTERN_LOCATION.name.equals(subTable.name) ||
-                Table.PATTERN_STOP_AREA.name.equals(subTable.name);
+                Table.PATTERN_LOCATION_GROUP_STOP.name.equals(subTable.name);
         if (isPatternTable) {
             reconciliation.stage(mapper, subTable, subEntities, keyValue);
         }
@@ -677,7 +674,7 @@ public class JdbcTableWriter implements TableWriter {
                     );
                 }
                 if (Table.PATTERN_LOCATION.name.equals(subTable.name) ||
-                    Table.PATTERN_STOP_AREA.name.equals(subTable.name)
+                    Table.PATTERN_LOCATION_GROUP_STOP.name.equals(subTable.name)
                 ) {
                     updateLinkedFields(
                         subTable,
@@ -1543,7 +1540,7 @@ public class JdbcTableWriter implements TableWriter {
         int deletedPatternStopAreas = executeStatement(
             String.format(
                 "delete from %s plg using %s p, %s r where plg.pattern_id = p.pattern_id and p.route_id = r.route_id and r.route_id = '%s'",
-                String.format("%s.pattern_stop_areas", tablePrefix),
+                String.format("%s.pattern_location_group_stops", tablePrefix),
                 String.format("%s.patterns", tablePrefix),
                 String.format("%s.routes", tablePrefix),
                 routeId

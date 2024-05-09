@@ -28,10 +28,6 @@ public class PatternLocationDTO {
 
     public int flex_default_travel_time;
     public int flex_default_zone_time;
-    public double mean_duration_factor;
-    public double mean_duration_offset;
-    public double safe_duration_factor;
-    public double safe_duration_offset;
 
     /** Empty constructor for deserialization */
     public PatternLocationDTO() {}

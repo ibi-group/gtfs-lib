@@ -42,11 +42,6 @@ public class StopTime extends Entity implements Cloneable, Serializable {
     // Additional GTFS Flex fields.
     public int start_pickup_drop_off_window = INT_MISSING;
     public int end_pickup_drop_off_window = INT_MISSING;
-    public double mean_duration_factor = DOUBLE_MISSING;
-    public double mean_duration_offset = DOUBLE_MISSING;
-    public double safe_duration_factor = DOUBLE_MISSING;
-    public double safe_duration_offset = DOUBLE_MISSING;
-
 
     @Override
     public String getId() {
@@ -84,10 +79,6 @@ public class StopTime extends Entity implements Cloneable, Serializable {
         statement.setString(oneBasedIndex++, drop_off_booking_rule_id);
         setIntParameter(statement, oneBasedIndex++, start_pickup_drop_off_window);
         setIntParameter(statement, oneBasedIndex++, end_pickup_drop_off_window);
-        setDoubleParameter(statement, oneBasedIndex++, mean_duration_factor);
-        setDoubleParameter(statement, oneBasedIndex++, mean_duration_offset);
-        setDoubleParameter(statement, oneBasedIndex++, safe_duration_factor);
-        setDoubleParameter(statement, oneBasedIndex, safe_duration_offset);
     }
 
     public static class Loader extends Entity.Loader<StopTime> {
@@ -126,10 +117,6 @@ public class StopTime extends Entity implements Cloneable, Serializable {
                 st.drop_off_booking_rule_id = getStringField("drop_off_booking_rule_id", false);
                 st.start_pickup_drop_off_window = getTimeField("start_pickup_drop_off_window", false);
                 st.end_pickup_drop_off_window = getTimeField("end_pickup_drop_off_window", false);
-                st.mean_duration_factor = getDoubleField("mean_duration_factor", false, 0D, Double.MAX_VALUE);
-                st.mean_duration_offset = getDoubleField("mean_duration_offset", false, 0D, Double.MAX_VALUE);
-                st.safe_duration_factor = getDoubleField("safe_duration_factor", false, 0D, Double.MAX_VALUE);
-                st.safe_duration_offset = getDoubleField("safe_duration_offset", false, 0D, Double.MAX_VALUE);
             }
             st.feed           = null; // this could circular-serialize the whole feed
             feed.stop_times.put(new Fun.Tuple2(st.trip_id, st.stop_sequence), st);
@@ -160,8 +147,7 @@ public class StopTime extends Entity implements Cloneable, Serializable {
                     "continuous_drop_off", "shape_dist_traveled", "timepoint"};
 
             String[] flexHeaders = new String[] {"pickup_booking_rule_id", "drop_off_booking_rule_id",
-                    "start_pickup_drop_off_window", "end_pickup_drop_off_window", "mean_duration_factor",
-                    "mean_duration_offset", "safe_duration_factor", "safe_duration_offset"};
+                    "start_pickup_drop_off_window", "end_pickup_drop_off_window"};
 
             if (feed.isGTFSFlexFeed()) {
                 String[] headers = Arrays.copyOf(originalHeaders, originalHeaders.length + flexHeaders.length);
@@ -192,10 +178,6 @@ public class StopTime extends Entity implements Cloneable, Serializable {
                 writeStringField(st.drop_off_booking_rule_id);
                 writeTimeField(st.start_pickup_drop_off_window);
                 writeTimeField(st.end_pickup_drop_off_window);
-                writeDoubleField(st.mean_duration_factor);
-                writeDoubleField(st.mean_duration_offset);
-                writeDoubleField(st.safe_duration_factor);
-                writeDoubleField(st.safe_duration_offset);
             }
             endRecord();
         }
@@ -205,13 +187,12 @@ public class StopTime extends Entity implements Cloneable, Serializable {
             return feed.stop_times.values().iterator();
         }
 
-
     }
 
     /**
-     * Check that the flex column 'start_pickup_drop_off_window' exists in the stop time table. If this column exists
-     * it is assumed that the other flex columns do too. This is to guard against cases where booking rules, stop
-     * areas or locations are defined in a feed but flex specific stop time columns are not.
+     * Check that the flex column 'start_pickup_drop_off_window' exists in the stop times table. If this column exists
+     * it is assumed that the other flex columns do too. This is to guard against cases where booking rules, location
+     * group stops or locations are defined in a feed but flex specific stop time columns are not.
      */
     private static boolean flexColumnExist(Connection connection, String tablePrefix) throws SQLException {
         boolean exists = false;
@@ -244,15 +225,10 @@ public class StopTime extends Entity implements Cloneable, Serializable {
         }
         String sql = String.format(
             "select id, trip_id, stop_id, arrival_time, departure_time, pickup_type, drop_off_type, " +
-            "start_pickup_drop_off_window, end_pickup_drop_off_window, mean_duration_factor, mean_duration_offset, " +
-            "safe_duration_factor, safe_duration_offset " +
+            "start_pickup_drop_off_window, end_pickup_drop_off_window " +
             "from %sstop_times where " +
             "start_pickup_drop_off_window IS NOT NULL " +
-            "or end_pickup_drop_off_window IS NOT NULL " +
-            "or mean_duration_factor IS NOT NULL " +
-            "or mean_duration_offset IS NOT NULL " +
-            "or safe_duration_factor IS NOT NULL " +
-            "or safe_duration_offset IS NOT NULL ",
+            "or end_pickup_drop_off_window IS NOT NULL ",
             tablePrefix
         );
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -268,10 +244,6 @@ public class StopTime extends Entity implements Cloneable, Serializable {
                 stopTime.drop_off_type  = resultSet.getInt(7);
                 stopTime.start_pickup_drop_off_window  = getIntValue(resultSet.getString(8));
                 stopTime.end_pickup_drop_off_window  = getIntValue(resultSet.getString(9));
-                stopTime.mean_duration_factor  = getDoubleValue(resultSet.getString(10));
-                stopTime.mean_duration_offset  = getDoubleValue(resultSet.getString(11));
-                stopTime.safe_duration_factor  = getDoubleValue(resultSet.getString(12));
-                stopTime.safe_duration_offset  = getDoubleValue(resultSet.getString(13));
                 stopTimes.add(stopTime);
             }
         }
@@ -303,10 +275,6 @@ public class StopTime extends Entity implements Cloneable, Serializable {
                 timepoint == stopTime.timepoint &&
                 start_pickup_drop_off_window == stopTime.start_pickup_drop_off_window &&
                 end_pickup_drop_off_window == stopTime.end_pickup_drop_off_window &&
-                Double.compare(stopTime.mean_duration_factor, mean_duration_factor) == 0 &&
-                Double.compare(stopTime.mean_duration_offset, mean_duration_offset) == 0 &&
-                Double.compare(stopTime.safe_duration_factor, safe_duration_factor) == 0 &&
-                Double.compare(stopTime.safe_duration_offset, safe_duration_offset) == 0 &&
                 Objects.equals(trip_id, stopTime.trip_id) &&
                 Objects.equals(stop_id, stopTime.stop_id) &&
                 Objects.equals(stop_headsign, stopTime.stop_headsign) &&
@@ -317,26 +285,22 @@ public class StopTime extends Entity implements Cloneable, Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(
-                trip_id,
-                arrival_time,
-                departure_time,
-                stop_id,
-                stop_sequence,
-                stop_headsign,
-                pickup_type,
-                drop_off_type,
-                continuous_pickup,
-                continuous_drop_off,
-                shape_dist_traveled,
-                timepoint,
-                pickup_booking_rule_id,
-                drop_off_booking_rule_id,
-                start_pickup_drop_off_window,
-                end_pickup_drop_off_window,
-                mean_duration_factor,
-                mean_duration_offset,
-                safe_duration_factor,
-                safe_duration_offset
+            trip_id,
+            arrival_time,
+            departure_time,
+            stop_id,
+            stop_sequence,
+            stop_headsign,
+            pickup_type,
+            drop_off_type,
+            continuous_pickup,
+            continuous_drop_off,
+            shape_dist_traveled,
+            timepoint,
+            pickup_booking_rule_id,
+            drop_off_booking_rule_id,
+            start_pickup_drop_off_window,
+            end_pickup_drop_off_window
         );
     }
 }

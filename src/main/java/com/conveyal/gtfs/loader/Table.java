@@ -11,7 +11,7 @@ import com.conveyal.gtfs.loader.conditions.FieldNotEmptyAndMatchesValueCheck;
 import com.conveyal.gtfs.loader.conditions.ForeignRefExistsCheck;
 import com.conveyal.gtfs.loader.conditions.ReferenceFieldShouldBeProvidedCheck;
 import com.conveyal.gtfs.model.Agency;
-import com.conveyal.gtfs.model.Area;
+import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.Attribution;
 import com.conveyal.gtfs.model.BookingRule;
 import com.conveyal.gtfs.model.Calendar;
@@ -26,12 +26,12 @@ import com.conveyal.gtfs.model.LocationShape;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.PatternLocation;
 import com.conveyal.gtfs.model.PatternStop;
-import com.conveyal.gtfs.model.PatternStopArea;
+import com.conveyal.gtfs.model.PatternLocationGroupStop;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.ShapePoint;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopArea;
+import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Transfer;
 import com.conveyal.gtfs.model.Translation;
@@ -84,13 +84,15 @@ import static com.conveyal.gtfs.loader.Requirement.UNKNOWN;
  * or descriptive (providing the schema of an RDBMS table).
  *
  * TODO associate Table with EntityPopulator (combine read and write sides)
+ *
+ * Flex spec: https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md
  */
 public class Table {
 
     private static final Logger LOG = LoggerFactory.getLogger(Table.class);
 
     public static final String LOCATION_GEO_JSON_FILE_NAME = "locations.geojson";
-    public static final String STOP_AREAS_FILE_NAME = "stop_areas.txt";
+    public static final String LOCATION_GROUP_STOPS_FILE_NAME = "location_group_stops.txt";
 
     public final String name;
 
@@ -371,21 +373,18 @@ public class Table {
     .addPrimaryKey()
     .addPrimaryKeyNames("location_id");
 
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#areastxt-no-change
-    public static final Table AREA = new Table("areas", Area.class, OPTIONAL,
-        new StringField("area_id", REQUIRED),
-        new StringField("area_name", OPTIONAL)
+    public static final Table LOCATION_GROUP = new Table("location_groups", LocationGroup.class, OPTIONAL,
+        new StringField("location_group_id", REQUIRED),
+        new StringField("location_group_name", OPTIONAL)
     )
-    .addPrimaryKeyNames("area_id");
+    .addPrimaryKeyNames("location_group_id");
 
-
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_areastxt-file-modified
-    public static final Table STOP_AREAS = new Table("stop_areas", StopArea.class, OPTIONAL,
-        new StringField("area_id", REQUIRED).isReferenceTo(AREA),
-        new StringField("stop_id", REQUIRED).isReferenceTo(STOPS).isReferenceTo(LOCATIONS)
+    public static final Table LOCATION_GROUP_STOPS = new Table("location_group_stops", LocationGroupStop.class, OPTIONAL,
+        new StringField("location_group_id", REQUIRED).isReferenceTo(LOCATION_GROUP),
+        new StringField("stop_id", REQUIRED).isReferenceTo(STOPS)
     )
     .keyFieldIsNotUnique()
-    .addPrimaryKeyNames("area_id", "stop_id");
+    .addPrimaryKeyNames("location_group_id", "stop_id");
 
     // Must come after TRIPS table to which it has references.
     public static final Table TRANSFERS = new Table("transfers", Transfer.class, OPTIONAL,
@@ -414,7 +413,7 @@ public class Table {
             new StringField("stop_id", REQUIRED)
                 .isReferenceTo(STOPS)
                 .isReferenceTo(LOCATIONS)
-                .isReferenceTo(STOP_AREAS),
+                .isReferenceTo(LOCATION_GROUP_STOPS),
 //                    .indexThisColumn(),
             // TODO verify that we have a special check for arrival and departure times first and last stop_time in a trip, which are required
             new TimeField("arrival_time", OPTIONAL),
@@ -436,11 +435,7 @@ public class Table {
             // Additional GTFS Flex stop areas and locations fields
             // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended
             new TimeField("start_pickup_drop_off_window", OPTIONAL),
-            new TimeField("end_pickup_drop_off_window", OPTIONAL),
-            new DoubleField("mean_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("mean_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2)
+            new TimeField("end_pickup_drop_off_window", OPTIONAL)
     ).withParentTable(TRIPS)
     .addPrimaryKeyNames("trip_id", "stop_sequence");
 
@@ -541,18 +536,14 @@ public class Table {
             // Additional GTFS Flex stop areas and locations fields
             // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended
             new TimeField("flex_default_travel_time", OPTIONAL),
-            new TimeField("flex_default_zone_time", OPTIONAL),
-            new DoubleField("mean_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("mean_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2)
+            new TimeField("flex_default_zone_time", OPTIONAL)
 
     ).withParentTable(PATTERNS);
 
-    public static final Table PATTERN_STOP_AREA = new Table("pattern_stop_areas", PatternStopArea.class, OPTIONAL,
+    public static final Table PATTERN_LOCATION_GROUP_STOP = new Table("pattern_location_group_stops", PatternLocationGroupStop.class, OPTIONAL,
             new StringField("pattern_id", REQUIRED).isReferenceTo(PATTERNS),
             new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
-            new StringField("area_id", REQUIRED).isReferenceTo(STOP_AREAS),
+            new StringField("location_group_id", REQUIRED).isReferenceTo(LOCATION_GROUP_STOPS),
             // Editor-specific fields
             new IntegerField("drop_off_type", EDITOR, 2),
             new IntegerField("pickup_type", EDITOR, 2),
@@ -566,17 +557,13 @@ public class Table {
             // Additional GTFS Flex stop areas and locations fields
             // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended
             new TimeField("flex_default_travel_time", OPTIONAL),
-            new TimeField("flex_default_zone_time", OPTIONAL),
-            new DoubleField("mean_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("mean_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2)
+            new TimeField("flex_default_zone_time", OPTIONAL)
 
     ).withParentTable(PATTERNS);
 
     /** List of tables in order needed for checking referential integrity during load stage. */
     public static final Table[] tablesInOrder = {
-        AREA,
+        LOCATION_GROUP,
         AGENCY,
         CALENDAR,
         SCHEDULE_EXCEPTIONS,
@@ -588,11 +575,11 @@ public class Table {
         SHAPES,
         STOPS,
         LOCATIONS,
-        STOP_AREAS,
+        LOCATION_GROUP_STOPS,
         FARE_RULES,
         PATTERN_STOP,
         PATTERN_LOCATION,
-        PATTERN_STOP_AREA,
+        PATTERN_LOCATION_GROUP_STOP,
         TRANSFERS,
         TRIPS,
         STOP_TIMES,
@@ -866,8 +853,8 @@ public class Table {
         CsvReader csvReader;
         if (tableFileName.equals(LOCATION_GEO_JSON_FILE_NAME)) {
             csvReader = GeoJsonUtil.getCsvReaderFromGeoJson(name, zipFile, entry, errors);
-        } else if (tableFileName.equals(STOP_AREAS_FILE_NAME)) {
-            csvReader = StopArea.getCsvReader(zipFile, entry, errors);
+        } else if (tableFileName.equals(LOCATION_GROUP_STOPS_FILE_NAME)) {
+            csvReader = LocationGroupStop.getCsvReader(zipFile, entry, errors);
         } else {
             InputStream zipInputStream = zipFile.getInputStream(entry);
             // Skip any byte order mark that may be present. Files must be UTF-8,

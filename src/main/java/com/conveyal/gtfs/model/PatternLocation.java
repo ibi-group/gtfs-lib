@@ -27,10 +27,6 @@ public class PatternLocation extends PatternHalt {
     public String drop_off_booking_rule_id;
     public int flex_default_travel_time = INT_MISSING;
     public int flex_default_zone_time = INT_MISSING;
-    public double mean_duration_factor = DOUBLE_MISSING;
-    public double mean_duration_offset = DOUBLE_MISSING;
-    public double safe_duration_factor = DOUBLE_MISSING;
-    public double safe_duration_offset = DOUBLE_MISSING;
 
     public PatternLocation () {}
 
@@ -53,13 +49,7 @@ public class PatternLocation extends PatternHalt {
 
         // the derived fields
         setIntParameter(statement, oneBasedIndex++, flex_default_travel_time);
-        setIntParameter(statement, oneBasedIndex++, flex_default_zone_time);
-
-        // the copied fields
-        setDoubleParameter(statement, oneBasedIndex++, mean_duration_factor);
-        setDoubleParameter(statement, oneBasedIndex++, mean_duration_offset);
-        setDoubleParameter(statement, oneBasedIndex++, safe_duration_factor);
-        setDoubleParameter(statement, oneBasedIndex, safe_duration_offset);
+        setIntParameter(statement, oneBasedIndex, flex_default_zone_time);
     }
 
     public int getTravelTime() {

@@ -19,50 +19,50 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class StopArea extends Entity {
+public class LocationGroupStop extends Entity {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StopArea.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LocationGroupStop.class);
     private static final long serialVersionUID = 469687473399554677L;
     private static final int NUMBER_OF_HEADERS = 2;
     private static final int NUMBER_OF_COLUMNS = 2;
-    private static final String CSV_HEADER = "area_id,stop_id" + System.lineSeparator();
+    private static final String CSV_HEADER = "location_group_id,stop_id" + System.lineSeparator();
 
-    public String area_id;
+    public String location_group_id;
     /**
      * A comma separated list of ids referencing stops.stop_id or id from locations.geojson. These are grouped by
-     * {@link StopArea#getCsvReader(ZipFile, ZipEntry, List)}.
+     * {@link LocationGroupStop#getCsvReader(ZipFile, ZipEntry, List)}.
      */
     public String stop_id;
 
-    public StopArea() {
+    public LocationGroupStop() {
     }
 
-    public StopArea(String areaId, String stopId) {
-        this.area_id = areaId;
+    public LocationGroupStop(String areaId, String stopId) {
+        this.location_group_id = areaId;
         this.stop_id = stopId;
     }
 
     @Override
     public String getId() {
-        return createId(area_id, stop_id);
+        return createId(location_group_id, stop_id);
     }
 
     /**
      * Sets the parameters for a prepared statement following the parameter order defined in
-     * {@link com.conveyal.gtfs.loader.Table#STOP_AREAS}. JDBC prepared statement parameters use a one-based index.
+     * {@link com.conveyal.gtfs.loader.Table#LOCATION_GROUP_STOPS}. JDBC prepared statement parameters use a one-based index.
      */
     @Override
     public void setStatementParameters(PreparedStatement statement, boolean setDefaultId) throws SQLException {
         int oneBasedIndex = 1;
         if (!setDefaultId) statement.setInt(oneBasedIndex++, id);
-        statement.setString(oneBasedIndex++, area_id);
+        statement.setString(oneBasedIndex++, location_group_id);
         statement.setString(oneBasedIndex, stop_id);
     }
 
-    public static class Loader extends Entity.Loader<StopArea> {
+    public static class Loader extends Entity.Loader<LocationGroupStop> {
 
         public Loader(GTFSFeed feed) {
-            super(feed, "stop_areas");
+            super(feed, "location_group_stops");
         }
 
         @Override
@@ -72,44 +72,44 @@ public class StopArea extends Entity {
 
         @Override
         public void loadOneRow() throws IOException {
-            StopArea stopArea = new StopArea();
-            stopArea.id = row + 1; // offset line number by 1 to account for 0-based row index
-            stopArea.area_id = getStringField("area_id", true);
-            stopArea.stop_id = getStringField("stop_id", true);
+            LocationGroupStop locationGroupStop = new LocationGroupStop();
+            locationGroupStop.id = row + 1; // offset line number by 1 to account for 0-based row index
+            locationGroupStop.location_group_id = getStringField("location_group_id", true);
+            locationGroupStop.stop_id = getStringField("stop_id", true);
             // Attempting to put a null key or value will cause an NPE in BTreeMap
-            if (stopArea.area_id != null && stopArea.stop_id != null) {
-                feed.stopAreas.put(createId(stopArea.area_id, stopArea.stop_id), stopArea);
+            if (locationGroupStop.location_group_id != null && locationGroupStop.stop_id != null) {
+                feed.locationGroupStops.put(createId(locationGroupStop.location_group_id, locationGroupStop.stop_id), locationGroupStop);
             }
         }
     }
 
-    public static class Writer extends Entity.Writer<StopArea> {
+    public static class Writer extends Entity.Writer<LocationGroupStop> {
         public Writer(GTFSFeed feed) {
-            super(feed, "stop_areas");
+            super(feed, "location_group_stops");
         }
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"area_id", "stop_id"});
+            writer.writeRecord(new String[] {"location_group_id", "stop_id"});
         }
 
         @Override
-        public void writeOneRow(StopArea stopArea) throws IOException {
-            writeStringField(stopArea.area_id);
-            writeStringField(stopArea.stop_id);
+        public void writeOneRow(LocationGroupStop locationGroupStop) throws IOException {
+            writeStringField(locationGroupStop.location_group_id);
+            writeStringField(locationGroupStop.stop_id);
             endRecord();
         }
 
         @Override
-        public Iterator<StopArea> iterator() {
-            return this.feed.stopAreas.values().iterator();
+        public Iterator<LocationGroupStop> iterator() {
+            return this.feed.locationGroupStops.values().iterator();
         }
     }
 
     public String toCsvRow() {
         return String.join(
             ",",
-            area_id,
+            location_group_id,
             (stop_id != null)
                 ? stop_id.contains(",") ? "\"" + stop_id + "\"" : stop_id
                 : ""
@@ -130,7 +130,7 @@ public class StopArea extends Entity {
         CsvReader csvReader = new CsvReader(new StringReader(""));
         int stopAreaIdIndex = 0;
         int stopIdIndex = 1;
-        HashMap<String, StopArea> multiStopAreas = new HashMap<>();
+        HashMap<String, LocationGroupStop> multiStopAreas = new HashMap<>();
         try {
             InputStream zipInputStream = zipFile.getInputStream(entry);
             csvReader = new CsvReader(new BOMInputStream(zipInputStream), ',', StandardCharsets.UTF_8);
@@ -160,16 +160,16 @@ public class StopArea extends Entity {
                     if (errors != null) errors.add(message);
                     continue;
                 }
-                StopArea stopArea = new StopArea(
+                LocationGroupStop locationGroupStop = new LocationGroupStop(
                     csvReader.get(stopAreaIdIndex),
                     csvReader.get(stopIdIndex)
                 );
-                if (multiStopAreas.containsKey(stopArea.area_id)) {
+                if (multiStopAreas.containsKey(locationGroupStop.location_group_id)) {
                     // Combine stop areas with matching stop areas ids.
-                    StopArea multiStopArea = multiStopAreas.get(stopArea.area_id);
-                    multiStopArea.stop_id += "," + stopArea.stop_id;
+                    LocationGroupStop multiLocationGroupStop = multiStopAreas.get(locationGroupStop.location_group_id);
+                    multiLocationGroupStop.stop_id += "," + locationGroupStop.stop_id;
                 } else {
-                    multiStopAreas.put(stopArea.area_id, stopArea);
+                    multiStopAreas.put(locationGroupStop.location_group_id, locationGroupStop);
                 }
             }
         } catch (IOException e) {
@@ -183,7 +183,7 @@ public class StopArea extends Entity {
     /**
      * Convert the multiple stop areas back into CSV, with header and return a {@link CsvReader} representation.
      */
-    private static CsvReader produceCsvPayload(HashMap<String, StopArea> multiStopAreaIds) {
+    private static CsvReader produceCsvPayload(HashMap<String, LocationGroupStop> multiStopAreaIds) {
         StringBuilder csvContent = new StringBuilder();
         csvContent.append(CSV_HEADER);
         multiStopAreaIds.forEach((key, value) -> csvContent.append(value.toCsvRow()));
@@ -191,24 +191,31 @@ public class StopArea extends Entity {
     }
 
     /**
-     * Expand all stop areas which have multiple stop ids into a single row for each stop id. This is to
+     * Expand all location group stops which have multiple stop ids into a single row for each stop id. This is to
      * conform with the GTFS Flex standard.
      *
-     * E.g. 1,"2,3", will become: 1,2 and 1,3.
+     * E.g.
+     *
+     * location_group_1,"stop_id_2,stop_id_3"
+     *
+     * will become:
+     *
+     * location_group_1,stop_id_2
+     * location_group_1,stop_id_3
      *
      */
-    public static String packStopAreas(List<StopArea> stopAreas) {
+    public static String packLocationGroupStops(List<LocationGroupStop> locationGroupStops) {
         StringBuilder csvContent = new StringBuilder();
         csvContent.append(CSV_HEADER);
-        stopAreas.forEach(stopArea -> {
-            if (stopArea.stop_id == null || !stopArea.stop_id.contains(",")) {
+        locationGroupStops.forEach(locationGroupStop -> {
+            if (locationGroupStop.stop_id == null || !locationGroupStop.stop_id.contains(",")) {
                 // Single location id reference.
-                csvContent.append(stopArea.toCsvRow());
+                csvContent.append(locationGroupStop.toCsvRow());
             } else {
-                for (String stopId : stopArea.stop_id.split(",")) {
+                for (String stopId : locationGroupStop.stop_id.split(",")) {
                     csvContent.append(String.join(
                         ",",
-                        stopArea.area_id,
+                        locationGroupStop.location_group_id,
                         stopId
                     ));
                     csvContent.append(System.lineSeparator());
@@ -227,14 +234,14 @@ public class StopArea extends Entity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        StopArea that = (StopArea) o;
-        return Objects.equals(area_id, that.area_id) &&
+        LocationGroupStop that = (LocationGroupStop) o;
+        return Objects.equals(location_group_id, that.location_group_id) &&
             Objects.equals(stop_id, that.stop_id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(area_id, stop_id);
+        return Objects.hash(location_group_id, stop_id);
     }
 }
 

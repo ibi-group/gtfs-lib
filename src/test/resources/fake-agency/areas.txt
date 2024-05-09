@@ -1,2 +1,0 @@
-area_id,area_name
-area1,"This is the area name"

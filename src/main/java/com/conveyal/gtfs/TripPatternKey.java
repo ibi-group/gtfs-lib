@@ -39,10 +39,6 @@ public class TripPatternKey {
     // Flex additions
     public List<String> pickup_booking_rule_id = new ArrayList<>();
     public List<String> drop_off_booking_rule_id = new ArrayList<>();
-    public TDoubleList mean_duration_factor = new TDoubleArrayList();
-    public TDoubleList mean_duration_offset = new TDoubleArrayList();
-    public TDoubleList safe_duration_factor = new TDoubleArrayList();
-    public TDoubleList safe_duration_offset = new TDoubleArrayList();
 
     public TripPatternKey (String routeId) {
         this.routeId = routeId;
@@ -65,10 +61,6 @@ public class TripPatternKey {
 
         start_pickup_drop_off_window.add(st.start_pickup_drop_off_window);
         end_pickup_drop_off_window.add(st.end_pickup_drop_off_window);
-        mean_duration_factor.add(st.mean_duration_factor);
-        mean_duration_offset.add(st.mean_duration_offset);
-        safe_duration_factor.add(st.safe_duration_factor);
-        safe_duration_offset.add(st.safe_duration_offset);
     }
 
     /**

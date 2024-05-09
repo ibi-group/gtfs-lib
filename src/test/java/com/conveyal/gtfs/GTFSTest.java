@@ -107,7 +107,7 @@ public class GTFSTest {
      * Tests whether a super simple 2-stop, 1-route, 1-trip, valid gtfs can be loaded and exported
      */
     @Test
-    public void canLoadAndExportSimpleAgency() {
+    void canLoadAndExportSimpleAgency() {
         ErrorExpectation[] fakeAgencyErrorExpectations = ErrorExpectation.list(
             new ErrorExpectation(NewGTFSErrorType.MISSING_FIELD),
             new ErrorExpectation(NewGTFSErrorType.GEO_JSON_PARSING),
@@ -124,9 +124,9 @@ public class GTFSTest {
         );
         PersistenceExpectation[] specialCasePersistenceExpectations = new PersistenceExpectation[] {
             new PersistenceExpectation(
-                "stop_areas",
+                "location_group_stops",
                 new RecordExpectation[] {
-                    new RecordExpectation("area_id", "area1"),
+                    new RecordExpectation("location_group_id", "area1"),
                     new RecordExpectation("stop_id", "123,4u6g")
                 }
             )
@@ -1324,13 +1324,6 @@ public class GTFSTest {
             }
         ),
         new PersistenceExpectation(
-            "areas",
-            new RecordExpectation[]{
-                new RecordExpectation("area_id", "area1"),
-                new RecordExpectation("area_name", "This is the area name")
-            }
-        ),
-        new PersistenceExpectation(
             "booking_rules",
             new RecordExpectation[]{
                 new RecordExpectation("booking_rule_id", "1"),
@@ -1393,6 +1386,19 @@ public class GTFSTest {
             }
         ),
         new PersistenceExpectation(
+            "location_groups",
+            new RecordExpectation[]{
+                new RecordExpectation("location_group_id", "area1"),
+                new RecordExpectation("location_group_name", "This is the location group name")
+            }
+        ),
+        new PersistenceExpectation(
+            "location_group_stops",
+            new RecordExpectation[]{
+                new RecordExpectation("location_group_id", "area1")
+            }
+        ),
+        new PersistenceExpectation(
             "routes",
             new RecordExpectation[]{
                 new RecordExpectation("agency_id", "1"),
@@ -1440,12 +1446,6 @@ public class GTFSTest {
                 new RecordExpectation("stop_headsign", "Test stop headsign"),
                 new RecordExpectation("drop_off_type", 0),
                 new RecordExpectation("shape_dist_traveled", 0.0, 0.01)
-            }
-        ),
-        new PersistenceExpectation(
-            "stop_areas",
-            new RecordExpectation[]{
-                new RecordExpectation("area_id", "area1")
             }
         ),
         new PersistenceExpectation(

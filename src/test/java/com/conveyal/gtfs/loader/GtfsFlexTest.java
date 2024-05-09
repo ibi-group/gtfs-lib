@@ -98,14 +98,14 @@ public class GtfsFlexTest {
     }
 
     @Test
-    void hasLoadedExpectedNumberOfAreas() {
-        String query = buildQuery(doloresCountyTestNamespace, "areas","area_id","1");
+    void hasLoadedExpectedNumberOfLocationGroups() {
+        String query = buildQuery(doloresCountyTestNamespace, "location_groups","location_group_id","1");
         assertThatSqlCountQueryYieldsExpectedCount(doloresCountyTestDataSource, query, 1);
     }
 
     @Test
-    void hasLoadedExpectedNumberOfStopAreas() {
-        String query = buildQuery(doloresCountyTestNamespace, "stop_areas","area_id","1");
+    void hasLoadedExpectedNumberOfLocationGroupStops() {
+        String query = buildQuery(doloresCountyTestNamespace, "location_group_stops","location_group_id","1");
         assertThatSqlCountQueryYieldsExpectedCount(doloresCountyTestDataSource, query, 1);
     }
 
@@ -164,7 +164,7 @@ public class GtfsFlexTest {
      * data.
      */
     @Test
-    public void canLoadAndWriteToFlexContentZipFile() throws IOException {
+    void canLoadAndWriteToFlexContentZipFile() throws IOException {
         // create a temp file for this test
         File outZip = File.createTempFile("dolorescounty-co-us--flex-v2", ".zip");
         GTFSFeed feed = GTFSFeed.fromFile(doloresCountyGtfsZipFileName);
@@ -181,7 +181,6 @@ public class GtfsFlexTest {
             assertEquals(features.get(1).getId(),"area_276");
 
             FileTestCase[] fileTestCases = {
-                // booking_rules.txt
                 new FileTestCase(
                     "booking_rules.txt",
                     new DataExpectation[]{
@@ -192,17 +191,17 @@ public class GtfsFlexTest {
                     }
                 ),
                 new TestUtils.FileTestCase(
-                    "areas.txt",
+                    "location_group_stops.txt",
                     new DataExpectation[]{
-                        new DataExpectation("area_id", "1"),
-                        new DataExpectation("area_name", "This is the area name"),
+                        new DataExpectation("location_group_id", "1"),
+                        new DataExpectation("stop_id", "2615682"),
                     }
                 ),
                 new TestUtils.FileTestCase(
-                    "stop_areas.txt",
+                    "location_groups.txt",
                     new DataExpectation[]{
-                        new DataExpectation("area_id", "1"),
-                        new DataExpectation("stop_id", "123"),
+                        new DataExpectation("location_group_id", "1"),
+                        new DataExpectation("location_group_name", "This is the location group name"),
                     }
                 ),
                 new TestUtils.FileTestCase(
@@ -212,12 +211,8 @@ public class GtfsFlexTest {
                         new DataExpectation("drop_off_booking_rule_id", "booking_route_16604"),
                         new DataExpectation("start_pickup_drop_off_window", "08:00:00"),
                         new DataExpectation("end_pickup_drop_off_window", "17:00:00"),
-                        new DataExpectation("mean_duration_factor", "1.0000000"),
-                        new DataExpectation("mean_duration_offset", "15.0000000"),
-                        new DataExpectation("safe_duration_factor", "1.0000000"),
-                        new DataExpectation("safe_duration_offset", "20.0000000")
                     }
-                ),
+                )
             };
             lookThroughFiles(fileTestCases, zip);
         }

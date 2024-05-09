@@ -1,0 +1,15 @@
+{
+  "data" : {
+    "feed" : {
+      "feed_version" : "1.0",
+      "location_group_stops" : [ {
+        "id" : 2,
+        "locationGroup" : [ {
+          "location_group_name" : "Location group name"
+        } ],
+        "location_group_id" : "1",
+        "stop_id" : "123"
+      } ]
+    }
+  }
+}

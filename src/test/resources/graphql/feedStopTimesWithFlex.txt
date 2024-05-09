@@ -16,10 +16,6 @@ query ($namespace: String) {
       drop_off_booking_rule_id
       start_pickup_drop_off_window
       end_pickup_drop_off_window
-      mean_duration_factor
-      mean_duration_offset
-      safe_duration_factor
-      safe_duration_offset
     }
   }
 }

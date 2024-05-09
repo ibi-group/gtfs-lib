@@ -8,7 +8,7 @@ import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopArea;
+import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import org.slf4j.Logger;
@@ -51,9 +51,9 @@ public class SpeedTripValidator extends TripValidator {
         List<StopTime> stopTimes,
         List<Stop> stops,
         List<Location> locations,
-        List<StopArea> stopAreas
+        List<LocationGroupStop> locationGroupStops
     ) {
-        if (FlexValidator.tripHasStopAreaOrLocationForStop(trip, stopTimes, stopAreas, locations)) {
+        if (FlexValidator.tripHasStopAreaOrLocationForStop(trip, stopTimes, locationGroupStops, locations)) {
             LOG.warn(
                 "Trip speed not validated for trip id {} because it contains at least one stop that is a location or stop area.",
                 trip.trip_id

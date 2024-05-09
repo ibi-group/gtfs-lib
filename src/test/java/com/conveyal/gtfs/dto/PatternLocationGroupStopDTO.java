@@ -1,21 +1,22 @@
 package com.conveyal.gtfs.dto;
 
+import com.conveyal.gtfs.model.PatternLocationGroupStop;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * DTO used to model expected {@link com.conveyal.gtfs.model.PatternStopArea} JSON structure for the editor. NOTE:
+ * DTO used to model expected {@link PatternLocationGroupStop} JSON structure for the editor. NOTE:
  * reference types (e.g., Integer and Double) are used here in order to model null/empty values in JSON object.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PatternStopAreaDTO {
+public class PatternLocationGroupStopDTO {
     public int id;
 
     // PatternHalt params
     public String pattern_id;
     public int stop_sequence;
 
-    // PatternStopArea params
-    public String area_id;
+    // PatternLocationGroupStop params
+    public String location_group_id;
     public int pickup_type;
     public int drop_off_type;
     public int timepoint;
@@ -28,31 +29,27 @@ public class PatternStopAreaDTO {
 
     public int flex_default_travel_time;
     public int flex_default_zone_time;
-    public double mean_duration_factor;
-    public double mean_duration_offset;
-    public double safe_duration_factor;
-    public double safe_duration_offset;
 
     /** Empty constructor for deserialization */
-    public PatternStopAreaDTO() {}
+    public PatternLocationGroupStopDTO() {}
 
-    public PatternStopAreaDTO(
+    public PatternLocationGroupStopDTO(
         String patternId,
-        String area_id,
+        String locationGroupId,
         int stopSequence,
         int flexDefaultTravelTime,
         int flexDefaultZoneTime
     ) {
         this.pattern_id = patternId;
-        this.area_id = area_id;
+        this.location_group_id = locationGroupId;
         this.stop_sequence = stopSequence;
         this.flex_default_travel_time = flexDefaultTravelTime;
         this.flex_default_zone_time = flexDefaultZoneTime;
     }
 
-    public PatternStopAreaDTO(String patternId, String areaId, int stopSequence) {
+    public PatternLocationGroupStopDTO(String patternId, String locationGroupId, int stopSequence) {
         this.pattern_id = patternId;
-        this.area_id = areaId;
+        this.location_group_id = locationGroupId;
         this.stop_sequence = stopSequence;
     }
 }

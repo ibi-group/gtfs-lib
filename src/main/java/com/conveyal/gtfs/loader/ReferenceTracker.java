@@ -89,7 +89,7 @@ public class ReferenceTracker {
             TreeSet<String> badValues = new TreeSet<>();
             for (Table referenceTable : field.referenceTables) {
                 String referenceField = referenceTable.getKeyFieldName();
-                if (table.name.equals(Table.STOP_AREAS.name) && field.name.equals("stop_id") && value.contains(",")) {
+                if (table.name.equals(Table.LOCATION_GROUP_STOPS.name) && field.name.equals("stop_id") && value.contains(",")) {
                     // Special case for stop areas as the area id can be an array of location and stop ids.
                     for (String reference : value.split(",")) {
                         if (checkReference(referenceField, reference, badValues)) {

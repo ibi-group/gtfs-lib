@@ -3,11 +3,11 @@ package com.conveyal.gtfs;
 import com.conveyal.gtfs.error.NewGTFSError;
 import com.conveyal.gtfs.error.NewGTFSErrorType;
 import com.conveyal.gtfs.error.SQLErrorStorage;
-import com.conveyal.gtfs.model.Area;
+import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopArea;
+import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.common.collect.HashMultimap;
@@ -72,8 +72,8 @@ public class PatternFinder {
     public Map<TripPatternKey, Pattern> createPatternObjects(
         Map<String, Stop> stopById,
         Map<String, Location> locationById,
-        Map<String, StopArea> stopAreaById,
-        Map<String, Area> areaById,
+        Map<String, LocationGroupStop> locationGroupStopById,
+        Map<String, LocationGroup> locationGroupById,
         List<Pattern> patternsFromFeed,
         SQLErrorStorage errorStorage
     ) {
@@ -112,7 +112,7 @@ public class PatternFinder {
         }
         if (!usePatternsFromFeed) {
             // Name patterns before storing in SQL database if they have not already been provided with a feed.
-            renamePatterns(patterns.values(), stopById, locationById, stopAreaById, areaById);
+            renamePatterns(patterns.values(), stopById, locationById, locationGroupStopById, locationGroupById);
         }
         LOG.info("Total patterns: {}", tripsForPattern.keySet().size());
         return patterns;
@@ -120,14 +120,14 @@ public class PatternFinder {
 
     /**
      * Destructively rename the supplied collection of patterns. This process requires access to all stops, locations
-     * and stop areas in the feed. Some validators already cache a map of all the stops. There's probably a
+     * and location group stops in the feed. Some validators already cache a map of all the stops. There's probably a
      * cleaner way to do this.
      *
      * If there is a difference in the number of patterns provided by a feed and the number of patterns generated here,
      * the patterns provided by the feed are rejected.
      */
     public boolean canUsePatternsFromFeed(List<Pattern> patternsFromFeed) {
-        boolean usePatternsFromFeed = patternsFromFeed.size() == tripsForPattern.keySet().size();
+        boolean usePatternsFromFeed = patternsFromFeed != null && patternsFromFeed.size() == tripsForPattern.keySet().size();
         LOG.info("Using patterns from feed: {}",  usePatternsFromFeed);
         return usePatternsFromFeed;
     }
@@ -141,8 +141,8 @@ public class PatternFinder {
         Collection<Pattern> patterns,
         Map<String, Stop> stopById,
         Map<String, Location> locationById,
-        Map<String, StopArea> stopAreaById,
-        Map<String, Area> areaById
+        Map<String, LocationGroupStop> locationGroupStopById,
+        Map<String, LocationGroup> locationGroupById
     ) {
         LOG.info("Generating unique names for patterns");
 
@@ -163,15 +163,15 @@ public class PatternFinder {
             // Stop names, unlike IDs, are not guaranteed to be unique.
             // Therefore we must track used names carefully to avoid duplicates.
 
-            String fromName = getTerminusName(pattern, stopById, locationById, stopAreaById, areaById, true);
-            String toName = getTerminusName(pattern, stopById, locationById, stopAreaById, areaById, false);
+            String fromName = getTerminusName(pattern, stopById, locationById, locationGroupStopById, locationGroupById, true);
+            String toName = getTerminusName(pattern, stopById, locationById, locationGroupStopById, locationGroupById, false);
 
             namingInfo.fromStops.put(fromName, pattern);
             namingInfo.toStops.put(toName, pattern);
 
             for (String stopId : pattern.orderedStops) {
                 Stop stop = stopById.get(stopId);
-                // If the stop doesn't exist, it's probably a location or stop area and can be ignored for renaming.
+                // If the stop doesn't exist, it's probably a location or location group stop and can be ignored for renaming.
                 if (stop == null || fromName.equals(stop.stop_name) || toName.equals(stop.stop_name)) continue;
                 namingInfo.vias.put(stop.stop_name, pattern);
             }
@@ -182,8 +182,8 @@ public class PatternFinder {
         for (PatternNamingInfo info : namingInfoForRoute.values()) {
             for (Pattern pattern : info.patternsOnRoute) {
                 pattern.name = null; // clear this now so we don't get confused later on
-                String fromName = getTerminusName(pattern, stopById, locationById, stopAreaById, areaById, true);
-                String toName = getTerminusName(pattern, stopById, locationById, stopAreaById, areaById, false);
+                String fromName = getTerminusName(pattern, stopById, locationById, locationGroupStopById, locationGroupById, true);
+                String toName = getTerminusName(pattern, stopById, locationById, locationGroupStopById, locationGroupById, false);
 
                 // check if combination from, to is unique
                 Set<Pattern> intersection = new HashSet<>(info.fromStops.get(fromName));
@@ -196,10 +196,10 @@ public class PatternFinder {
 
                 // check for unique via stop
                 pattern.orderedStops.stream().map(
-                    uniqueEntityId -> getStopType(uniqueEntityId, stopById, locationById, stopAreaById)
+                    uniqueEntityId -> getStopType(uniqueEntityId, stopById, locationById, locationGroupStopById)
                 ).forEach(entity -> {
                     Set<Pattern> viaIntersection = new HashSet<>(intersection);
-                    String stopName = getStopName(entity, areaById);
+                    String stopName = getStopName(entity, locationGroupById);
                     viaIntersection.retainAll(info.vias.get(stopName));
 
                     if (viaIntersection.size() == 1) {
@@ -239,39 +239,39 @@ public class PatternFinder {
 
     /**
      * Using the 'unique stop id' return the object it actually relates to. Under flex, a stop id can either be a stop,
-     * location or stop area, this method decides which.
+     * location or location group stop, this method decides which.
      */
     private static Object getStopType(
         String uniqueEntityId,
         Map<String, Stop> stopById,
         Map<String, Location> locationById,
-        Map<String, StopArea> stopAreaById
+        Map<String, LocationGroupStop> locationGroupStopById
     ) {
         if (stopById.get(uniqueEntityId) != null) {
             return stopById.get(uniqueEntityId);
         } else if (locationById.get(uniqueEntityId) != null) {
             return locationById.get(uniqueEntityId);
-        } else if (stopAreaById.get(uniqueEntityId) != null) {
-            return stopAreaById.get(uniqueEntityId);
+        } else if (locationGroupStopById.get(uniqueEntityId) != null) {
+            return locationGroupStopById.get(uniqueEntityId);
         } else {
             return null;
         }
     }
 
     /**
-     * Extract the 'stop name' from either a stop, location or area (via stop area) depending on the entity type.
+     * Extract the 'stop name' from either a stop, location or location group stops depending on the entity type.
      */
-    private static String getStopName(Object entity, Map<String, Area> areaById) {
+    private static String getStopName(Object entity, Map<String, LocationGroup> locationGroupById) {
         if (entity != null) {
             if (entity instanceof Stop) {
                 return ((Stop) entity).stop_name;
             } else if (entity instanceof Location) {
                 return ((Location) entity).stop_name;
-            } else if (entity instanceof StopArea) {
-                StopArea stopArea = (StopArea) entity;
-                Area area = areaById.get(stopArea.area_id);
-                if (area != null) {
-                    return area.area_name;
+            } else if (entity instanceof LocationGroupStop) {
+                LocationGroupStop locationGroupStop = (LocationGroupStop) entity;
+                LocationGroup locationGroup = locationGroupById.get(locationGroupStop.location_group_id);
+                if (locationGroup != null) {
+                    return locationGroup.location_group_name;
                 }
             }
         }
@@ -279,16 +279,16 @@ public class PatternFinder {
     }
 
     /**
-     * Return either the 'from' or 'to' terminus name. Check the stops followed by locations and then areas (via stop
-     * areas). If a match is found return the name (or id if this is no available). If there are no matches return the
+     * Return either the 'from' or 'to' terminus name. Check the stops followed by locations and then location group
+     * stops. If a match is found return the name (or id if this is no available). If there are no matches return the
      * default value.
      */
     private static String getTerminusName(
         Pattern pattern,
         Map<String, Stop> stopById,
         Map<String, Location> locationById,
-        Map<String, StopArea> stopAreaById,
-        Map<String, Area> areaById,
+        Map<String, LocationGroupStop> locationGroupStopById,
+        Map<String, LocationGroup> locationGroupById,
         boolean isFrom
     ) {
         int id = isFrom ? 0 : pattern.orderedStops.size() - 1;
@@ -299,9 +299,9 @@ public class PatternFinder {
         } else if (locationById.containsKey(haltId)) {
             Location location = locationById.get(haltId);
             return location.stop_name != null ? location.stop_name : location.location_id;
-        } else if (stopAreaById.containsKey(haltId)) {
-            Area area = areaById.get(haltId);
-            return area.area_name != null ? area.area_name : area.area_id;
+        } else if (locationGroupStopById.containsKey(haltId)) {
+            LocationGroup locationGroup = locationGroupById.get(haltId);
+            return locationGroup.location_group_name != null ? locationGroup.location_group_name : locationGroup.location_group_id;
         }
         return isFrom ? "fromTerminusNameUnknown" : "toTerminusNameUnknown";
     }
