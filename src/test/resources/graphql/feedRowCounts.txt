@@ -5,6 +5,7 @@ query($namespace: String) {
     row_counts {
       agency
       calendar
+      calendar_dates
       errors
       routes
       stops

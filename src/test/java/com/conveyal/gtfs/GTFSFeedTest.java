@@ -191,7 +191,7 @@ public class GTFSFeedTest {
             new FileTestCase(
                 "stop_times.txt",
                 new DataExpectation[]{
-                    new DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
+                    new DataExpectation("trip_id", "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"),
                     new DataExpectation("departure_time", "07:00:00"),
                     new DataExpectation("stop_id", "4u6g")
                 }
@@ -200,7 +200,7 @@ public class GTFSFeedTest {
                 "trips.txt",
                 new DataExpectation[]{
                     new DataExpectation("route_id", "1"),
-                    new DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
+                    new DataExpectation("trip_id", "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"),
                     new DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57")
                 }
             )

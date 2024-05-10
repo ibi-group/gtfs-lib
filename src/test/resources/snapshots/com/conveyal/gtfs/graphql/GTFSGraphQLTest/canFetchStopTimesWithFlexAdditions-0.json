@@ -16,7 +16,7 @@
         "stop_id" : "4u6g",
         "stop_sequence" : 1,
         "timepoint" : 1,
-        "trip_id" : "a30277f8-e50a-4a85-9141-b1e0da9d429d"
+        "trip_id" : "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"
       }, {
         "arrival_time" : 25260,
         "departure_time" : 25260,
@@ -31,7 +31,7 @@
         "stop_id" : "johv",
         "stop_sequence" : 2,
         "timepoint" : 1,
-        "trip_id" : "a30277f8-e50a-4a85-9141-b1e0da9d429d"
+        "trip_id" : "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"
       }, {
         "arrival_time" : 28800,
         "departure_time" : 28800,
@@ -46,7 +46,7 @@
         "stop_id" : "4u6g",
         "stop_sequence" : 1,
         "timepoint" : 1,
-        "trip_id" : "frequency-trip"
+        "trip_id" : "flex-frequency-trip"
       }, {
         "arrival_time" : 30540,
         "departure_time" : 30540,
@@ -61,37 +61,37 @@
         "stop_id" : "1234",
         "stop_sequence" : 2,
         "timepoint" : 1,
-        "trip_id" : "frequency-trip"
+        "trip_id" : "flex-frequency-trip"
       }, {
-        "arrival_time" : 30660,
-        "departure_time" : 30660,
+        "arrival_time" : 30780,
+        "departure_time" : 30780,
         "drop_off_booking_rule_id" : "1",
         "drop_off_type" : 0,
-        "end_pickup_drop_off_window" : 25380,
+        "end_pickup_drop_off_window" : 25200,
         "pickup_booking_rule_id" : "1",
         "pickup_type" : 0,
-        "shape_dist_traveled" : 341.4491961,
-        "start_pickup_drop_off_window" : 25380,
-        "stop_headsign" : null,
+        "shape_dist_traveled" : 0.0,
+        "start_pickup_drop_off_window" : 25200,
+        "stop_headsign" : "Test stop headsign calendar date trip",
         "stop_id" : "area_251",
-        "stop_sequence" : 3,
+        "stop_sequence" : 1,
         "timepoint" : 1,
-        "trip_id" : "frequency-trip"
+        "trip_id" : "flex-calendar-date-trip"
       }, {
-        "arrival_time" : null,
-        "departure_time" : null,
+        "arrival_time" : 30840,
+        "departure_time" : 30840,
         "drop_off_booking_rule_id" : "1",
-        "drop_off_type" : 1,
-        "end_pickup_drop_off_window" : 25500,
+        "drop_off_type" : 0,
+        "end_pickup_drop_off_window" : 25200,
         "pickup_booking_rule_id" : "1",
-        "pickup_type" : 1,
-        "shape_dist_traveled" : 341.4491961,
-        "start_pickup_drop_off_window" : 25440,
-        "stop_headsign" : null,
-        "stop_id" : "3",
-        "stop_sequence" : 4,
+        "pickup_type" : 0,
+        "shape_dist_traveled" : 0.0,
+        "start_pickup_drop_off_window" : 25200,
+        "stop_headsign" : "Test stop headsign calendar date trip 2",
+        "stop_id" : "1",
+        "stop_sequence" : 2,
         "timepoint" : 1,
-        "trip_id" : "frequency-trip"
+        "trip_id" : "flex-calendar-date-trip"
       } ]
     }
   }

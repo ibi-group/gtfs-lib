@@ -491,8 +491,8 @@ public class GraphQLGtfsSchema {
                             // If it is not possible to join across all fetches (e.g. no matching id) an empty array
                             // will be returned.
                             new JDBCFetcher("pattern_stops", "stop_id", null, false),
-//                            new JDBCFetcher("pattern_locations", "location_id", null, false),
-//                            new JDBCFetcher("pattern_location_group_stops", "location_group_id", null, false),
+                            new JDBCFetcher("pattern_locations", "location_id", null, false),
+                            new JDBCFetcher("pattern_location_group_stops", "location_group_id", null, false),
                             new JDBCFetcher("patterns", "pattern_id")
                         )
                     )
