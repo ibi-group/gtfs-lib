@@ -6,6 +6,12 @@
         "agency_id" : "1",
         "count" : 1,
         "id" : 2,
+        "locationGroups" : [ {
+          "location_group_id" : "1"
+        } ],
+        "locations" : [ {
+          "location_id" : "area_251"
+        } ],
         "pattern_count" : 3,
         "patterns" : [ {
           "pattern_id" : "1"
@@ -30,11 +36,7 @@
         }, {
           "stop_id" : "johv"
         }, {
-          "stop_id" : "123"
-        }, {
           "stop_id" : "1234"
-        }, {
-          "stop_id" : "1234567"
         } ],
         "trip_count" : 3,
         "trips" : [ {

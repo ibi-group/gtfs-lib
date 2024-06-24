@@ -9,7 +9,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -35,11 +34,12 @@ public class StopTime extends Entity implements Cloneable, Serializable {
     public double shape_dist_traveled = DOUBLE_MISSING;
     public int    timepoint = INT_MISSING;
 
-    // Additional GTFS Flex booking rule fields.
-    public String pickup_booking_rule_id;
-    public String drop_off_booking_rule_id;
 
     // Additional GTFS Flex fields.
+    public String location_group_id;
+    public String location_id;
+    public String pickup_booking_rule_id;
+    public String drop_off_booking_rule_id;
     public int start_pickup_drop_off_window = INT_MISSING;
     public int end_pickup_drop_off_window = INT_MISSING;
 
@@ -64,6 +64,8 @@ public class StopTime extends Entity implements Cloneable, Serializable {
         statement.setString(oneBasedIndex++, trip_id);
         setIntParameter(statement, oneBasedIndex++, stop_sequence);
         statement.setString(oneBasedIndex++, stop_id);
+        statement.setString(oneBasedIndex++, location_group_id);
+        statement.setString(oneBasedIndex++, location_id);
         setIntParameter(statement, oneBasedIndex++, arrival_time);
         setIntParameter(statement, oneBasedIndex++, departure_time);
         statement.setString(oneBasedIndex++, stop_headsign);
@@ -73,17 +75,13 @@ public class StopTime extends Entity implements Cloneable, Serializable {
         setIntParameter(statement, oneBasedIndex++, continuous_drop_off);
         statement.setDouble(oneBasedIndex++, shape_dist_traveled);
         setIntParameter(statement, oneBasedIndex++, timepoint);
-
-        // Flex fields
         statement.setString(oneBasedIndex++, pickup_booking_rule_id);
         statement.setString(oneBasedIndex++, drop_off_booking_rule_id);
         setIntParameter(statement, oneBasedIndex++, start_pickup_drop_off_window);
-        setIntParameter(statement, oneBasedIndex++, end_pickup_drop_off_window);
+        setIntParameter(statement, oneBasedIndex, end_pickup_drop_off_window);
     }
 
     public static class Loader extends Entity.Loader<StopTime> {
-
-        private boolean isFlex = feed.isGTFSFlexFeed();
 
         public Loader(GTFSFeed feed) {
             super(feed, "stop_times");
@@ -98,35 +96,39 @@ public class StopTime extends Entity implements Cloneable, Serializable {
         public void loadOneRow() throws IOException {
             StopTime st = new StopTime();
             st.id = row + 1; // offset line number by 1 to account for 0-based row index
-            st.trip_id        = getStringField("trip_id", true);
+            st.trip_id = getStringField("trip_id", true);
             // TODO: arrival_time and departure time are not required, but if one is present the other should be
             // also, if this is the first or last stop, they are both required
-            st.arrival_time   = getTimeField("arrival_time", false);
+            st.arrival_time = getTimeField("arrival_time", false);
             st.departure_time = getTimeField("departure_time", false);
-            st.stop_id        = getStringField("stop_id", true);
-            st.stop_sequence  = getIntField("stop_sequence", true, 0, Integer.MAX_VALUE);
-            st.stop_headsign  = getStringField("stop_headsign", false);
-            st.pickup_type    = getIntField("pickup_type", false, 0, 3); // TODO add ranges as parameters
-            st.drop_off_type  = getIntField("drop_off_type", false, 0, 3);
+            st.stop_id = getStringField("stop_id", false);
+            st.stop_sequence = getIntField("stop_sequence", true, 0, Integer.MAX_VALUE);
+            st.stop_headsign = getStringField("stop_headsign", false);
+            st.pickup_type = getIntField("pickup_type", false, 0, 3); // TODO add ranges as parameters
+            st.drop_off_type = getIntField("drop_off_type", false, 0, 3);
             st.continuous_pickup = getIntField("continuous_pickup", false, 0, 3, INT_MISSING);
             st.continuous_drop_off = getIntField("continuous_drop_off", false, 0, 3, INT_MISSING);
             st.shape_dist_traveled = getDoubleField("shape_dist_traveled", false, 0D, Double.MAX_VALUE); // FIXME using both 0 and NaN for "missing", define DOUBLE_MISSING
-            st.timepoint      = getIntField("timepoint", false, 0, 1, INT_MISSING);
-            if (isFlex) {
+            st.timepoint = getIntField("timepoint", false, 0, 1, INT_MISSING);
+            if (feed.isGTFSFlexFeed()) {
+                st.location_group_id = getStringField("location_group_id", false);
+                st.location_id = getStringField("location_id", false);
                 st.pickup_booking_rule_id = getStringField("pickup_booking_rule_id", false);
                 st.drop_off_booking_rule_id = getStringField("drop_off_booking_rule_id", false);
                 st.start_pickup_drop_off_window = getTimeField("start_pickup_drop_off_window", false);
                 st.end_pickup_drop_off_window = getTimeField("end_pickup_drop_off_window", false);
             }
-            st.feed           = null; // this could circular-serialize the whole feed
+            st.feed = null; // this could circular-serialize the whole feed
             feed.stop_times.put(new Fun.Tuple2(st.trip_id, st.stop_sequence), st);
 
             /*
-              Check referential integrity without storing references. StopTime cannot directly reference Trips or
-              Stops because they would be serialized into the MapDB.
+              Check referential integrity without storing references. StopTime cannot directly reference foreign tables
+              because they would be serialized into the MapDB.
              */
             getRefField("trip_id", true, feed.trips);
-            getRefField("stop_id", true, feed.stops);
+            getRefField("stop_id", st.stop_id != null, feed.stops);
+            getRefField("location_group_id", st.location_group_id != null, feed.locationGroup);
+            getRefField("location_id", st.location_id != null, feed.locations);
         }
 
     }
@@ -142,30 +144,38 @@ public class StopTime extends Entity implements Cloneable, Serializable {
          */
         @Override
         protected void writeHeaders() throws IOException {
-            String[] originalHeaders = new String[] {"trip_id", "arrival_time", "departure_time", "stop_id",
-                    "stop_sequence", "stop_headsign", "pickup_type", "drop_off_type", "continuous_pickup",
-                    "continuous_drop_off", "shape_dist_traveled", "timepoint"};
-
-            String[] flexHeaders = new String[] {"pickup_booking_rule_id", "drop_off_booking_rule_id",
-                    "start_pickup_drop_off_window", "end_pickup_drop_off_window"};
-
             if (feed.isGTFSFlexFeed()) {
-                String[] headers = Arrays.copyOf(originalHeaders, originalHeaders.length + flexHeaders.length);
-                System.arraycopy(flexHeaders, 0, headers, originalHeaders.length, flexHeaders.length);
-                writer.writeRecord(headers);
+                writer.writeRecord(new String[] {"trip_id", "arrival_time", "departure_time", "stop_id",
+                    "location_group_id", "location_id", "stop_sequence", "stop_headsign", "start_pickup_drop_off_window",
+                    "end_pickup_drop_off_window", "pickup_type", "drop_off_type", "continuous_pickup",
+                    "continuous_drop_off", "shape_dist_traveled", "timepoint", "pickup_booking_rule_id",
+                    "drop_off_booking_rule_id"});
             } else {
-                writer.writeRecord(originalHeaders);
+                writer.writeRecord(new String[] {"trip_id", "arrival_time", "departure_time", "stop_id",
+                    "stop_sequence", "stop_headsign", "pickup_type", "drop_off_type", "continuous_pickup",
+                    "continuous_drop_off", "shape_dist_traveled", "timepoint"});
             }
         }
 
+        /**
+         * Only include the flex fields if this is a GTFS Flex feed.
+         */
         @Override
         protected void writeOneRow(StopTime st) throws IOException {
             writeStringField(st.trip_id);
             writeTimeField(st.arrival_time);
             writeTimeField(st.departure_time);
             writeStringField(st.stop_id);
+            if (feed.isGTFSFlexFeed()) {
+                writeStringField(st.location_group_id);
+                writeStringField(st.location_id);
+            }
             writeIntField(st.stop_sequence);
             writeStringField(st.stop_headsign);
+            if (feed.isGTFSFlexFeed()) {
+                writeTimeField(st.start_pickup_drop_off_window);
+                writeTimeField(st.end_pickup_drop_off_window);
+            }
             writeIntField(st.pickup_type);
             writeIntField(st.drop_off_type);
             writeIntField(st.continuous_pickup);
@@ -173,11 +183,8 @@ public class StopTime extends Entity implements Cloneable, Serializable {
             writeDoubleField(st.shape_dist_traveled);
             writeIntField(st.timepoint);
             if (feed.isGTFSFlexFeed()) {
-                // Only include these fields if this is a GTFS Flex feed.
                 writeStringField(st.pickup_booking_rule_id);
                 writeStringField(st.drop_off_booking_rule_id);
-                writeTimeField(st.start_pickup_drop_off_window);
-                writeTimeField(st.end_pickup_drop_off_window);
             }
             endRecord();
         }
@@ -224,8 +231,8 @@ public class StopTime extends Entity implements Cloneable, Serializable {
             return stopTimes;
         }
         String sql = String.format(
-            "select id, trip_id, stop_id, arrival_time, departure_time, pickup_type, drop_off_type, " +
-            "start_pickup_drop_off_window, end_pickup_drop_off_window " +
+            "select id, trip_id, stop_id, location_group_id, location_id, arrival_time, departure_time, pickup_type, " +
+            "drop_off_type, start_pickup_drop_off_window, end_pickup_drop_off_window " +
             "from %sstop_times where " +
             "start_pickup_drop_off_window IS NOT NULL " +
             "or end_pickup_drop_off_window IS NOT NULL ",
@@ -236,14 +243,16 @@ public class StopTime extends Entity implements Cloneable, Serializable {
             while (resultSet.next()) {
                 StopTime stopTime = new StopTime();
                 stopTime.id = resultSet.getInt(1);
-                stopTime.trip_id  = resultSet.getString(2);
-                stopTime.stop_id  = resultSet.getString(3);
-                stopTime.arrival_time  = getIntValue(resultSet.getString(4));
-                stopTime.departure_time  = getIntValue(resultSet.getString(5));
-                stopTime.pickup_type  = resultSet.getInt(6);
-                stopTime.drop_off_type  = resultSet.getInt(7);
-                stopTime.start_pickup_drop_off_window  = getIntValue(resultSet.getString(8));
-                stopTime.end_pickup_drop_off_window  = getIntValue(resultSet.getString(9));
+                stopTime.trip_id = resultSet.getString(2);
+                stopTime.stop_id = resultSet.getString(3);
+                stopTime.location_group_id = resultSet.getString(4);
+                stopTime.location_id = resultSet.getString(5);
+                stopTime.arrival_time = getIntValue(resultSet.getString(6));
+                stopTime.departure_time = getIntValue(resultSet.getString(7));
+                stopTime.pickup_type = resultSet.getInt(8);
+                stopTime.drop_off_type = resultSet.getInt(9);
+                stopTime.start_pickup_drop_off_window = getIntValue(resultSet.getString(10));
+                stopTime.end_pickup_drop_off_window = getIntValue(resultSet.getString(11));
                 stopTimes.add(stopTime);
             }
         }
@@ -264,22 +273,25 @@ public class StopTime extends Entity implements Cloneable, Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StopTime stopTime = (StopTime) o;
-        return arrival_time == stopTime.arrival_time &&
-                departure_time == stopTime.departure_time &&
-                stop_sequence == stopTime.stop_sequence &&
-                pickup_type == stopTime.pickup_type &&
-                drop_off_type == stopTime.drop_off_type &&
-                continuous_pickup == stopTime.continuous_pickup &&
-                continuous_drop_off == stopTime.continuous_drop_off &&
-                Double.compare(stopTime.shape_dist_traveled, shape_dist_traveled) == 0 &&
-                timepoint == stopTime.timepoint &&
-                start_pickup_drop_off_window == stopTime.start_pickup_drop_off_window &&
-                end_pickup_drop_off_window == stopTime.end_pickup_drop_off_window &&
-                Objects.equals(trip_id, stopTime.trip_id) &&
-                Objects.equals(stop_id, stopTime.stop_id) &&
-                Objects.equals(stop_headsign, stopTime.stop_headsign) &&
-                Objects.equals(pickup_booking_rule_id, stopTime.pickup_booking_rule_id) &&
-                Objects.equals(drop_off_booking_rule_id, stopTime.drop_off_booking_rule_id);
+        return
+            arrival_time == stopTime.arrival_time &&
+            departure_time == stopTime.departure_time &&
+            stop_sequence == stopTime.stop_sequence &&
+            pickup_type == stopTime.pickup_type &&
+            drop_off_type == stopTime.drop_off_type &&
+            continuous_pickup == stopTime.continuous_pickup &&
+            continuous_drop_off == stopTime.continuous_drop_off &&
+            Double.compare(stopTime.shape_dist_traveled, shape_dist_traveled) == 0 &&
+            timepoint == stopTime.timepoint &&
+            start_pickup_drop_off_window == stopTime.start_pickup_drop_off_window &&
+            end_pickup_drop_off_window == stopTime.end_pickup_drop_off_window &&
+            Objects.equals(trip_id, stopTime.trip_id) &&
+            Objects.equals(stop_id, stopTime.stop_id) &&
+            Objects.equals(location_group_id, stopTime.location_group_id) &&
+            Objects.equals(location_id, stopTime.location_id) &&
+            Objects.equals(stop_headsign, stopTime.stop_headsign) &&
+            Objects.equals(pickup_booking_rule_id, stopTime.pickup_booking_rule_id) &&
+            Objects.equals(drop_off_booking_rule_id, stopTime.drop_off_booking_rule_id);
     }
 
     @Override
@@ -289,6 +301,8 @@ public class StopTime extends Entity implements Cloneable, Serializable {
             arrival_time,
             departure_time,
             stop_id,
+            location_group_id,
+            location_id,
             stop_sequence,
             stop_headsign,
             pickup_type,

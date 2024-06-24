@@ -117,14 +117,21 @@ public class LocationGroupStop extends Entity {
     }
 
     /**
-     * Extract the stop areas from file and group by stop id. Multiple rows of stop areas with the
-     * same stop id will be compressed into a single row with comma separated stop ids. This is to allow
+     * Extract the location group stops from file and group by location group id. Multiple rows of location groups with
+     * the same location group id will be compressed into a single row with comma separated stop ids. This is to allow
      * for easier CRUD by the DT UI.
-     *
-     * E.g. 1,2 and 1,3, will become: 1,"2,3".
-     *
-     * If there are any issues grouping the stop areas or there are no stop areas, return the default CSV
-     * reader. This is to prevent downstream processing from failing where a CSV reader is expected.
+     * <p>
+     * E.g.
+     * <p>
+     * location_group_1,stop_id_1
+     * location_group_1,stop_id_2
+     * <p>
+     * will become:
+     * <p>
+     * location_group_1,"stop_id_1,stop_id_2"
+     * <p>
+     * If any issues are encountered or there are no location group stops, return the default CSV reader. This is to
+     * prevent downstream processing from failing where a CSV reader is expected.
      */
     public static CsvReader getCsvReader(ZipFile zipFile, ZipEntry entry, List<String> errors) {
         CsvReader csvReader = new CsvReader(new StringReader(""));
@@ -181,7 +188,7 @@ public class LocationGroupStop extends Entity {
     }
 
     /**
-     * Convert the multiple stop areas back into CSV, with header and return a {@link CsvReader} representation.
+     * Convert the multiple location group stops back into CSV, with header and return a {@link CsvReader} representation.
      */
     private static CsvReader produceCsvPayload(HashMap<String, LocationGroupStop> multiStopAreaIds) {
         StringBuilder csvContent = new StringBuilder();
@@ -193,13 +200,13 @@ public class LocationGroupStop extends Entity {
     /**
      * Expand all location group stops which have multiple stop ids into a single row for each stop id. This is to
      * conform with the GTFS Flex standard.
-     *
+     * <p>
      * E.g.
-     *
+     * <p>
      * location_group_1,"stop_id_2,stop_id_3"
-     *
+     * <p>
      * will become:
-     *
+     * <p>
      * location_group_1,stop_id_2
      * location_group_1,stop_id_3
      *

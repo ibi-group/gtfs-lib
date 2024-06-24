@@ -26,8 +26,12 @@ public class PatternStop extends PatternHalt {
     public int continuous_drop_off = INT_MISSING;
 
     // Flex additions.
+    public String location_group_id;
+    public String location_id;
     public String pickup_booking_rule_id;
     public String drop_off_booking_rule_id;
+    public int start_pickup_drop_off_window = INT_MISSING;
+    public int end_pickup_drop_off_window = INT_MISSING;
 
     public PatternStop () {}
 
@@ -39,6 +43,8 @@ public class PatternStop extends PatternHalt {
         // Stop sequence is zero-based.
         setIntParameter(statement, oneBasedIndex++, stop_sequence);
         statement.setString(oneBasedIndex++, stop_id);
+        statement.setString(oneBasedIndex++, location_group_id);
+        statement.setString(oneBasedIndex++, location_id);
         statement.setString(oneBasedIndex++, stop_headsign);
         setIntParameter(statement, oneBasedIndex++, default_travel_time);
         setIntParameter(statement, oneBasedIndex++, default_dwell_time);
@@ -49,7 +55,9 @@ public class PatternStop extends PatternHalt {
         setIntParameter(statement, oneBasedIndex++, continuous_pickup);
         setIntParameter(statement, oneBasedIndex++, continuous_drop_off);
         statement.setString(oneBasedIndex++, pickup_booking_rule_id);
-        statement.setString(oneBasedIndex, drop_off_booking_rule_id);
+        statement.setString(oneBasedIndex++, drop_off_booking_rule_id);
+        setIntParameter(statement, oneBasedIndex++, start_pickup_drop_off_window);
+        setIntParameter(statement, oneBasedIndex, end_pickup_drop_off_window);
     }
 
     public int getTravelTime() {
@@ -60,7 +68,12 @@ public class PatternStop extends PatternHalt {
         return default_dwell_time == Entity.INT_MISSING ? 0 : default_dwell_time;
     }
 
+
+    /**
+     * As part of the flex spec, either stop id, location group id or location id can be defined. If one of the latter
+     * two are defined, this is a flex pattern stop.
+     */
     public boolean isFlex() {
-        return false;
+        return location_group_id != null || location_id != null;
     }
 }

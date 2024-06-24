@@ -51,7 +51,7 @@ public class PatternFinderValidator extends TripValidator {
         List<StopTime> stopTimes,
         List<Stop> stops,
         List<Location> locations,
-        List<LocationGroupStop> locationGroupStops
+        List<LocationGroup> locationGroups
     ) {
         // As we hit each trip, accumulate them into the wrapped PatternFinder object.
         patternFinder.processTrip(trip, stopTimes);
@@ -94,10 +94,7 @@ public class PatternFinderValidator extends TripValidator {
         );
         patternBuilder.create(
             patterns,
-            patternFinder.canUsePatternsFromFeed(patternsFromFeed),
-            stopById,
-            locationById,
-            locationGroupStopById
+            patternFinder.canUsePatternsFromFeed(patternsFromFeed)
         );
     }
 }

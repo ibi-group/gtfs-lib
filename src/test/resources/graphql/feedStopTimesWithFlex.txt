@@ -9,6 +9,8 @@ query ($namespace: String) {
       shape_dist_traveled
       stop_headsign
       stop_id
+      location_group_id
+      location_id
       stop_sequence
       timepoint
       trip_id

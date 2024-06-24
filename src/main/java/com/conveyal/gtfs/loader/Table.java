@@ -24,9 +24,7 @@ import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.LocationShape;
 import com.conveyal.gtfs.model.Pattern;
-import com.conveyal.gtfs.model.PatternLocation;
 import com.conveyal.gtfs.model.PatternStop;
-import com.conveyal.gtfs.model.PatternLocationGroupStop;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.ShapePoint;
@@ -324,44 +322,6 @@ public class Table {
     .addPrimaryKey().keyFieldIsNotUnique()
     .addPrimaryKeyNames("fare_id", "route_id", "origin_id", "destination_id", "contains_id");
 
-    public static final Table PATTERN_STOP = new Table("pattern_stops", PatternStop.class, OPTIONAL,
-            new StringField("pattern_id", REQUIRED).isReferenceTo(PATTERNS),
-            new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
-            // FIXME: Do we need an index on stop_id?
-            new StringField("stop_id", REQUIRED).isReferenceTo(STOPS),
-            // Editor-specific fields
-            new StringField("stop_headsign", EDITOR),
-            new IntegerField("default_travel_time", EDITOR,0, Integer.MAX_VALUE),
-            new IntegerField("default_dwell_time", EDITOR, 0, Integer.MAX_VALUE),
-            new IntegerField("drop_off_type", EDITOR, 2),
-            new IntegerField("pickup_type", EDITOR, 2),
-            new DoubleField("shape_dist_traveled", EDITOR, 0, Double.POSITIVE_INFINITY, -1),
-            new ShortField("timepoint", EDITOR, 1),
-            new ShortField("continuous_pickup", OPTIONAL,3),
-            new ShortField("continuous_drop_off", OPTIONAL,3),
-            new StringField("pickup_booking_rule_id", OPTIONAL),
-            new StringField("drop_off_booking_rule_id", OPTIONAL)
-    ).withParentTable(PATTERNS)
-    .addPrimaryKeyNames("pattern_id", "stop_sequence");
-
-    public static final Table TRIPS = new Table("trips", Trip.class, REQUIRED,
-        new StringField("trip_id", REQUIRED),
-        new StringField("route_id", REQUIRED).isReferenceTo(ROUTES).indexThisColumn(),
-        // FIXME: Do we need an index on service_id
-        new StringField("service_id", REQUIRED).isReferenceTo(CALENDAR).isReferenceTo(CALENDAR_DATES).isReferenceTo(SCHEDULE_EXCEPTIONS),
-        new StringField("trip_headsign", OPTIONAL),
-        new StringField("trip_short_name", OPTIONAL),
-        new ShortField("direction_id", OPTIONAL, 1),
-        new StringField("block_id", OPTIONAL),
-        new StringField("shape_id", OPTIONAL).isReferenceTo(SHAPES),
-        new ShortField("wheelchair_accessible", OPTIONAL, 2),
-        new ShortField("bikes_allowed", OPTIONAL, 2),
-        // Editor-specific fields below.
-        new StringField("pattern_id", EDITOR).isReferenceTo(PATTERNS)
-    ).addPrimaryKey()
-    .addPrimaryKeyNames("trip_id");
-
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#
     public static final Table LOCATIONS = new Table("locations", Location.class, OPTIONAL,
         new StringField("location_id", REQUIRED),
         new StringField("stop_name", OPTIONAL),
@@ -385,6 +345,47 @@ public class Table {
     )
     .keyFieldIsNotUnique()
     .addPrimaryKeyNames("location_group_id", "stop_id");
+
+    public static final Table PATTERN_STOP = new Table("pattern_stops", PatternStop.class, OPTIONAL,
+            new StringField("pattern_id", REQUIRED).isReferenceTo(PATTERNS),
+            new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
+            // FIXME: Do we need an index on stop_id?
+            new StringField("stop_id", OPTIONAL).isReferenceTo(STOPS),
+            new StringField("location_group_id", OPTIONAL).isReferenceTo(LOCATION_GROUP),
+            new StringField("location_id", OPTIONAL).isReferenceTo(LOCATIONS),
+            // Editor-specific fields
+            new StringField("stop_headsign", EDITOR),
+            new IntegerField("default_travel_time", EDITOR,0, Integer.MAX_VALUE),
+            new IntegerField("default_dwell_time", EDITOR, 0, Integer.MAX_VALUE),
+            new IntegerField("drop_off_type", EDITOR, 2),
+            new IntegerField("pickup_type", EDITOR, 2),
+            new DoubleField("shape_dist_traveled", EDITOR, 0, Double.POSITIVE_INFINITY, -1),
+            new ShortField("timepoint", EDITOR, 1),
+            new ShortField("continuous_pickup", OPTIONAL,3),
+            new ShortField("continuous_drop_off", OPTIONAL,3),
+            new StringField("pickup_booking_rule_id", OPTIONAL),
+            new StringField("drop_off_booking_rule_id", OPTIONAL),
+            new TimeField("start_pickup_drop_off_window", OPTIONAL),
+            new TimeField("end_pickup_drop_off_window", OPTIONAL)
+).withParentTable(PATTERNS)
+    .addPrimaryKeyNames("pattern_id", "stop_sequence");
+
+    public static final Table TRIPS = new Table("trips", Trip.class, REQUIRED,
+        new StringField("trip_id", REQUIRED),
+        new StringField("route_id", REQUIRED).isReferenceTo(ROUTES).indexThisColumn(),
+        // FIXME: Do we need an index on service_id
+        new StringField("service_id", REQUIRED).isReferenceTo(CALENDAR).isReferenceTo(CALENDAR_DATES).isReferenceTo(SCHEDULE_EXCEPTIONS),
+        new StringField("trip_headsign", OPTIONAL),
+        new StringField("trip_short_name", OPTIONAL),
+        new ShortField("direction_id", OPTIONAL, 1),
+        new StringField("block_id", OPTIONAL),
+        new StringField("shape_id", OPTIONAL).isReferenceTo(SHAPES),
+        new ShortField("wheelchair_accessible", OPTIONAL, 2),
+        new ShortField("bikes_allowed", OPTIONAL, 2),
+        // Editor-specific fields below.
+        new StringField("pattern_id", EDITOR).isReferenceTo(PATTERNS)
+    ).addPrimaryKey()
+    .addPrimaryKeyNames("trip_id");
 
     // Must come after TRIPS table to which it has references.
     public static final Table TRANSFERS = new Table("transfers", Transfer.class, OPTIONAL,
@@ -410,11 +411,9 @@ public class Table {
             new StringField("trip_id", REQUIRED).isReferenceTo(TRIPS),
             new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
             // FIXME: Do we need an index on stop_id
-            new StringField("stop_id", REQUIRED)
-                .isReferenceTo(STOPS)
-                .isReferenceTo(LOCATIONS)
-                .isReferenceTo(LOCATION_GROUP_STOPS),
-//                    .indexThisColumn(),
+            new StringField("stop_id", OPTIONAL).isReferenceTo(STOPS),
+            new StringField("location_group_id", OPTIONAL).isReferenceTo(LOCATION_GROUP),
+            new StringField("location_id", OPTIONAL).isReferenceTo(LOCATIONS),
             // TODO verify that we have a special check for arrival and departure times first and last stop_time in a trip, which are required
             new TimeField("arrival_time", OPTIONAL),
             new TimeField("departure_time", OPTIONAL),
@@ -426,14 +425,8 @@ public class Table {
             new DoubleField("shape_dist_traveled", OPTIONAL, 0, Double.POSITIVE_INFINITY, -1),
             new ShortField("timepoint", OPTIONAL, 1),
             new IntegerField("fare_units_traveled", EXTENSION), // OpenOV NL extension
-
-            // Additional GTFS Flex booking rule fields.
-            // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended-1
             new StringField("pickup_booking_rule_id", OPTIONAL),
             new StringField("drop_off_booking_rule_id", OPTIONAL),
-
-            // Additional GTFS Flex stop areas and locations fields
-            // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended
             new TimeField("start_pickup_drop_off_window", OPTIONAL),
             new TimeField("end_pickup_drop_off_window", OPTIONAL)
     ).withParentTable(TRIPS)
@@ -519,51 +512,8 @@ public class Table {
     .withParentTable(LOCATIONS)
     .addPrimaryKeyNames("location_id", "geometry_id", "geometry_pt_lat", "geometry_pt_lon");
 
-    public static final Table PATTERN_LOCATION = new Table("pattern_locations", PatternLocation.class, OPTIONAL,
-            new StringField("pattern_id", REQUIRED).isReferenceTo(PATTERNS),
-            new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
-            new StringField("location_id", REQUIRED).isReferenceTo(LOCATIONS),
-            // Editor-specific fields
-            new IntegerField("drop_off_type", EDITOR, 2),
-            new IntegerField("pickup_type", EDITOR, 2),
-            new ShortField("timepoint", EDITOR, 1),
-            new StringField("stop_headsign", EDITOR),
-            new ShortField("continuous_pickup", OPTIONAL,3),
-            new ShortField("continuous_drop_off", OPTIONAL,3),
-            new StringField("pickup_booking_rule_id", OPTIONAL),
-            new StringField("drop_off_booking_rule_id", OPTIONAL),
-
-            // Additional GTFS Flex stop areas and locations fields
-            // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended
-            new TimeField("flex_default_travel_time", OPTIONAL),
-            new TimeField("flex_default_zone_time", OPTIONAL)
-
-    ).withParentTable(PATTERNS);
-
-    public static final Table PATTERN_LOCATION_GROUP_STOP = new Table("pattern_location_group_stops", PatternLocationGroupStop.class, OPTIONAL,
-            new StringField("pattern_id", REQUIRED).isReferenceTo(PATTERNS),
-            new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
-            new StringField("location_group_id", REQUIRED).isReferenceTo(LOCATION_GROUP_STOPS),
-            // Editor-specific fields
-            new IntegerField("drop_off_type", EDITOR, 2),
-            new IntegerField("pickup_type", EDITOR, 2),
-            new ShortField("timepoint", EDITOR, 1),
-            new StringField("stop_headsign", EDITOR),
-            new ShortField("continuous_pickup", OPTIONAL,3),
-            new ShortField("continuous_drop_off", OPTIONAL,3),
-            new StringField("pickup_booking_rule_id", OPTIONAL),
-            new StringField("drop_off_booking_rule_id", OPTIONAL),
-
-            // Additional GTFS Flex stop areas and locations fields
-            // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended
-            new TimeField("flex_default_travel_time", OPTIONAL),
-            new TimeField("flex_default_zone_time", OPTIONAL)
-
-    ).withParentTable(PATTERNS);
-
     /** List of tables in order needed for checking referential integrity during load stage. */
     public static final Table[] tablesInOrder = {
-        LOCATION_GROUP,
         AGENCY,
         CALENDAR,
         SCHEDULE_EXCEPTIONS,
@@ -575,11 +525,10 @@ public class Table {
         SHAPES,
         STOPS,
         LOCATIONS,
+        LOCATION_GROUP,
         LOCATION_GROUP_STOPS,
         FARE_RULES,
         PATTERN_STOP,
-        PATTERN_LOCATION,
-        PATTERN_LOCATION_GROUP_STOP,
         TRANSFERS,
         TRIPS,
         STOP_TIMES,

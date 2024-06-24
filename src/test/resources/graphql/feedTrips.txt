@@ -23,6 +23,8 @@ query ($namespace: String) {
       shape_id
       stop_times {
         stop_id
+        location_group_id
+        location_id
         stop_sequence
         trip_id
       }

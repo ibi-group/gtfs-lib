@@ -11,9 +11,9 @@ import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.CalendarDate;
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.Location;
+import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.conveyal.gtfs.storage.StorageException;
@@ -75,8 +75,9 @@ public class ServiceValidator extends TripValidator {
         List<StopTime> stopTimes,
         List<Stop> stops,
         List<Location> locations,
-        List<LocationGroupStop> locationGroupStops
+        List<LocationGroup> locationGroups
     ) {
+        int tripDurationSeconds = 0;
         if (trip.block_id != null) {
             // If the trip has a block_id, add a new block interval to the map.
             BlockInterval blockInterval = new BlockInterval();
@@ -90,16 +91,21 @@ public class ServiceValidator extends TripValidator {
                 .computeIfAbsent(trip.block_id, k -> new ArrayList<>())
                 .add(blockInterval);
         }
-        int firstStopDeparture = stopTimes.get(0).departure_time;
-        int lastStopArrival = stopTimes.get(stopTimes.size() - 1).arrival_time;
-        if (firstStopDeparture == Entity.INT_MISSING || lastStopArrival == Entity.INT_MISSING) {
-            // ERR
-            return;
-        }
-        int tripDurationSeconds = lastStopArrival - firstStopDeparture;
-        if (tripDurationSeconds <= 0) {
-            // ERR
-            return;
+        if (!isFlexTrip(stopTimes)) {
+            // The trip duration can only be obtained if the trip starts and ends with non-flex stops. if either the
+            // start or end stop is flex the service info must still be created and attributed to a trip. In this case
+            // the trip duration will have a value of 0.
+            int firstStopDeparture = stopTimes.get(0).departure_time;
+            int lastStopArrival = stopTimes.get(stopTimes.size() - 1).arrival_time;
+            if (firstStopDeparture == Entity.INT_MISSING || lastStopArrival == Entity.INT_MISSING) {
+                // ERR
+                return;
+            }
+            tripDurationSeconds = lastStopArrival - firstStopDeparture;
+            if (tripDurationSeconds <= 0) {
+                // ERR
+                return;
+            }
         }
         // Get the map from modes to service durations in seconds for this trip's service ID.
         // Create a new empty map if it doesn't yet exist.
@@ -111,6 +117,13 @@ public class ServiceValidator extends TripValidator {
         // Record which trips occur on each service_id.
         serviceInfo.tripIds.add(trip.trip_id);
         // TODO validate mode codes
+    }
+
+    /**
+     * The trip starts or ends with a flex stop.
+     */
+    private boolean isFlexTrip(List<StopTime> stopTimes) {
+        return stopTimes.get(0).stop_id == null || stopTimes.get(stopTimes.size() - 1).stop_id == null;
     }
 
     /**

@@ -38,7 +38,7 @@ public class LocationGroup extends Entity {
 
         @Override
         protected boolean isRequired() {
-            return true;
+            return false;
         }
 
         @Override

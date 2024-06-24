@@ -9,9 +9,15 @@ query ($namespace: String) {
       shape_dist_traveled
       stop_headsign
       stop_id
+      location_group_id
+      location_id
       stop_sequence
       timepoint
       trip_id
+      pickup_booking_rule_id
+      drop_off_booking_rule_id
+      start_pickup_drop_off_window
+      end_pickup_drop_off_window
     }
   }
 }

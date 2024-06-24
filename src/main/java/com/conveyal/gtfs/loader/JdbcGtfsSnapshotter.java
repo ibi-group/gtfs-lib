@@ -108,8 +108,6 @@ public class JdbcGtfsSnapshotter {
             // FIXME: Find some place to store errors encountered after copying various patterns.
             copy(Table.PATTERNS, true);
             copy(Table.PATTERN_STOP, true);
-            copy(Table.PATTERN_LOCATION, true);
-            copy(Table.PATTERN_LOCATION_GROUP_STOP, true);
             // see method comments fo why different logic is needed for this table
             result.scheduleExceptions = createScheduleExceptionsTable();
             result.shapes = copy(Table.SHAPES, true);

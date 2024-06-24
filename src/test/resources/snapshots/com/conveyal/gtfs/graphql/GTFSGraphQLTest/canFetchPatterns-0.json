@@ -5,16 +5,24 @@
       "patterns" : [ {
         "direction_id" : 0,
         "id" : 1,
+        "locationGroups" : [ {
+          "id" : 2,
+          "location_group_id" : "1"
+        } ],
+        "locations" : [ {
+          "id" : 3,
+          "location_id" : "area_251"
+        } ],
         "name" : "2 stops from Butler Ln to Scotts Valley Dr & Victor Sq (1 trips)",
         "pattern_id" : "1",
-        "pattern_location_group_stops" : [ ],
-        "pattern_locations" : [ ],
         "pattern_stops" : [ {
           "default_dwell_time" : 0,
           "default_travel_time" : 0,
           "drop_off_booking_rule_id" : "1",
           "drop_off_type" : 0,
           "id" : 1,
+          "location" : [ ],
+          "locationGroup" : [ ],
           "pattern_id" : "1",
           "pickup_booking_rule_id" : "1",
           "pickup_type" : 0,
@@ -32,6 +40,8 @@
           "drop_off_booking_rule_id" : "1",
           "drop_off_type" : 0,
           "id" : 2,
+          "location" : [ ],
+          "locationGroup" : [ ],
           "pattern_id" : "1",
           "pickup_booking_rule_id" : "1",
           "pickup_type" : 0,
@@ -103,12 +113,6 @@
           "stop_id" : "4u6g"
         }, {
           "stop_id" : "johv"
-        }, {
-          "stop_id" : "123"
-        }, {
-          "stop_id" : "1234"
-        }, {
-          "stop_id" : "1234567"
         } ],
         "trip_count" : 1,
         "trips" : [ {
@@ -118,25 +122,72 @@
       }, {
         "direction_id" : 0,
         "id" : 2,
-        "name" : "2 stops from Muff to Moville to Location group name (1 trips)",
-        "pattern_id" : "2",
-        "pattern_location_group_stops" : [ {
-          "id" : 1,
-          "location_group_id" : "1",
-          "location_group_stops" : [ {
-            "id" : 2,
-            "locationGroup" : [ {
-              "id" : 2,
-              "location_group_name" : "Location group name"
-            } ],
-            "location_group_id" : "1"
-          } ]
+        "locationGroups" : [ {
+          "id" : 2,
+          "location_group_id" : "1"
         } ],
-        "pattern_locations" : [ {
-          "id" : 1,
+        "locations" : [ {
+          "id" : 3,
           "location_id" : "area_251"
         } ],
-        "pattern_stops" : [ ],
+        "name" : "3 stops from fromTerminusNameUnknown to toTerminusNameUnknown (1 trips)",
+        "pattern_id" : "2",
+        "pattern_stops" : [ {
+          "default_dwell_time" : 0,
+          "default_travel_time" : 0,
+          "drop_off_booking_rule_id" : "1",
+          "drop_off_type" : 0,
+          "id" : 3,
+          "location" : [ {
+            "location_id" : "area_251"
+          } ],
+          "locationGroup" : [ ],
+          "pattern_id" : "2",
+          "pickup_booking_rule_id" : "1",
+          "pickup_type" : 0,
+          "shape_dist_traveled" : 0.0,
+          "stop" : [ ],
+          "stop_headsign" : "Test location stop",
+          "stop_id" : null,
+          "stop_sequence" : 0,
+          "timepoint" : 1
+        }, {
+          "default_dwell_time" : 0,
+          "default_travel_time" : 5640,
+          "drop_off_booking_rule_id" : "1",
+          "drop_off_type" : 0,
+          "id" : 4,
+          "location" : [ ],
+          "locationGroup" : [ ],
+          "pattern_id" : "2",
+          "pickup_booking_rule_id" : "1",
+          "pickup_type" : 0,
+          "shape_dist_traveled" : 0.0,
+          "stop" : [ ],
+          "stop_headsign" : "Test stop headsign calendar date trip 2",
+          "stop_id" : "1",
+          "stop_sequence" : 1,
+          "timepoint" : 1
+        }, {
+          "default_dwell_time" : 0,
+          "default_travel_time" : -5640,
+          "drop_off_booking_rule_id" : "1",
+          "drop_off_type" : 0,
+          "id" : 5,
+          "location" : [ ],
+          "locationGroup" : [ {
+            "location_group_id" : "1"
+          } ],
+          "pattern_id" : "2",
+          "pickup_booking_rule_id" : "1",
+          "pickup_type" : 0,
+          "shape_dist_traveled" : 0.0,
+          "stop" : [ ],
+          "stop_headsign" : "Test location group stop",
+          "stop_id" : null,
+          "stop_sequence" : 2,
+          "timepoint" : 1
+        } ],
         "route" : [ {
           "route_id" : "1"
         } ],
@@ -201,16 +252,24 @@
       }, {
         "direction_id" : 0,
         "id" : 3,
+        "locationGroups" : [ {
+          "id" : 2,
+          "location_group_id" : "1"
+        } ],
+        "locations" : [ {
+          "id" : 3,
+          "location_id" : "area_251"
+        } ],
         "name" : "2 stops from Butler Ln to Child Stop (1 trips)",
         "pattern_id" : "3",
-        "pattern_location_group_stops" : [ ],
-        "pattern_locations" : [ ],
         "pattern_stops" : [ {
           "default_dwell_time" : 0,
           "default_travel_time" : 0,
           "drop_off_booking_rule_id" : "1",
           "drop_off_type" : 0,
-          "id" : 3,
+          "id" : 6,
+          "location" : [ ],
+          "locationGroup" : [ ],
           "pattern_id" : "3",
           "pickup_booking_rule_id" : "1",
           "pickup_type" : 0,
@@ -227,7 +286,9 @@
           "default_travel_time" : 1740,
           "drop_off_booking_rule_id" : "1",
           "drop_off_type" : 0,
-          "id" : 4,
+          "id" : 7,
+          "location" : [ ],
+          "locationGroup" : [ ],
           "pattern_id" : "3",
           "pickup_booking_rule_id" : "1",
           "pickup_type" : 0,
@@ -298,13 +359,7 @@
         "stops" : [ {
           "stop_id" : "4u6g"
         }, {
-          "stop_id" : "johv"
-        }, {
-          "stop_id" : "123"
-        }, {
           "stop_id" : "1234"
-        }, {
-          "stop_id" : "1234567"
         } ],
         "trip_count" : 1,
         "trips" : [ {

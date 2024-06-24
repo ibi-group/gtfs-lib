@@ -18,27 +18,25 @@ query ($namespace: String) {
         stop {
           stop_id
         }
+        locationGroup {
+          location_group_id
+        }
+        location {
+          location_id
+        }
         stop_id
         stop_sequence
         timepoint
         pickup_booking_rule_id
         drop_off_booking_rule_id
       }
-      pattern_locations {
-        id
-        location_id
-      }
-      pattern_location_group_stops {
+      locationGroups {
         id
         location_group_id
-        location_group_stops {
-            id
-            location_group_id
-            locationGroup {
-                id
-                location_group_name
-            }
-        }
+      }
+      locations {
+        id
+        location_id
       }
       route {
         route_id

@@ -4,9 +4,9 @@ import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.loader.Feed;
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.Location;
+import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import org.slf4j.Logger;
@@ -41,7 +41,7 @@ public class NewTripTimesValidator extends FeedValidator {
     // TODO build this same kind of caching into the table reader class.
     Map<String, Stop> stopById = new HashMap<>();
     Map<String, Location> locationById = new HashMap<>();
-    Map<String, LocationGroupStop> stopAreaById = new HashMap<>();
+    Map<String, LocationGroup> locationGroupById = new HashMap<>();
     Map<String, Trip> tripById = new HashMap<>();
     Map<String, Route> routeById = new HashMap<>();
 
@@ -65,15 +65,15 @@ public class NewTripTimesValidator extends FeedValidator {
     @Override
     public void validate () {
         // TODO cache automatically in feed or TableReader object
-        LOG.info("Cacheing stops, trips, and routes...");
+        LOG.info("Caching stops, locations, location groups, trips, and routes...");
         for (Stop stop : feed.stops) {
             stopById.put(stop.stop_id, stop);
         }
         for (Location location : feed.locations) {
             locationById.put(location.location_id, location);
         }
-        for (LocationGroupStop locationGroupStop : feed.locationGroupStops) {
-            stopAreaById.put(locationGroupStop.location_group_id, locationGroupStop);
+        for (LocationGroup locationGroup : feed.locationGroups) {
+            locationGroupById.put(locationGroup.location_group_id, locationGroup);
         }
         // FIXME: determine a good way to validate shapes without caching them all in memory...
         for (Trip trip: feed.trips) {
@@ -157,53 +157,59 @@ public class NewTripTimesValidator extends FeedValidator {
         // We could ask the SQL server to do the join between stop_times and stops, but we want to check references.
         List<Stop> stops = new ArrayList<>();
         List<Location> locations = new ArrayList<>();
-        List<LocationGroupStop> locationGroupStops = new ArrayList<>();
+        List<LocationGroup> locationGroups = new ArrayList<>();
         for (Iterator<StopTime> it = stopTimes.iterator(); it.hasNext(); ) {
             StopTime stopTime = it.next();
             if (hasContinuousBehavior(stopTime.continuous_drop_off, stopTime.continuous_pickup)) {
                 hasContinuousBehavior = true;
             }
-            Stop stop = stopById.get(stopTime.stop_id);
-            Location location = locationById.get(stopTime.stop_id);
-            LocationGroupStop locationGroupStop = stopAreaById.get(stopTime.stop_id);
-            if (stop == null && location == null && locationGroupStop == null) {
+            if (stopTime.stop_id == null && stopTime.location_group_id == null && stopTime.location_id == null) {
                 // All bad references should have been recorded at import, we can just remove them from the trips.
                 it.remove();
             } else {
-                if (stop == null && location == null) {
-                    locationGroupStops.add(locationGroupStop);
-                } else if (stop == null && locationGroupStop == null) {
-                    locations.add(location);
-                } else {
-                    stops.add(stop);
+                if (stopTime.stop_id != null) {
+                    stops.add(stopById.get(stopTime.stop_id));
                 }
+                if (stopTime.location_group_id != null) {
+                    locationGroups.add(locationGroupById.get(stopTime.location_group_id));
+                }
+                if (stopTime.location_id != null) {
+                    locations.add(locationById.get(stopTime.location_id));
+                }
+//                if (stop == null && location == null) {
+//                    locationGroups.add(locationGroup);
+//                } else if (stop == null && locationGroup == null) {
+//                    locations.add(location);
+//                } else {
+//                    stops.add(stop);
+//                }
             }
         }
 
         // If either of these conditions are true none of the trip validators' validateTrip methods are executed.
-        if (hasSingleFlexStop(stopTimes, locations, locationGroupStops)) {
+        if (hasSingleFlexStop(stopTimes, locations, locationGroups)) {
             LOG.warn("Trip has a single flex stop.");
             skipStandardTripValidation = true;
             return;
-        } else if (hasSingleStop(stopTimes, locations, locationGroupStops)) {
+        } else if (hasSingleStop(stopTimes, locations, locationGroups)) {
             LOG.warn("Too few stop times that have references to stops to validate trip.");
             registerError(trip, TRIP_TOO_FEW_STOP_TIMES);
             return;
         }
 
-        // Check that first and last stop times are not missing values and repair them if they are not locations or
-        // stop areas. Note that this repair will be seen by the validators but not saved in the database.
+        // Check that first and last stop times are not missing values and repair them if they are not location groups or
+        // locations. Note that this repair will be seen by the validators but not saved in the database.
         StopTime firstStop = stopTimes.get(0);
         StopTime lastStop = stopTimes.get(stopTimes.size() - 1);
-        if (!FlexValidator.stopIdIsStopAreaOrLocation(firstStop.stop_id, locationGroupStops, locations)) {
+        if (!FlexValidator.isLocationOrLocationGroupDefined(firstStop)) {
             fixInitialFinal(firstStop);
         }
-        if (!FlexValidator.stopIdIsStopAreaOrLocation(lastStop.stop_id, locationGroupStops, locations)) {
+        if (!FlexValidator.isLocationOrLocationGroupDefined(lastStop)) {
             fixInitialFinal(lastStop);
         }
 
         for (StopTime stopTime : stopTimes) {
-            if (!FlexValidator.stopIdIsStopAreaOrLocation(stopTime.stop_id, locationGroupStops, locations)) {
+            if (!FlexValidator.isLocationOrLocationGroupDefined(stopTime)) {
                 // Repair the case where an arrival or departure time is provided, but not both.
                 fixMissingTimes(stopTime);
             }
@@ -227,10 +233,10 @@ public class NewTripTimesValidator extends FeedValidator {
 
         // Pass these same cleaned lists of stop_times and stops into each trip validator in turn.
         for (TripValidator tripValidator : standardTripValidators) {
-            tripValidator.validateTrip(trip, route, stopTimes, stops, locations, locationGroupStops);
+            tripValidator.validateTrip(trip, route, stopTimes, stops, locations, locationGroups);
         }
         for (TripValidator tripValidator : additionalTripValidators) {
-            tripValidator.validateTrip(trip, route, stopTimes, stops, locations, locationGroupStops);
+            tripValidator.validateTrip(trip, route, stopTimes, stops, locations, locationGroups);
         }
     }
 
@@ -271,14 +277,14 @@ public class NewTripTimesValidator extends FeedValidator {
     }
 
     /**
-     * A single stop is permitted if it is a location or stop area.
+     * A single stop is permitted if it is a location group or location.
      */
     private boolean hasSingleFlexStop(
         List<StopTime> stopTimes,
         List<Location> locations,
-        List<LocationGroupStop> locationGroupStops
+        List<LocationGroup> locationGroups
     ) {
-        return stopTimes.size() < 2 && (!locations.isEmpty() || !locationGroupStops.isEmpty());
+        return stopTimes.size() < 2 && (!locations.isEmpty() || !locationGroups.isEmpty());
     }
 
     /**
@@ -287,9 +293,9 @@ public class NewTripTimesValidator extends FeedValidator {
     private boolean hasSingleStop(
          List<StopTime> stopTimes,
          List<Location> locations,
-         List<LocationGroupStop> locationGroupStops
+         List<LocationGroup> locationGroups
     ) {
-        return stopTimes.size() < 2 && locations.isEmpty() && locationGroupStops.isEmpty();
+        return stopTimes.size() < 2 && locations.isEmpty() && locationGroups.isEmpty();
     }
 
 }

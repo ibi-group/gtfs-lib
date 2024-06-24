@@ -153,7 +153,7 @@ public class GTFSFeedTest {
             new FileTestCase(
                 "calendar.txt",
                 new DataExpectation[]{
-                    new DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57"),
+                    new DataExpectation("service_id", "flex-04100312-8fe1-46a5-a9f2-556f39478f57"),
                     new DataExpectation("start_date", "20170915"),
                     new DataExpectation("end_date", "20170917")
                 }
@@ -201,7 +201,7 @@ public class GTFSFeedTest {
                 new DataExpectation[]{
                     new DataExpectation("route_id", "1"),
                     new DataExpectation("trip_id", "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"),
-                    new DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57")
+                    new DataExpectation("service_id", "flex-04100312-8fe1-46a5-a9f2-556f39478f57")
                 }
             )
         };

@@ -3,6 +3,8 @@ package com.conveyal.gtfs.dto;
 public class StopDTO {
     public Integer id;
     public String stop_id;
+    public String location_group_id;
+    public String location_id;
     public String stop_name;
     public String stop_code;
     public String stop_desc;

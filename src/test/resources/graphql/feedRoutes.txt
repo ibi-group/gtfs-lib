@@ -23,6 +23,12 @@ query ($namespace: String) {
       stops {
         stop_id
       }
+      locationGroups {
+        location_group_id
+      }
+      locations {
+        location_id
+      }
       trip_count
       trips {
         trip_id

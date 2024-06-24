@@ -6,9 +6,9 @@
         "agency" : 1,
         "calendar" : 1,
         "calendar_dates" : 2,
-        "errors" : 41,
+        "errors" : 25,
         "routes" : 1,
-        "stop_times" : 6,
+        "stop_times" : 7,
         "stops" : 5,
         "trips" : 3
       },

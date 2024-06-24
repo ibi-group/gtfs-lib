@@ -1,2 +1,0 @@
-location_group_id,stop_id
-1,2615682
