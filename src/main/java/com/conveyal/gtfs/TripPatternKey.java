@@ -20,7 +20,6 @@ import static com.conveyal.gtfs.model.Entity.INT_MISSING;
 public class TripPatternKey {
 
     public String routeId;
-    public List<Boolean> isFlexStop = new ArrayList<>();
     public List<String> stops = new ArrayList<>();
     public TIntList pickupTypes = new TIntArrayList();
     public TIntList dropoffTypes = new TIntArrayList();
@@ -38,10 +37,14 @@ public class TripPatternKey {
     public TDoubleList shapeDistances = new TDoubleArrayList();
 
     // Flex additions
+    public List<Boolean> isFlexStop = new ArrayList<>();
     public List<String> locationGroupIds = new ArrayList<>();
     public List<String> locationIds = new ArrayList<>();
     public List<String> pickup_booking_rule_id = new ArrayList<>();
     public List<String> drop_off_booking_rule_id = new ArrayList<>();
+
+    /** An ordered list of stop, location group and location ids */
+    public List<String> orderedHalts = new ArrayList<>();
 
     public TripPatternKey (String routeId) {
         this.routeId = routeId;
@@ -52,6 +55,7 @@ public class TripPatternKey {
         stops.add(st.stop_id);
         locationGroupIds.add(st.location_group_id);
         locationIds.add(st.location_id);
+        orderedHalts.add(getStopOrLocationId(st));
         pickupTypes.add(resolvePickupOrDropOffType(st.pickup_type));
         dropoffTypes.add(resolvePickupOrDropOffType(st.drop_off_type));
         start_pickup_drop_off_window.add(st.start_pickup_drop_off_window);
@@ -66,6 +70,20 @@ public class TripPatternKey {
         continuous_drop_off.add(st.continuous_drop_off);
         pickup_booking_rule_id.add(st.pickup_booking_rule_id);
         drop_off_booking_rule_id.add(st.drop_off_booking_rule_id);
+    }
+
+    /**
+     * In order to maintain a continuous and ordered list of ids across stops, location groups, and locations determine
+     * which is populated/defined for this stop time and return.
+     */
+    private String getStopOrLocationId(StopTime st) {
+        if (st.stop_id != null) {
+            return st.stop_id;
+        } else if (st.location_group_id != null) {
+            return st.location_group_id;
+        } else {
+            return st.location_id;
+        }
     }
 
     /**

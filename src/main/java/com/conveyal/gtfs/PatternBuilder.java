@@ -230,7 +230,7 @@ public class PatternBuilder {
         // Determine departure times based on the stop type.
         List<Integer> previousDepartureTimes = calculatePreviousDepartureTimes(key);
         // Construct pattern stops based on values in trip pattern key.
-        for (int stopSequence = 0; stopSequence < key.stops.size(); stopSequence++) {
+        for (int stopSequence = 0; stopSequence < key.orderedHalts.size(); stopSequence++) {
             boolean prevIsFlexStop = stopSequence > 0 && key.isFlexStop.get(stopSequence - 1);
             int lastValidDepartureTime = previousDepartureTimes.get(stopSequence);
             insertPatternType(
@@ -260,7 +260,7 @@ public class PatternBuilder {
         // Set the previous departure time for the first stop, which will always be zero.
         previousDepartureTimes.add(0);
         // Construct pattern stops based on values in trip pattern key.
-        for (int stopSequence = 1; stopSequence < key.stops.size(); stopSequence++) {
+        for (int stopSequence = 1; stopSequence < key.orderedHalts.size(); stopSequence++) {
             boolean prevIsFlexStop = key.isFlexStop.get(stopSequence - 1);
             boolean currentIsFlexStop = key.isFlexStop.get(stopSequence);
             // Set travel time for all stops except the first.

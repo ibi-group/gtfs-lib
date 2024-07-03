@@ -130,7 +130,7 @@
           "id" : 3,
           "location_id" : "area_251"
         } ],
-        "name" : "3 stops from fromTerminusNameUnknown to toTerminusNameUnknown (1 trips)",
+        "name" : "3 stops from Muff to Moville to Location group name (1 trips)",
         "pattern_id" : "2",
         "pattern_stops" : [ {
           "default_dwell_time" : 0,
