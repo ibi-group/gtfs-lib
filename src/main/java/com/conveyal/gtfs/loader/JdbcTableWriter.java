@@ -212,7 +212,7 @@ public class JdbcTableWriter implements TableWriter {
                         jsonObject,
                         "trips",
                         "route_id",
-                        "wheelchair_accessible"
+                        new String[]{"wheelchair_accessible"}
                     );
                     break;
                 case "patterns":
@@ -221,7 +221,7 @@ public class JdbcTableWriter implements TableWriter {
                         jsonObject,
                         "trips",
                         "pattern_id",
-                        "direction_id", "shape_id"
+                        new String[]{"direction_id", "shape_id"}
                     );
                     break;
                 default:
@@ -334,7 +334,7 @@ public class JdbcTableWriter implements TableWriter {
         ObjectNode exemplarEntity,
         String linkedTableName,
         String keyField,
-        String... linkedFieldsToUpdate
+        String[] linkedFieldsToUpdate
     ) throws SQLException {
         boolean updatingStopTimes = "stop_times".equals(linkedTableName);
         // Collect fields, the JSON values for these fields, and the strings to add to the prepared statement into Lists.
@@ -367,8 +367,11 @@ public class JdbcTableWriter implements TableWriter {
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
             String newValue = values.get(i).isNull() ? null : values.get(i).asText();
-            if (newValue == null) field.setNull(statement, oneBasedIndex++);
-            else field.setParameter(statement, oneBasedIndex++, newValue);
+            if (newValue == null) {
+                field.setNull(statement, oneBasedIndex++);
+            } else {
+                field.setParameter(statement, oneBasedIndex++, newValue);
+            }
         }
         // Set "where clause" with value for key field (e.g., set values where pattern_id = '3')
         statement.setString(oneBasedIndex++, exemplarEntity.get(keyField).asText());
@@ -438,7 +441,7 @@ public class JdbcTableWriter implements TableWriter {
                 // have all of the required fields, yet this would prohibit such an update. Further, an update on such
                 // a table that DID have all of the spec table fields would fail because they might be missing from
                 // the actual database table.
-                missingFieldNames.add(field.name);
+                updateMissingFields(missingFieldNames, field);
                 continue;
             }
             JsonNode value = jsonObject.get(field.name);
@@ -450,7 +453,7 @@ public class JdbcTableWriter implements TableWriter {
                         // Only register the field as missing if the value is null, the field is required, and empty
                         // values are not permitted. For example, a null value for fare_attributes#transfers should not
                         // trigger a missing field exception.
-                        missingFieldNames.add(field.name);
+                        updateMissingFields(missingFieldNames, field);
                         continue;
                     }
                     // Set value to null if empty value is OK and update JSON.
@@ -516,14 +519,24 @@ public class JdbcTableWriter implements TableWriter {
             // Increment index for next field.
             index += 1;
         }
-        if (missingFieldNames.size() > 0) {
+        if (!missingFieldNames.isEmpty()) {
             throw new SQLException(
                 String.format(
                     "The following field(s) are missing from JSON %s object: %s",
                     table.name,
-                    missingFieldNames.toString()
+                    missingFieldNames
                 )
             );
+        }
+    }
+
+    /**
+     * If a field is an optional flex field don't add it to the list of missing field names. This then covers normal
+     * non-flex feeds where these fields are not defined.
+     */
+    private void updateMissingFields(List<String> missingFieldNames, Field field) {
+        if (field.requirement != Requirement.FLEX_OPTIONAL) {
+            missingFieldNames.add(field.name);
         }
     }
 
@@ -647,17 +660,7 @@ public class JdbcTableWriter implements TableWriter {
                     subEntity,
                     "stop_times",
                     "pattern_id",
-                    "timepoint",
-                    "drop_off_type",
-                    "stop_headsign",
-                    "pickup_type",
-                    "continuous_pickup",
-                    "continuous_drop_off",
-                    "shape_dist_traveled",
-                    "pickup_booking_rule_id",
-                    "drop_off_booking_rule_id",
-                    "start_pickup_drop_off_window",
-                    "end_pickup_drop_off_window"
+                    getLinkedFields(subEntity)
                 );
             }
             setStatementParameters(subEntity, subTable, insertStatement, connection);
@@ -711,6 +714,34 @@ public class JdbcTableWriter implements TableWriter {
         // Return key value in the case that it was updated (the only case for this would be if the shape was referenced
         // by multiple patterns).
         return keyValue;
+    }
+
+    /**
+     * Defined the linked fields to be updated. This will depend on the fields that are provided. Optional, editor and
+     * extension fields can be undefined and therefore not provided. To prevent a mismatch between provided and expected
+     * a linked field is only defined if the entity provides a value for it.
+     */
+    private String[] getLinkedFields(ObjectNode entity) {
+        Set<String> linkedFields = new HashSet<>();
+        String[] linkedFieldsToCheck = {
+            "timepoint",
+            "drop_off_type",
+            "stop_headsign",
+            "pickup_type",
+            "continuous_pickup",
+            "continuous_drop_off",
+            "shape_dist_traveled",
+            "pickup_booking_rule_id",
+            "drop_off_booking_rule_id",
+            "start_pickup_drop_off_window",
+            "end_pickup_drop_off_window"
+        };
+        for (String field : linkedFieldsToCheck) {
+            if (entity.get(field) != null) {
+                linkedFields.add(field);
+            }
+        }
+        return linkedFields.toArray(new String[0]);
     }
 
     /**

@@ -71,6 +71,7 @@ import static com.conveyal.gtfs.error.NewGTFSErrorType.TABLE_IN_SUBDIRECTORY;
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.sanitize;
 import static com.conveyal.gtfs.loader.Requirement.EDITOR;
 import static com.conveyal.gtfs.loader.Requirement.EXTENSION;
+import static com.conveyal.gtfs.loader.Requirement.FLEX_OPTIONAL;
 import static com.conveyal.gtfs.loader.Requirement.OPTIONAL;
 import static com.conveyal.gtfs.loader.Requirement.REQUIRED;
 import static com.conveyal.gtfs.loader.Requirement.UNKNOWN;
@@ -363,11 +364,13 @@ public class Table {
             new ShortField("timepoint", EDITOR, 1),
             new ShortField("continuous_pickup", OPTIONAL,3),
             new ShortField("continuous_drop_off", OPTIONAL,3),
-            new StringField("pickup_booking_rule_id", OPTIONAL),
-            new StringField("drop_off_booking_rule_id", OPTIONAL),
-            new TimeField("start_pickup_drop_off_window", OPTIONAL),
-            new TimeField("end_pickup_drop_off_window", OPTIONAL)
-).withParentTable(PATTERNS)
+            // These flex fields are defined as "flex_optional" and not "optional" to avoid the missing field exception
+            // when updating linked fields.
+            new StringField("pickup_booking_rule_id", FLEX_OPTIONAL),
+            new StringField("drop_off_booking_rule_id", FLEX_OPTIONAL),
+            new TimeField("start_pickup_drop_off_window", FLEX_OPTIONAL),
+            new TimeField("end_pickup_drop_off_window", FLEX_OPTIONAL)
+    ).withParentTable(PATTERNS)
     .addPrimaryKeyNames("pattern_id", "stop_sequence");
 
     public static final Table TRIPS = new Table("trips", Trip.class, REQUIRED,
@@ -612,8 +615,10 @@ public class Table {
      */
     public List<Field> editorFields() {
         List<Field> editorFields = new ArrayList<>();
-        for (Field f : fields) if (f.requirement == REQUIRED || f.requirement == OPTIONAL || f.requirement == EDITOR) {
-            editorFields.add(f);
+        for (Field f : fields) {
+            if (f.requirement == REQUIRED || f.requirement == OPTIONAL || f.requirement == FLEX_OPTIONAL || f.requirement == EDITOR) {
+                editorFields.add(f);
+            }
         }
         return editorFields;
     }
@@ -634,7 +639,11 @@ public class Table {
      */
     public List<Field> specFields () {
         List<Field> specFields = new ArrayList<>();
-        for (Field f : fields) if (f.requirement == REQUIRED || f.requirement == OPTIONAL) specFields.add(f);
+        for (Field f : fields) {
+            if (f.requirement == REQUIRED || f.requirement == OPTIONAL || f.requirement == FLEX_OPTIONAL) {
+                specFields.add(f);
+            }
+        }
         return specFields;
     }
 
@@ -1061,7 +1070,7 @@ public class Table {
      * (e.g., Patterns or PatternStops).
      */
     public boolean isSpecTable() {
-        return required == REQUIRED || required == OPTIONAL;
+        return required == REQUIRED || required == OPTIONAL || required == FLEX_OPTIONAL;
     }
 
     /**
