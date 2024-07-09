@@ -8,6 +8,6 @@ public class PatternDTO {
     public Integer direction_id;
     public Integer use_frequency;
     public String name;
-    public PatternStopDTO[] pattern_stops;
+    public PatternStopWithFlexDTO[] pattern_stops;
     public ShapePointDTO[] shapes;
 }

@@ -13,6 +13,6 @@ public class TripDTO {
     public Integer bikes_allowed;
     public String shape_id;
     public String pattern_id;
-    public StopTimeDTO[] stop_times;
+    public StopTimeWithFlexDTO[] stop_times;
     public FrequencyDTO[] frequencies;
 }

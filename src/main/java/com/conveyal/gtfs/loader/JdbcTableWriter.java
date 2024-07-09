@@ -402,9 +402,9 @@ public class JdbcTableWriter implements TableWriter {
     ) throws SQLException {
         String statementString;
         if (isCreating) {
-            statementString = table.generateInsertSql(tablePrefix, true);
+            statementString = table.generateInsertSql(jsonObject, tablePrefix, true);
         } else {
-            statementString = table.generateUpdateSql(tablePrefix, id);
+            statementString = table.generateUpdateSql(jsonObject, tablePrefix, id);
         }
         // Set the RETURN_GENERATED_KEYS flag on the PreparedStatement because it may be creating new rows, in which
         // case we need to know the auto-generated IDs of those new rows.
@@ -531,7 +531,7 @@ public class JdbcTableWriter implements TableWriter {
     }
 
     /**
-     * If a field is an optional flex field don't add it to the list of missing field names. This then covers normal
+     * If a field is an optional flex field don't add it to the list of missing field names. This also covers normal
      * non-flex feeds where these fields are not defined.
      */
     private void updateMissingFields(List<String> missingFieldNames, Field field) {

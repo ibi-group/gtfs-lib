@@ -37,6 +37,7 @@ import com.conveyal.gtfs.model.Trip;
 import com.conveyal.gtfs.storage.StorageException;
 import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -352,8 +353,8 @@ public class Table {
             new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
             // FIXME: Do we need an index on stop_id?
             new StringField("stop_id", OPTIONAL).isReferenceTo(STOPS),
-            new StringField("location_group_id", OPTIONAL).isReferenceTo(LOCATION_GROUP),
-            new StringField("location_id", OPTIONAL).isReferenceTo(LOCATIONS),
+            new StringField("location_group_id", FLEX_OPTIONAL).isReferenceTo(LOCATION_GROUP),
+            new StringField("location_id", FLEX_OPTIONAL).isReferenceTo(LOCATIONS),
             // Editor-specific fields
             new StringField("stop_headsign", EDITOR),
             new IntegerField("default_travel_time", EDITOR,0, Integer.MAX_VALUE),
@@ -364,8 +365,6 @@ public class Table {
             new ShortField("timepoint", EDITOR, 1),
             new ShortField("continuous_pickup", OPTIONAL,3),
             new ShortField("continuous_drop_off", OPTIONAL,3),
-            // These flex fields are defined as "flex_optional" and not "optional" to avoid the missing field exception
-            // when updating linked fields.
             new StringField("pickup_booking_rule_id", FLEX_OPTIONAL),
             new StringField("drop_off_booking_rule_id", FLEX_OPTIONAL),
             new TimeField("start_pickup_drop_off_window", FLEX_OPTIONAL),
@@ -415,8 +414,8 @@ public class Table {
             new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
             // FIXME: Do we need an index on stop_id
             new StringField("stop_id", OPTIONAL).isReferenceTo(STOPS),
-            new StringField("location_group_id", OPTIONAL).isReferenceTo(LOCATION_GROUP),
-            new StringField("location_id", OPTIONAL).isReferenceTo(LOCATIONS),
+            new StringField("location_group_id", FLEX_OPTIONAL).isReferenceTo(LOCATION_GROUP),
+            new StringField("location_id", FLEX_OPTIONAL).isReferenceTo(LOCATIONS),
             // TODO verify that we have a special check for arrival and departure times first and last stop_time in a trip, which are required
             new TimeField("arrival_time", OPTIONAL),
             new TimeField("departure_time", OPTIONAL),
@@ -428,10 +427,10 @@ public class Table {
             new DoubleField("shape_dist_traveled", OPTIONAL, 0, Double.POSITIVE_INFINITY, -1),
             new ShortField("timepoint", OPTIONAL, 1),
             new IntegerField("fare_units_traveled", EXTENSION), // OpenOV NL extension
-            new StringField("pickup_booking_rule_id", OPTIONAL),
-            new StringField("drop_off_booking_rule_id", OPTIONAL),
-            new TimeField("start_pickup_drop_off_window", OPTIONAL),
-            new TimeField("end_pickup_drop_off_window", OPTIONAL)
+            new StringField("pickup_booking_rule_id", FLEX_OPTIONAL),
+            new StringField("drop_off_booking_rule_id", FLEX_OPTIONAL),
+            new TimeField("start_pickup_drop_off_window", FLEX_OPTIONAL),
+            new TimeField("end_pickup_drop_off_window", FLEX_OPTIONAL)
     ).withParentTable(TRIPS)
     .addPrimaryKeyNames("trip_id", "stop_sequence");
 
@@ -616,11 +615,29 @@ public class Table {
     public List<Field> editorFields() {
         List<Field> editorFields = new ArrayList<>();
         for (Field f : fields) {
-            if (f.requirement == REQUIRED || f.requirement == OPTIONAL || f.requirement == FLEX_OPTIONAL || f.requirement == EDITOR) {
+            if (
+                f.requirement == REQUIRED ||
+                f.requirement == OPTIONAL ||
+                f.requirement == FLEX_OPTIONAL ||
+                f.requirement == EDITOR
+            ) {
                 editorFields.add(f);
             }
         }
         return editorFields;
+    }
+
+    /**
+     * Get only optional flex fields.
+     */
+    public List<Field> flexOptionalFields() {
+        List<Field> flexOptionalFields = new ArrayList<>();
+        for (Field f : this.fields) {
+            if (f.requirement == FLEX_OPTIONAL) {
+                flexOptionalFields.add(f);
+            }
+        }
+        return flexOptionalFields;
     }
 
     /**
@@ -721,6 +738,65 @@ public class Table {
             idValue,
             String.join(", ", Collections.nCopies(editorFields().size(), "?"))
         );
+    }
+
+    /**
+     * Create SQL string for use in insert statement. Note, this filters table's fields to only those used in editor and
+     * in the case of flex, provided optional fields.
+     */
+    public String generateInsertSql(ObjectNode jsonObject, String namespace, boolean setDefaultId) {
+        if (!hasOptionalFlexFields()) {
+            return generateInsertSql(namespace, setDefaultId);
+        }
+        String tableName = namespace == null
+            ? name
+            : String.join(".", namespace, name);
+
+        // Get the flex optional fields missing from the object to be inserted.
+        List<Field> missingFields = getMissingFlexFields(jsonObject);
+
+        // Remove missing fields from all table fields.
+        List<Field> allFields = editorFields();
+        allFields.removeAll(missingFields);
+
+        String idValue = setDefaultId ? "DEFAULT" : "?";
+        return String.format(
+            "insert into %s (id, %s) values (%s, %s)",
+            tableName,
+            commaSeparatedNames(allFields),
+            idValue,
+            String.join(
+                ", ",
+                Collections.nCopies(allFields.size(), "?")
+            )
+        );
+    }
+
+    /**
+     * {@link Table#STOP_TIMES} and {@link Table#PATTERN_STOP} contain optional flex fields. Some or all of these will
+     * be provided by the UI. In the case of non-flex feeds, none of these will be provided. This aids with producing
+     * the correct insert and update SQL statements.
+     */
+    private boolean hasOptionalFlexFields() {
+        for (Field field : fields) {
+            if (field.requirement == FLEX_OPTIONAL) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get the flex optional fields missing from the object to be inserted.
+     */
+    private List<Field> getMissingFlexFields(ObjectNode jsonObject) {
+        List<Field> missingFields = new ArrayList<>();
+        for (Field field : flexOptionalFields()) {
+            if (jsonObject.get(field.name) == null) {
+                missingFields.add(field);
+            }
+        }
+        return missingFields;
     }
 
     /**
@@ -855,9 +931,34 @@ public class Table {
     /**
      * Create SQL string for use in update statement. Note, this filters table's fields to only those used in editor.
      */
-    public String generateUpdateSql (String namespace, int id) {
+    private String generateUpdateSql (String namespace, int id) {
         // Collect field names for string joining from JsonObject.
         String joinedFieldNames = editorFields().stream()
+                // If updating, add suffix for use in set clause
+                .map(field -> field.name + " = ?")
+                .collect(Collectors.joining(", "));
+
+        String tableName = namespace == null ? name : String.join(".", namespace, name);
+        return String.format("update %s set %s where id = %d", tableName, joinedFieldNames, id);
+    }
+
+    /**
+     * Create SQL string for use in update statement. Note, this filters table's fields to only those used in editor.
+     */
+    public String generateUpdateSql (ObjectNode jsonObject, String namespace, int id) {
+        if (!hasOptionalFlexFields()) {
+            return generateUpdateSql(namespace, id);
+        }
+
+        // Get the flex optional fields missing from the object to be inserted.
+        List<Field> missingFields = getMissingFlexFields(jsonObject);
+
+        // Remove missing fields from all table fields.
+        List<Field> allFields = editorFields();
+        allFields.removeAll(missingFields);
+
+        // Collect field names for string joining from JsonObject.
+        String joinedFieldNames = allFields.stream()
                 // If updating, add suffix for use in set clause
                 .map(field -> field.name + " = ?")
                 .collect(Collectors.joining(", "));
