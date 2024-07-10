@@ -6,6 +6,7 @@ import com.conveyal.gtfs.model.BookingRule;
 import com.conveyal.gtfs.model.FareRule;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.LocationGroup;
+import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
@@ -50,6 +51,42 @@ class FlexValidatorTest {
             ),
             new LocationGroupArguments(
                 "1",null, null,
+                null
+            )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("createRouteChecks")
+    void validateRouteTests(RouteArguments routeArguments) {
+        List<NewGTFSError> errors = FlexValidator.validateRoute(
+            (Route) routeArguments.testObject,
+            routeArguments.trips,
+            routeArguments.stopTimes
+        );
+        checkValidationErrorsMatchExpectedErrors(errors, routeArguments.expectedErrors);
+    }
+
+    private static Stream<RouteArguments> createRouteChecks() {
+        return Stream.of(
+            new RouteArguments(
+                creeateRoute(INT_MISSING, INT_MISSING), 1, 1,
+                null
+            ),
+            new RouteArguments(
+                creeateRoute(1, INT_MISSING), 1, 1,
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF)
+            ),
+            new RouteArguments(
+                creeateRoute(INT_MISSING, 1), 1, 1,
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP)
+            ),
+            new RouteArguments(
+                creeateRoute(INT_MISSING, 1), INT_MISSING, INT_MISSING,
+                null
+            ),
+            new RouteArguments(
+                creeateRoute(1, INT_MISSING), INT_MISSING, INT_MISSING,
                 null
             )
         );
@@ -476,22 +513,6 @@ class FlexValidatorTest {
         }
     }
 
-    private static class StopTimeArguments extends BaseArguments {
-        public final List<LocationGroup> locationGroups;
-        public final List<Location> locations;
-
-        private StopTimeArguments(
-            Object stopTime,
-            String locationId,
-            String locationGroupId,
-            List<NewGTFSErrorType> expectedErrors
-        ) {
-            super(stopTime, expectedErrors);
-            this.locationGroups = (locationGroupId != null) ? Lists.newArrayList(createLocationGroup(locationGroupId)) : null;
-            this.locations = (locationId != null) ? Lists.newArrayList(createLocation(locationId)) : null;
-       }
-    }
-
     private static class LocationArguments extends BaseArguments {
         public final List<Stop> stops;
         public List<FareRule> fareRules = new ArrayList<>();
@@ -549,6 +570,22 @@ class FlexValidatorTest {
             this.stopTimes = (stopId != null) ? Lists.newArrayList(createStopTime(stopId, ((Trip)trip).trip_id)) : null;
             this.locationGroups = (locationGroupId != null) ? Lists.newArrayList(createLocationGroup(locationGroupId)) : null;
             this.locations = (locationId != null) ? Lists.newArrayList(createLocation(locationId)) : null;
+        }
+    }
+
+    private static class RouteArguments extends BaseArguments {
+        public final List<Trip> trips;
+        public final List<StopTime> stopTimes;
+
+        private RouteArguments(
+            Object route,
+            int startPickupDropOffWindow,
+            int endPickupDropOffWindow,
+            List<NewGTFSErrorType> expectedErrors
+        ) {
+            super(route, expectedErrors);
+            this.trips = Lists.newArrayList(createTrip("trip-id-1", "route-id-1"));
+            this.stopTimes = Lists.newArrayList(createStopTime("trip-id-1", startPickupDropOffWindow, endPickupDropOffWindow));
         }
     }
 
@@ -619,6 +656,14 @@ class FlexValidatorTest {
         StopTime stopTime = new StopTime();
         stopTime.stop_id = stopId;
         stopTime.trip_id = tripId;
+        return stopTime;
+    }
+
+    private static StopTime createStopTime(String tripId, int startPickupDropOffWindow, int endPickupDropOffWindow) {
+        StopTime stopTime = new StopTime();
+        stopTime.trip_id = tripId;
+        stopTime.start_pickup_drop_off_window = startPickupDropOffWindow;
+        stopTime.end_pickup_drop_off_window = endPickupDropOffWindow;
         return stopTime;
     }
 
@@ -713,9 +758,24 @@ class FlexValidatorTest {
         return stopTime;
     }
 
+    private static Route creeateRoute(int continuousDropOff, int continuousPickup) {
+        Route route = new Route();
+        route.route_id = "route-id-1";
+        route.continuous_drop_off = continuousDropOff;
+        route.continuous_pickup = continuousPickup;
+        return route;
+    }
+
     private static Trip createTrip() {
         Trip trip = new Trip();
         trip.trip_id = "12345";
+        return trip;
+    }
+
+    private static Trip createTrip(String tripId, String routeId) {
+        Trip trip = new Trip();
+        trip.trip_id = tripId;
+        trip.route_id = routeId;
         return trip;
     }
 }

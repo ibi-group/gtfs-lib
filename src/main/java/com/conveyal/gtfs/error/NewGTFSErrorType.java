@@ -46,6 +46,8 @@ public enum NewGTFSErrorType {
     FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY(Priority.HIGH, "It is forbidden to define a prior notice start day for booking type 1 (Up to same-day booking with advance notice) and if prior notice duration max is defined."),
     FLEX_FORBIDDEN_PRIOR_START_TIME(Priority.HIGH, "It is forbidden to define a prior notice start time if prior notice start day is not defined."),
     FLEX_FORBIDDEN_STOP_ID(Priority.HIGH, "It is forbidden to define a stop id if a location group id or location id are defined."),
+    FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF(Priority.HIGH, "It is forbidden to define a continuous drop off if start/end pick up drop off windows are defined for any trip of this route."),
+    FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP(Priority.HIGH, "It is forbidden to define a continuous pick up if start/end pick up drop off windows are defined for any trip of this route."),
     FLEX_REQUIRED_END_PICKUP_DROP_OFF_WINDOW(Priority.HIGH, "End pickup drop off window is required if a location group id, location id or start pickup drop off window is defined."),
     FLEX_REQUIRED_PRIOR_NOTICE_DURATION_MIN(Priority.HIGH, "Prior notice duration min is required for booking type 1 (Up to same-day booking with advance notice)."),
     FLEX_REQUIRED_PRIOR_NOTICE_LAST_DAY(Priority.HIGH, "Prior notice last day is required if a stop id refers to a stop area or location."),

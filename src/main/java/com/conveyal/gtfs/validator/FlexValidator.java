@@ -8,6 +8,7 @@ import com.conveyal.gtfs.model.BookingRule;
 import com.conveyal.gtfs.model.FareRule;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.LocationGroup;
+import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
@@ -19,6 +20,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.VALIDATOR_FAILED;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
@@ -44,13 +46,16 @@ public class FlexValidator extends FeedValidator {
         List<LocationGroup> locationGroups = Lists.newArrayList(feed.locationGroups);
         List<LocationGroupStop> locationGroupStops = Lists.newArrayList(feed.locationGroupStops);
         List<Location> locations = Lists.newArrayList(feed.locations);
+        List<Route> routes = Lists.newArrayList(feed.routes);
+        List<Trip> trips = Lists.newArrayList(feed.trips);
 
         if (isFlexFeed(bookingRules, locationGroups, locationGroupStops, locations)) {
             List<NewGTFSError> errors = new ArrayList<>();
             try (Connection connection = dataSource.getConnection()) {
                 List<StopTime> stopTimes = getFlexStopTimesForValidation(connection, feed.databaseSchemaPrefix);
                 stopTimes.forEach(stopTime -> errors.addAll(validateStopTime(stopTime)));
-                feed.trips.forEach(trip -> errors.addAll(validateTrip(trip, stopTimes)));
+                trips.forEach(trip -> errors.addAll(validateTrip(trip, stopTimes)));
+                routes.forEach(route -> errors.addAll(validateRoute(route, trips, stopTimes)));
             } catch (SQLException e) {
                 String badValue = String.join(":", this.getClass().getSimpleName(), e.toString());
                 errorStorage.storeError(NewGTFSError.forFeed(VALIDATOR_FAILED, badValue));
@@ -92,6 +97,45 @@ public class FlexValidator extends FeedValidator {
                 .forEntity(trip, NewGTFSErrorType.TRIP_SPEED_NOT_VALIDATED)
                 .setBadValue(trip.trip_id)
             );
+        }
+        return errors;
+    }
+
+    /**
+     * A route can not define a continuous_pickup nor continuous_drop_off if these values are defined for one or more
+     * stop times for any trip.
+     */
+    public static List<NewGTFSError> validateRoute(Route route, List<Trip> trips, List<StopTime> stopTimes) {
+        List<NewGTFSError> errors = new ArrayList<>();
+        if (route.continuous_drop_off == INT_MISSING && route.continuous_pickup == INT_MISSING) {
+            return errors;
+        }
+
+        List<Trip> routeTrips = trips
+            .stream()
+            .filter(trip -> trip.route_id.equalsIgnoreCase(route.route_id))
+            .collect(Collectors.toList());
+
+        for (Trip trip : routeTrips) {
+            boolean match = stopTimes
+                .stream()
+                .filter(stopTime -> stopTime.trip_id.equalsIgnoreCase(trip.trip_id))
+                .anyMatch(stopTime -> stopTime.start_pickup_drop_off_window != INT_MISSING || stopTime.end_pickup_drop_off_window != INT_MISSING);
+            if (match) {
+                if (route.continuous_drop_off != INT_MISSING) {
+                    errors.add(NewGTFSError
+                        .forEntity(route, NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF)
+                        .setBadValue(String.valueOf(route.continuous_drop_off))
+                    );
+                }
+                if (route.continuous_pickup != INT_MISSING) {
+                    errors.add(NewGTFSError
+                        .forEntity(route, NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP)
+                        .setBadValue(String.valueOf(route.continuous_pickup))
+                    );
+                }
+                break;
+            }
         }
         return errors;
     }
@@ -563,16 +607,6 @@ public class FlexValidator extends FeedValidator {
 
     public static boolean isArriveOrDepartureTimeDefined(StopTime stopTime) {
         return stopTime.arrival_time != INT_MISSING || stopTime.departure_time != INT_MISSING;
-    }
-
-    /**
-     * Check if a stop id matches any stop area, area ids.
-     */
-    public static boolean stopIdIsStopArea(String stopId, List<LocationGroupStop> locationGroupStops) {
-        return
-            locationGroupStops != null &&
-                !locationGroupStops.isEmpty() &&
-                locationGroupStops.stream().anyMatch(stopArea -> stopId.equals(stopArea.location_group_id));
     }
 
     /**
