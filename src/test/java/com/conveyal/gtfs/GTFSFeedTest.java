@@ -24,7 +24,6 @@ import static org.hamcrest.number.IsCloseTo.closeTo;
  */
 public class GTFSFeedTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GTFSFeedTest.class);
     private static String simpleGtfsZipFileName;
     private static String simpleFlexGtfsZipFileName;
 
@@ -54,9 +53,7 @@ public class GTFSFeedTest {
         feed.close();
         assertThat(outZip.exists(), is(true));
 
-        // assert that rows of data were written to files within the zipfile
-        ZipFile zip = new ZipFile(outZip);
-
+        // assert that rows of data were written to files within the zip file.
         FileTestCase[] fileTestCases = {
             // agency.txt
             new FileTestCase(

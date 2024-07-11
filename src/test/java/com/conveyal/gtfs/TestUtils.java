@@ -226,6 +226,10 @@ public class TestUtils {
      */
     public static String loadFeedAndValidate(DataSource dataSource, String zipFolderName) throws IOException {
         String zipFileName = TestUtils.zipFolderFiles(zipFolderName,  true);
+        return loadFeedFromZipFileAndValidate(dataSource, zipFileName);
+    }
+
+    public static String loadFeedFromZipFileAndValidate(DataSource dataSource, String zipFileName) {
         FeedLoadResult feedLoadResult = load(zipFileName, dataSource);
         String namespace = feedLoadResult.uniqueIdentifier;
         validate(namespace, dataSource);

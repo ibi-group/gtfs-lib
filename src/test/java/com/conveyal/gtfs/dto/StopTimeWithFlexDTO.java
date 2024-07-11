@@ -1,6 +1,6 @@
 package com.conveyal.gtfs.dto;
 
-public class StopTimeWithFlexDTO extends StopTimeDTO{
+public class StopTimeWithFlexDTO extends StopTimeDTO {
     // Additional GTFS Flex booking rule fields.
     public String pickup_booking_rule_id;
     public String drop_off_booking_rule_id;

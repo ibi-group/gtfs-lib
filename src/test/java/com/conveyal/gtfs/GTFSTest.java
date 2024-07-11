@@ -45,6 +45,9 @@ import java.util.Iterator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.conveyal.gtfs.TestUtils.getResourceFileName;
+import static com.conveyal.gtfs.TestUtils.loadFeedFromZipFileAndValidate;
+import static com.conveyal.gtfs.TestUtils.lookThroughFiles;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -199,7 +202,7 @@ public class GTFSTest {
      * is loaded with the blank values resolved, so that the patterns are counted correctly.
      */
     @Test
-    public void canLoadFeedAndResolveUnsetPickupDropOffValues () {
+    void canLoadFeedAndResolveUnsetPickupDropOffValues () {
         PersistenceExpectation persistenceExpectation1 = makePickupDropOffPersistenceExpectation(1);
         PersistenceExpectation persistenceExpectation2 = makePickupDropOffPersistenceExpectation(2);
 
@@ -249,7 +252,7 @@ public class GTFSTest {
      * database.
      */
     @Test
-    public void canLoadFeedWithErrors () {
+    void canLoadFeedWithErrors () {
         PersistenceExpectation[] expectations = PersistenceExpectation.list();
         ErrorExpectation[] errorExpectations = ErrorExpectation.list(
             new ErrorExpectation(NewGTFSErrorType.FARE_TRANSFER_MISMATCH, equalTo("fare-02")),
@@ -272,7 +275,7 @@ public class GTFSTest {
      * Tests whether "fake-agency" GTFS can be placed in a zipped subdirectory and loaded/exported successfully.
      */
     @Test
-    public void canLoadAndExportSimpleAgencyInSubDirectory() throws IOException {
+    void canLoadAndExportSimpleAgencyInSubDirectory() throws IOException {
         String zipFileName = null;
         // Get filename for fake-agency resource
         String resourceFolder = TestUtils.getResourceFileName("fake-agency");
@@ -333,7 +336,7 @@ public class GTFSTest {
      * Tests whether the simple gtfs can be loaded and exported if it has only calendar_dates.txt
      */
     @Test
-    public void canLoadAndExportSimpleAgencyWithOnlyCalendarDates() {
+    void canLoadAndExportSimpleAgencyWithOnlyCalendarDates() {
         PersistenceExpectation[] persistenceExpectations = new PersistenceExpectation[]{
             new PersistenceExpectation(
                 "agency",
@@ -413,8 +416,9 @@ public class GTFSTest {
     /**
      * Tests whether the simple gtfs can be loaded and exported if it has a mixture of service_id definitions in both
      * the calendar.txt and calendar_dates.txt files.
-     */@Test
-    public void canLoadAndExportSimpleAgencyWithMixtureOfCalendarDefinitions() {
+     */
+    @Test
+    void canLoadAndExportSimpleAgencyWithMixtureOfCalendarDefinitions() {
         PersistenceExpectation[] persistenceExpectations = new PersistenceExpectation[]{
             new PersistenceExpectation(
                 "agency",
@@ -598,7 +602,7 @@ public class GTFSTest {
      * validation errors per MTC guidelines.
      */
     @Test
-    public void canLoadFeedWithLongFieldValues () {
+    void canLoadFeedWithLongFieldValues () {
         PersistenceExpectation[] expectations = PersistenceExpectation.list();
         ErrorExpectation[] errorExpectations = ErrorExpectation.list(
             new ErrorExpectation(NewGTFSErrorType.FIELD_VALUE_TOO_LONG),
@@ -628,7 +632,7 @@ public class GTFSTest {
      * generates a validation error.
      */
     @Test
-    public void canLoadFeedWithServiceWithoutDaysOfWeek() {
+    void canLoadFeedWithServiceWithoutDaysOfWeek() {
         PersistenceExpectation[] expectations = PersistenceExpectation.list();
         ErrorExpectation[] errorExpectations = ErrorExpectation.list(
             new ErrorExpectation(NewGTFSErrorType.SERVICE_WITHOUT_DAYS_OF_WEEK),
@@ -735,6 +739,7 @@ public class GTFSTest {
             if (tempFile != null) tempFile.deleteOnExit();
         }
     }
+
     /**
      * Load a feed and then export minus proprietary files. Confirm proprietary files are not present in export.
      */
@@ -754,6 +759,46 @@ public class GTFSTest {
             ZipFile gtfsZipFile = new ZipFile(tempFile.getAbsolutePath());
             for (String fileName : JdbcGtfsExporter.proprietaryFileList) {
                 Assert.assertNull(gtfsZipFile.getEntry(fileName));
+            }
+        } catch (IOException e) {
+            LOG.error("An error occurred while attempting to test exporting of proprietary files.", e);
+        } finally {
+            TestUtils.dropDB(testDBName);
+            if (tempFile != null) tempFile.deleteOnExit();
+        }
+    }
+
+    /**
+     * Load a flex feed and then export with proprietary files. Confirm proprietary files are present in export.
+     */
+    @Test
+    void canExportProprietaryFilesForFlex() {
+        String testDBName = TestUtils.generateNewDB();
+        File tempFile = null;
+        try {
+            String zipFileName = getResourceFileName("real-world-gtfs-feeds/islandtransit-wa-us--flex-v2.zip");
+            String dbConnectionUrl = String.join("/", JDBC_URL, testDBName);
+            DataSource dataSource = TestUtils.createTestDataSource(dbConnectionUrl);
+            String namespace = loadFeedFromZipFileAndValidate(dataSource, zipFileName);
+
+            tempFile = exportGtfs(namespace, dataSource, false, true);
+            ZipFile gtfsZipFile = new ZipFile(tempFile.getAbsolutePath());
+            for (String fileName : JdbcGtfsExporter.proprietaryFileList) {
+                TestUtils.FileTestCase[] fileTestCases = {
+                    new TestUtils.FileTestCase(
+                        fileName,
+                        new TestUtils.DataExpectation[] {
+                            new TestUtils.DataExpectation("id", "1"),
+                            new TestUtils.DataExpectation("pattern_id", "1"),
+                            new TestUtils.DataExpectation("route_id", "32474"),
+                            new TestUtils.DataExpectation("name", "67 stops from Harbor Station Transfer Center Bayshore Dr to Clinton Ferry Terminal via Bakken Rd at Greenbank (16 trips)"),
+                            new TestUtils.DataExpectation("direction_id", "1"),
+                            new TestUtils.DataExpectation("use_frequency", ""),
+                            new TestUtils.DataExpectation("shape_id", "p_1304000")
+                        }
+                    )
+                };
+                lookThroughFiles(fileTestCases, gtfsZipFile);
             }
         } catch (IOException e) {
             LOG.error("An error occurred while attempting to test exporting of proprietary files.", e);
@@ -911,11 +956,6 @@ public class GTFSTest {
     /**
      * Helper function to export a GTFS from the database to a temporary zip file.
      */
-//    private File exportGtfs(String namespace, DataSource dataSource, boolean fromEditor) throws IOException {
-//        File tempFile = File.createTempFile("snapshot", ".zip");
-//        GTFS.export(namespace, tempFile.getAbsolutePath(), dataSource, fromEditor, false);
-//        return tempFile;
-//    }
     private File exportGtfs(String namespace, DataSource dataSource, boolean fromEditor, boolean publishProprietaryFiles) throws IOException {
         File tempFile = File.createTempFile("snapshot", ".zip");
         GTFS.export(namespace, tempFile.getAbsolutePath(), dataSource, fromEditor, publishProprietaryFiles);

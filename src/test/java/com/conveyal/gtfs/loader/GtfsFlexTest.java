@@ -26,7 +26,6 @@ import static com.conveyal.gtfs.GTFS.load;
 import static com.conveyal.gtfs.GTFS.validate;
 import static com.conveyal.gtfs.TestUtils.assertThatSqlCountQueryYieldsExpectedCount;
 import static com.conveyal.gtfs.TestUtils.getResourceFileName;
-import static com.conveyal.gtfs.TestUtils.loadFeedAndValidate;
 import static com.conveyal.gtfs.TestUtils.lookThroughFiles;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

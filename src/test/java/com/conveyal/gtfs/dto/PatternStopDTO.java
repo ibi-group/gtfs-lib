@@ -25,25 +25,4 @@ public class PatternStopDTO {
         stop_sequence = stopSequence;
         default_travel_time = defaultTravelTime;
     }
-
-    public PatternStopDTO(String patternId, String stopId, int stopSequence) {
-        pattern_id = patternId;
-        stop_id = stopId;
-        stop_sequence = stopSequence;
-    }
-    public PatternStopDTO(String patternId, String stopId, int stopSequence, int defaultTravelTime, int defaultDwellTime) {
-        pattern_id = patternId;
-        stop_id = stopId;
-        stop_sequence = stopSequence;
-        default_travel_time = defaultTravelTime;
-        default_dwell_time = defaultDwellTime;
-    }
-
-    public PatternStopDTO(String patternId, String stopId, int stopSequence, int timePoint, double shape_dist_traveledValue) {
-        timepoint = timePoint;
-        pattern_id = patternId;
-        stop_id = stopId;
-        stop_sequence = stopSequence;
-        shape_dist_traveled = shape_dist_traveledValue;
-    }
 }

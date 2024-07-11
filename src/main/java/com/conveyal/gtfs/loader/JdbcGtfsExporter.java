@@ -59,7 +59,7 @@ public class JdbcGtfsExporter {
     private ZipOutputStream zipOutputStream;
     // The reference feed ID (namespace) to copy.
     private final String feedIdToExport;
-    private List<String> emptyTableList = new ArrayList<>();
+    private final List<String> emptyTableList = new ArrayList<>();
     // These files, even if empty, are required as part of the GTFS specification.
     public static final List<String> mandatoryFileList = Lists.newArrayList(
         Table.AGENCY.fileName,
