@@ -93,7 +93,6 @@ public class JdbcGtfsSnapshotter {
             // Copy each table in turn
             // FIXME: NO non-fatal exception errors are being captured during copy operations.
             result.agency = copy(Table.AGENCY, true);
-            result.locationGroup = copy(Table.LOCATION_GROUP, true);
             result.calendar = copy(Table.CALENDAR, true);
             result.bookingRules = copy(Table.BOOKING_RULES, true);
             result.calendarDates = copy(Table.CALENDAR_DATES, true);
@@ -102,6 +101,7 @@ public class JdbcGtfsSnapshotter {
             result.feedInfo = copy(Table.FEED_INFO, true);
             result.frequencies = copy(Table.FREQUENCIES, true);
             result.locations = copy(Table.LOCATIONS, true);
+            result.locationGroup = copy(Table.LOCATION_GROUP, true);
             result.locationGroupStops = copy(Table.LOCATION_GROUP_STOPS, true);
             result.locationShapes = copy(Table.LOCATION_SHAPES, true);
             result.routes = copy(Table.ROUTES, true);

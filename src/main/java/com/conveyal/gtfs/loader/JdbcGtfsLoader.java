@@ -154,7 +154,6 @@ public class JdbcGtfsLoader {
             // Load each table in turn, saving some summary information about what happened during each table load.
             // The loading order is needed for referential integrity.
             result.agency = load(Table.AGENCY);
-            result.locationGroup = load(Table.LOCATION_GROUP);
             result.calendar = load(Table.CALENDAR);
             result.calendarDates = load(Table.CALENDAR_DATES);
             result.routes = load(Table.ROUTES);
@@ -168,8 +167,9 @@ public class JdbcGtfsLoader {
             result.transfers = load(Table.TRANSFERS); // refs trips.
             result.frequencies = load(Table.FREQUENCIES); // refs trips
             result.locations = load(Table.LOCATIONS);
+            result.locationGroup = load(Table.LOCATION_GROUP);
             result.locationGroupStops = load(Table.LOCATION_GROUP_STOPS);  // refs location groups.
-            result.stopTimes = load(Table.STOP_TIMES); // refs stop areas, locations and stops
+            result.stopTimes = load(Table.STOP_TIMES); // refs location groups, locations and stops
             result.translations = load(Table.TRANSLATIONS);
             result.attributions = load(Table.ATTRIBUTIONS);
             result.bookingRules = load(Table.BOOKING_RULES);

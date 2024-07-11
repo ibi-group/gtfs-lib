@@ -84,6 +84,7 @@ public class FeedLoadResult implements Serializable {
         return
             (bookingRules != null && bookingRules.rowCount > 0) ||
             (locations != null && locations.rowCount > 0) ||
+            (locationGroup != null && locationGroup.rowCount > 0) ||
             (locationGroupStops != null && locationGroupStops.rowCount > 0) ||
             (locationShapes != null && locationShapes.rowCount > 0);
     }

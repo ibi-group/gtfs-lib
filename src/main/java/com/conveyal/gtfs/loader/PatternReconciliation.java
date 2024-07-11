@@ -47,13 +47,6 @@ public class PatternReconciliation {
         ADD_ONE, ADD_MULTIPLE, DELETE, TRANSPOSE, NONE
     }
 
-    /**
-     * Enum containing available pattern types.
-     */
-    public enum PatternType {
-        STOP
-    }
-
     public PatternReconciliation(Connection connection, String tablePrefix) throws SQLException {
         this.connection = connection;
         this.tablePrefix = tablePrefix;
@@ -498,10 +491,8 @@ public class PatternReconciliation {
         public final String referenceId;
         // This stopTime object is a template that will be used to build database statements.
         StopTime stopTime;
-        PatternType patternType;
 
         public GenericStop(PatternStop patternStop) {
-            patternType = PatternType.STOP;
             referenceId = getReferenceId(patternStop.stop_id, patternStop.location_group_id, patternStop.location_id);
             stopTime = new StopTime();
             stopTime.stop_id = patternStop.stop_id;

@@ -176,13 +176,6 @@ public class NewTripTimesValidator extends FeedValidator {
                 if (stopTime.location_id != null) {
                     locations.add(locationById.get(stopTime.location_id));
                 }
-//                if (stop == null && location == null) {
-//                    locationGroups.add(locationGroup);
-//                } else if (stop == null && locationGroup == null) {
-//                    locations.add(location);
-//                } else {
-//                    stops.add(stop);
-//                }
             }
         }
 

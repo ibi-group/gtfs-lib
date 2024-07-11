@@ -106,6 +106,11 @@ public class ServiceValidator extends TripValidator {
                 // ERR
                 return;
             }
+        } else {
+            LOG.warn(
+                "Trip duration not calculated for trip id {} because it starts or ends with a flex stop.",
+                trip.trip_id
+            );
         }
         // Get the map from modes to service durations in seconds for this trip's service ID.
         // Create a new empty map if it doesn't yet exist.

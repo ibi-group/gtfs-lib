@@ -53,8 +53,6 @@ public class NestedJDBCFetcher implements DataFetcher<List<Map<String, Object>>>
                         // Auto limit is set to false in first fetchers because otherwise the limit could cut short the
                         // queries which first get the fields to join to routes.
                         new JDBCFetcher("pattern_stops", "stop_id", null, false),
-                        new JDBCFetcher("pattern_locations", "location_id", null, false),
-                        new JDBCFetcher("pattern_location_group_stops", "location_group_id", null, false),
                         new JDBCFetcher("patterns", "pattern_id", null, false),
                         new JDBCFetcher("routes", "route_id")))
                 .build();

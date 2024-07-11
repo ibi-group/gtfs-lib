@@ -30,7 +30,6 @@ public class Feed {
     // This may be the empty string if the feed is stored in the root ("public") schema.
     public final String databaseSchemaPrefix;
 
-    public final TableReader<LocationGroup> locationGroups;
     public final TableReader<Agency> agencies;
     public final TableReader<BookingRule> bookingRules;
     public final TableReader<Calendar> calendars;
@@ -39,6 +38,7 @@ public class Feed {
     public final TableReader<FareRule> fareRules;
     public final TableReader<Frequency> frequencies;
     public final TableReader<Location> locations;
+    public final TableReader<LocationGroup> locationGroups;
     public final TableReader<LocationShape> locationShapes;
     public final TableReader<Route> routes;
     public final TableReader<LocationGroupStop> locationGroupStops;
@@ -57,13 +57,13 @@ public class Feed {
         // Ensure separator dot is present
         if (databaseSchemaPrefix != null && !databaseSchemaPrefix.endsWith(".")) databaseSchemaPrefix += ".";
         this.databaseSchemaPrefix = databaseSchemaPrefix == null ? "" : databaseSchemaPrefix;
-        locationGroups = new JDBCTableReader(Table.LOCATION_GROUP, dataSource, databaseSchemaPrefix, EntityPopulator.LOCATION_GROUPS);
         agencies = new JDBCTableReader(Table.AGENCY, dataSource, databaseSchemaPrefix, EntityPopulator.AGENCY);
         bookingRules = new JDBCTableReader(Table.BOOKING_RULES, dataSource, databaseSchemaPrefix, EntityPopulator.BOOKING_RULE);
         fareAttributes = new JDBCTableReader(Table.FARE_ATTRIBUTES, dataSource, databaseSchemaPrefix, EntityPopulator.FARE_ATTRIBUTE);
         fareRules = new JDBCTableReader(Table.FARE_RULES, dataSource, databaseSchemaPrefix, EntityPopulator.FARE_RULE);
         frequencies = new JDBCTableReader(Table.FREQUENCIES, dataSource, databaseSchemaPrefix, EntityPopulator.FREQUENCY);
         locations = new JDBCTableReader(Table.LOCATIONS, dataSource, databaseSchemaPrefix, EntityPopulator.LOCATION);
+        locationGroups = new JDBCTableReader(Table.LOCATION_GROUP, dataSource, databaseSchemaPrefix, EntityPopulator.LOCATION_GROUPS);
         locationShapes = new JDBCTableReader(Table.LOCATION_SHAPES, dataSource, databaseSchemaPrefix, EntityPopulator.LOCATION_SHAPES);
         calendars = new JDBCTableReader(Table.CALENDAR, dataSource, databaseSchemaPrefix, EntityPopulator.CALENDAR);
         calendarDates = new JDBCTableReader(Table.CALENDAR_DATES, dataSource, databaseSchemaPrefix, EntityPopulator.CALENDAR_DATE);

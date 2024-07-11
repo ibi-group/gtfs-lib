@@ -652,7 +652,7 @@ public class JdbcTableWriter implements TableWriter {
                 // If handling first iteration, create the prepared statement (later iterations will add to batch).
                 insertStatement = createPreparedUpdate(id, true, subEntity, subTable, connection, true);
             }
-            if (isPatternTable && (Table.PATTERN_STOP.name.equals(subTable.name))) {
+            if (isPatternTable) {
                 // Update linked stop times fields for each updated pattern stop (e.g., timepoint, pickup/drop off type).
                 // These fields should be updated for all patterns (e.g., timepoint, pickup/drop off type).
                 updateLinkedFields(

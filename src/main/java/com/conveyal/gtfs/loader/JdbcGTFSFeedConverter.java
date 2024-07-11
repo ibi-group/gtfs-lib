@@ -107,7 +107,6 @@ public class JdbcGTFSFeedConverter {
 
             // Copy all tables (except for PATTERN_STOPS, which does not exist in GTFSFeed).
             copyEntityToSql(gtfsFeed.agency.values(), Table.AGENCY);
-            copyEntityToSql(gtfsFeed.locationGroup.values(), Table.LOCATION_GROUP);
             copyEntityToSql(gtfsFeed.bookingRules.values(), Table.BOOKING_RULES);
             copyEntityToSql(calendars, Table.CALENDAR);
             copyEntityToSql(calendarDates, Table.CALENDAR_DATES);
@@ -125,6 +124,7 @@ public class JdbcGTFSFeedConverter {
             copyEntityToSql(frequencies, Table.FREQUENCIES); // refs trips
             copyEntityToSql(gtfsFeed.stop_times.values(), Table.STOP_TIMES);
             copyEntityToSql(gtfsFeed.locations.values(), Table.LOCATIONS);
+            copyEntityToSql(gtfsFeed.locationGroup.values(), Table.LOCATION_GROUP);
             copyEntityToSql(gtfsFeed.locationGroupStops.values(), Table.LOCATION_GROUP_STOPS);
             copyEntityToSql(gtfsFeed.locationShapes.values(), Table.LOCATION_SHAPES);
 //            result.errorCount = errorStorage.getErrorCount();
