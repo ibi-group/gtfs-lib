@@ -244,8 +244,8 @@ public class Table {
         new IntegerField("route_sort_order", OPTIONAL, 0, Integer.MAX_VALUE),
         // Status values are In progress (0), Pending approval (1), and Approved (2).
         new ShortField("status", EDITOR, 2),
-        new ShortField("continuous_pickup", OPTIONAL,3),
-        new ShortField("continuous_drop_off", OPTIONAL,3)
+        new IntegerField("continuous_pickup", OPTIONAL,3),
+        new IntegerField("continuous_drop_off", OPTIONAL,3)
     ).addPrimaryKey()
     .addPrimaryKeyNames("route_id");
 
@@ -363,8 +363,8 @@ public class Table {
             new IntegerField("pickup_type", EDITOR, 2),
             new DoubleField("shape_dist_traveled", EDITOR, 0, Double.POSITIVE_INFINITY, -1),
             new ShortField("timepoint", EDITOR, 1),
-            new ShortField("continuous_pickup", OPTIONAL,3),
-            new ShortField("continuous_drop_off", OPTIONAL,3),
+            new IntegerField("continuous_pickup", OPTIONAL,3),
+            new IntegerField("continuous_drop_off", OPTIONAL,3),
             new StringField("pickup_booking_rule_id", FLEX_OPTIONAL),
             new StringField("drop_off_booking_rule_id", FLEX_OPTIONAL),
             new TimeField("start_pickup_drop_off_window", FLEX_OPTIONAL),
@@ -422,8 +422,8 @@ public class Table {
             new StringField("stop_headsign", OPTIONAL),
             new ShortField("pickup_type", OPTIONAL, 3),
             new ShortField("drop_off_type", OPTIONAL, 3),
-            new ShortField("continuous_pickup", OPTIONAL, 3),
-            new ShortField("continuous_drop_off", OPTIONAL, 3),
+            new IntegerField("continuous_pickup", OPTIONAL, 3),
+            new IntegerField("continuous_drop_off", OPTIONAL, 3),
             new DoubleField("shape_dist_traveled", OPTIONAL, 0, Double.POSITIVE_INFINITY, -1),
             new ShortField("timepoint", OPTIONAL, 1),
             new IntegerField("fare_units_traveled", EXTENSION), // OpenOV NL extension
