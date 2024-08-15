@@ -357,12 +357,12 @@ public class GTFSTest {
         new PersistenceExpectation(
             "fare_leg_rules",
             new RecordExpectation[]{
-                new RecordExpectation("leg_group_id", "leg_commuter_rail_cash"),
-                new RecordExpectation("network_id", "commuter_rail"),
-                new RecordExpectation("from_area_id", "area_commuter_rail_sumner_tunnel_zone_1a"),
-                new RecordExpectation("to_area_id", "area_commuter_rail_sumner_tunnel_zone_1a"),
-                new RecordExpectation("fare_product_id", "prod_cr_zone_1a"),
-                new RecordExpectation("from_timeframe_group_id", "timeframe_sumner_tunnel_closure"),
+                new RecordExpectation("leg_group_id", "leg_airport_rapid_transit_quick_subway"),
+                new RecordExpectation("network_id", "rapid_transit"),
+                new RecordExpectation("from_area_id", "area_bl_airport"),
+                new RecordExpectation("to_area_id", null),
+                new RecordExpectation("fare_product_id", "prod_rapid_transit_quick_subway"),
+                new RecordExpectation("from_timeframe_group_id", "timeframe_regular"),
                 new RecordExpectation("to_timeframe_group_id", null),
                 new RecordExpectation("transfer_only", null)
             }
@@ -388,13 +388,13 @@ public class GTFSTest {
         new PersistenceExpectation(
             "fare_transfer_rules",
             new RecordExpectation[]{
-                new RecordExpectation("from_leg_group_id", "leg_airport_rapid_transit_quick_subway"),
+                new RecordExpectation("from_leg_group_id", "leg_mattapan_rapid_transit_quick_subway"),
                 new RecordExpectation("to_leg_group_id", "leg_local_bus_quick_subway"),
                 new RecordExpectation("transfer_count", null),
                 new RecordExpectation("duration_limit", "7200"),
                 new RecordExpectation("duration_limit_type", "1"),
                 new RecordExpectation("fare_transfer_type", "0"),
-                new RecordExpectation("fare_product_id", null)
+                new RecordExpectation("fare_product_id", "prod_rapid_transit_quick_subway")
             }
         ),
         new PersistenceExpectation(
