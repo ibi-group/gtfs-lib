@@ -1,0 +1,408 @@
+{
+  "data" : {
+    "feed" : {
+      "feed_version" : "1.0",
+      "stopArea" : [ {
+        "area_id" : "area_route_426_downtown",
+        "id" : 2,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_downtown",
+        "id" : 3,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 4,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 5,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 6,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 7,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 8,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 9,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 10,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_426_outside_downtown",
+        "id" : 11,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 12,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_426_outside_downtown",
+        "id" : 13,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_426_outside_downtown",
+        "id" : 14,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 15,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_426_outside_downtown",
+        "id" : 16,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 17,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 18,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 19,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 20,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 21,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 22,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 23,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 24,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 25,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 26,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 27,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 28,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 29,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 30,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 31,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 32,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 33,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_green_b_west_of_kenmore",
+        "id" : 34,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_green_b_west_of_kenmore",
+        "id" : 35,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_green_b_west_of_kenmore",
+        "id" : 36,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_green_b_west_of_kenmore",
+        "id" : 37,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_sl_logan_terminal",
+        "id" : 38,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_sl_logan_terminal",
+        "id" : 39,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_sl_logan_terminal",
+        "id" : 40,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_sl_logan_terminal",
+        "id" : 41,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_426_outside_downtown",
+        "id" : 42,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_426_outside_downtown",
+        "id" : 43,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_426_outside_downtown",
+        "id" : 44,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_426_outside_downtown",
+        "id" : 45,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 46,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_354_outside_downtown",
+        "id" : 47,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_426_outside_downtown",
+        "id" : 48,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 49,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_426_outside_downtown",
+        "id" : 50,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      }, {
+        "area_id" : "area_route_450_outside_downtown",
+        "id" : 51,
+        "stop_id" : "4u6g",
+        "stops" : [ {
+          "stop_id" : "4u6g",
+          "stop_name" : "Butler Ln"
+        } ]
+      } ]
+    }
+  }
+}

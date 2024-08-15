@@ -1,24 +1,17 @@
 package com.conveyal.gtfs;
 
 import com.conveyal.gtfs.model.StopTime;
-import com.csvreader.CsvReader;
-import org.apache.commons.io.input.BOMInputStream;
 import org.hamcrest.comparator.ComparatorMatcherBuilder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.conveyal.gtfs.TestUtils.checkFileTestCases;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.IsCloseTo.closeTo;
 
@@ -26,29 +19,7 @@ import static org.hamcrest.number.IsCloseTo.closeTo;
  * Test suite for the GTFSFeed class.
  */
 public class GTFSFeedTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GTFSFeedTest.class);
     private static String simpleGtfsZipFileName;
-
-    private static class FileTestCase {
-        public String filename;
-        public DataExpectation[] expectedColumnData;
-
-        public FileTestCase(String filename, DataExpectation[] expectedColumnData) {
-            this.filename = filename;
-            this.expectedColumnData = expectedColumnData;
-        }
-    }
-
-    private static class DataExpectation {
-        public String columnName;
-        public String expectedValue;
-
-        public DataExpectation(String columnName, String expectedValue) {
-            this.columnName = columnName;
-            this.expectedValue = expectedValue;
-        }
-    }
 
     @BeforeAll
     public static void setUpClass() {
@@ -65,7 +36,7 @@ public class GTFSFeedTest {
      * Make sure a round-trip of loading a GTFS zip file and then writing another zip file can be performed.
      */
     @Test
-    public void canDoRoundTripLoadAndWriteToZipFile() throws IOException {
+    void canDoRoundTripLoadAndWriteToZipFile() throws IOException {
         // create a temp file for this test
         File outZip = File.createTempFile("fake-agency-output", ".zip");
 
@@ -80,119 +51,84 @@ public class GTFSFeedTest {
         // assert that rows of data were written to files within the zipfile
         ZipFile zip = new ZipFile(outZip);
 
-        FileTestCase[] fileTestCases = {
+        TestUtils.FileTestCase[] fileTestCases = {
             // agency.txt
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "agency.txt",
-                new DataExpectation[]{
-                    new DataExpectation("agency_id", "1"),
-                    new DataExpectation("agency_name", "Fake Transit")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("agency_id", "1"),
+                    new TestUtils.DataExpectation("agency_name", "Fake Transit")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "calendar.txt",
-                new DataExpectation[]{
-                    new DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57"),
-                    new DataExpectation("start_date", "20170915"),
-                    new DataExpectation("end_date", "20170917")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57"),
+                    new TestUtils.DataExpectation("start_date", "20170915"),
+                    new TestUtils.DataExpectation("end_date", "20170917")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "calendar_dates.txt",
-                new DataExpectation[]{
-                    new DataExpectation("service_id", "calendar-date-service"),
-                    new DataExpectation("date", "20170917"),
-                    new DataExpectation("exception_type", "1")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("service_id", "calendar-date-service"),
+                    new TestUtils.DataExpectation("date", "20170917"),
+                    new TestUtils.DataExpectation("exception_type", "1")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "routes.txt",
-                new DataExpectation[]{
-                    new DataExpectation("agency_id", "1"),
-                    new DataExpectation("route_id", "1"),
-                    new DataExpectation("route_long_name", "Route 1")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("agency_id", "1"),
+                    new TestUtils.DataExpectation("route_id", "1"),
+                    new TestUtils.DataExpectation("route_long_name", "Route 1")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "shapes.txt",
-                new DataExpectation[]{
-                    new DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e"),
-                    new DataExpectation("shape_pt_lat", "37.0612132"),
-                    new DataExpectation("shape_pt_lon", "-122.0074332")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e"),
+                    new TestUtils.DataExpectation("shape_pt_lat", "37.0612132"),
+                    new TestUtils.DataExpectation("shape_pt_lon", "-122.0074332")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "stop_times.txt",
-                new DataExpectation[]{
-                    new DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
-                    new DataExpectation("departure_time", "07:00:00"),
-                    new DataExpectation("stop_id", "4u6g")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
+                    new TestUtils.DataExpectation("departure_time", "07:00:00"),
+                    new TestUtils.DataExpectation("stop_id", "4u6g")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "trips.txt",
-                new DataExpectation[]{
-                    new DataExpectation("route_id", "1"),
-                    new DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
-                    new DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("route_id", "1"),
+                    new TestUtils.DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
+                    new TestUtils.DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "datatools_patterns.txt",
-                new DataExpectation[]{
-                    new DataExpectation("pattern_id", "1"),
-                    new DataExpectation("route_id", "1"),
-                    new DataExpectation("name", "2 stops from Butler Ln to Scotts Valley Dr & Victor Sq (1 trips)"),
-                    new DataExpectation("direction_id", "0"),
-                    new DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("pattern_id", "1"),
+                    new TestUtils.DataExpectation("route_id", "1"),
+                    new TestUtils.DataExpectation("name", "2 stops from Butler Ln to Scotts Valley Dr & Victor Sq (1 trips)"),
+                    new TestUtils.DataExpectation("direction_id", "0"),
+                    new TestUtils.DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e")
                 }
             )
         };
-
-        // look through all written files in the zipfile
-        for (FileTestCase fileTestCase: fileTestCases) {
-            ZipEntry entry = zip.getEntry(fileTestCase.filename);
-
-            // make sure the file exists within the zipfile
-            assertThat(entry, notNullValue());
-
-            // create csv reader for file
-            InputStream zis = zip.getInputStream(entry);
-            InputStream bis = new BOMInputStream(zis);
-            CsvReader reader = new CsvReader(bis, ',', Charset.forName("UTF8"));
-
-            // make sure the file has headers
-            boolean hasHeaders = reader.readHeaders();
-            assertThat(hasHeaders, is(true));
-
-            // make sure that the a record matching the expected row exists in this table
-            boolean recordFound = false;
-            while (reader.readRecord() && !recordFound) {
-                boolean allExpectationsMetForThisRecord = true;
-                for (DataExpectation dataExpectation : fileTestCase.expectedColumnData) {
-                    if(!reader.get(dataExpectation.columnName).equals(dataExpectation.expectedValue)) {
-                        allExpectationsMetForThisRecord = false;
-                        break;
-                    }
-                }
-                if (allExpectationsMetForThisRecord) {
-                    recordFound = true;
-                }
-            }
-            assertThat(
-                String.format("Data Expectation record not found in %s", fileTestCase.filename),
-                recordFound,
-                is(true)
-            );
-        }
+        checkFileTestCases(zip, fileTestCases);
     }
 
     /**
      * Make sure that a GTFS feed with interpolated stop times have calculated times after feed processing
+     *
      * @throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes
      */
     @Test
-    public void canGetInterpolatedTimes() throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes, IOException {
+    void canGetInterpolatedTimes() throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes, IOException {
         String tripId = "a30277f8-e50a-4a85-9141-b1e0da9d429d";
 
         String gtfsZipFileName = TestUtils.zipFolderFiles("fake-agency-interpolated-stop-times", true);
@@ -241,7 +177,7 @@ public class GTFSFeedTest {
      * Make sure a spatial index of stops can be calculated
      */
     @Test
-    public void canGetSpatialIndex() {
+    void canGetSpatialIndex() {
         GTFSFeed feed = GTFSFeed.fromFile(simpleGtfsZipFileName);
         assertThat(
             feed.getSpatialIndex().size(),
@@ -254,7 +190,7 @@ public class GTFSFeedTest {
      * Make sure trip speed can be calculated using trip's shape.
      */
     @Test
-    public void canGetTripSpeedUsingShape() {
+    void canGetTripSpeedUsingShape() {
         GTFSFeed feed = GTFSFeed.fromFile(simpleGtfsZipFileName);
         assertThat(
             feed.getTripSpeed("a30277f8-e50a-4a85-9141-b1e0da9d429d"),
@@ -266,7 +202,7 @@ public class GTFSFeedTest {
      * Make sure trip speed can be calculated using trip's shape.
      */
     @Test
-    public void canGetTripSpeedUsingStraightLine() {
+    void canGetTripSpeedUsingStraightLine() {
         GTFSFeed feed = GTFSFeed.fromFile(simpleGtfsZipFileName);
         assertThat(
             feed.getTripSpeed("a30277f8-e50a-4a85-9141-b1e0da9d429d", true),

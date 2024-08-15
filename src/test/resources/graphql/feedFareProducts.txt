@@ -1,0 +1,18 @@
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_version
+    fareProduct(limit: 10) {
+      fare_product_id
+      fare_product_name
+      fare_media_id
+      amount
+      currency
+      fareMedia {
+        fare_media_id
+        fare_media_name
+        fare_media_type
+        id
+      }
+    }
+  }
+}

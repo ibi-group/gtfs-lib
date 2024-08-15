@@ -1,0 +1,51 @@
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_version
+    fareLegRule(limit: 10) {
+      leg_group_id
+      network_id
+      from_area_id
+      to_area_id
+      from_timeframe_group_id
+      to_timeframe_group_id
+      fare_product_id
+      rule_priority
+      id
+      routes {
+        route_id
+        route_long_name
+      }
+      networks {
+        network_id
+        network_name
+      }
+      fareProducts {
+        fare_product_id
+        fare_product_name
+        fare_media_id
+        amount
+        currency
+      }
+      fromTimeFrame {
+        timeframe_group_id
+        start_time
+        end_time
+        service_id
+      }
+      toTimeFrame {
+        timeframe_group_id
+        start_time
+        end_time
+        service_id
+      }
+      toArea {
+        area_id
+        area_name
+      }
+      fromArea {
+        area_id
+        area_name
+      }
+    }
+  }
+}

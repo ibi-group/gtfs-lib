@@ -9,6 +9,16 @@ import com.conveyal.gtfs.graphql.fetchers.PolylineFetcher;
 import com.conveyal.gtfs.graphql.fetchers.RowCountFetcher;
 import com.conveyal.gtfs.graphql.fetchers.SQLColumnFetcher;
 import com.conveyal.gtfs.graphql.fetchers.SourceObjectFetcher;
+import com.conveyal.gtfs.model.Area;
+import com.conveyal.gtfs.model.FareLegRule;
+import com.conveyal.gtfs.model.FareMedia;
+import com.conveyal.gtfs.model.FareProduct;
+import com.conveyal.gtfs.model.FareTransferRule;
+import com.conveyal.gtfs.model.Network;
+import com.conveyal.gtfs.model.Route;
+import com.conveyal.gtfs.model.RouteNetwork;
+import com.conveyal.gtfs.model.StopArea;
+import com.conveyal.gtfs.model.TimeFrame;
 import graphql.schema.Coercing;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
@@ -622,6 +632,193 @@ public class GraphQLGtfsSchema {
                     .build())
             .build();
 
+    public static final GraphQLObjectType stopAreaType = newObject().name("stopArea")
+        .description("A GTFS stop area object")
+        .field(MapFetcher.field("id", GraphQLInt))
+        .field(MapFetcher.field(StopArea.AREA_ID_COLUMN_NAME))
+        .field(MapFetcher.field(StopArea.STOP_ID_COLUMN_NAME))
+        .field(newFieldDefinition()
+            .name("stops")
+            .type(new GraphQLList(stopType))
+            .dataFetcher(new JDBCFetcher("stops", StopArea.STOP_ID_COLUMN_NAME))
+            .build())
+        .build();
+
+    public static final GraphQLObjectType areaType = newObject().name("area")
+        .description("A GTFS area object")
+        .field(MapFetcher.field("id", GraphQLInt))
+        .field(MapFetcher.field(Area.AREA_ID_COLUMN_NAME))
+        .field(MapFetcher.field(Area.AREA_NAME_COLUMN_NAME))
+        .field(newFieldDefinition()
+            .name("stopAreas")
+            .type(new GraphQLList(stopAreaType))
+            .dataFetcher(new JDBCFetcher(StopArea.TABLE_NAME, Area.AREA_ID_COLUMN_NAME))
+            .build())
+        .build();
+
+    public static final GraphQLObjectType fareMediaType = newObject().name("fareMedia")
+        .description("A GTFS fare media object")
+        .field(MapFetcher.field("id", GraphQLInt))
+        .field(MapFetcher.field(FareMedia.FARE_MEDIA_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareMedia.FARE_MEDIA_NAME_COLUMN_NAME))
+        .field(MapFetcher.field(FareMedia.FARE_MEDIA_TYPE_COLUMN_NAME))
+        .build();
+
+    public static final GraphQLObjectType fareProductType = newObject().name("fareProduct")
+        .description("A GTFS fare product object")
+        .field(MapFetcher.field("id", GraphQLInt))
+        .field(MapFetcher.field(FareProduct.FARE_PRODUCT_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareProduct.FARE_PRODUCT_NAME_COLUMN_NAME))
+        .field(MapFetcher.field(FareProduct.FARE_MEDIA_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareProduct.AMOUNT_COLUMN_NAME))
+        .field(MapFetcher.field(FareProduct.CURRENCY_COLUMN_NAME))
+        .field(newFieldDefinition()
+            .name("fareMedia")
+            .type(new GraphQLList(fareMediaType))
+            .dataFetcher(new JDBCFetcher(FareMedia.TABLE_NAME, FareProduct.FARE_MEDIA_ID_COLUMN_NAME))
+            .build())
+        .build();
+
+    public static final GraphQLObjectType timeFrameType = newObject().name("timeFrame")
+        .description("A GTFS time frame object")
+        .field(MapFetcher.field("id", GraphQLInt))
+        .field(MapFetcher.field(TimeFrame.TIME_FRAME_GROUP_ID_COLUMN_NAME))
+        .field(MapFetcher.field(TimeFrame.START_TIME_COLUMN_NAME))
+        .field(MapFetcher.field(TimeFrame.END_TIME_COLUMN_NAME))
+        .field(MapFetcher.field(TimeFrame.SERVICE_ID_COLUMN_NAME))
+        .build();
+
+    public static final GraphQLObjectType networkType = newObject().name("network")
+        .description("A GTFS network object")
+        .field(MapFetcher.field("id", GraphQLInt))
+        .field(MapFetcher.field(Network.NETWORK_ID_COLUMN_NAME))
+        .field(MapFetcher.field(Network.NETWORK_NAME_COLUMN_NAME))
+        .build();
+
+    public static final GraphQLObjectType fareLegRuleType = newObject().name("fareLegRule")
+        .description("A GTFS fare leg rule object")
+        .field(MapFetcher.field("id", GraphQLInt))
+        .field(MapFetcher.field(FareLegRule.LEG_GROUP_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareLegRule.NETWORK_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareLegRule.FROM_AREA_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareLegRule.TO_AREA_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareLegRule.FROM_TIMEFRAME_GROUP_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareLegRule.TO_TIMEFRAME_GROUP_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareLegRule.FARE_PRODUCT_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareLegRule.RULE_PRIORITY_COLUMN_NAME))
+        // Will return either routes or networks, not both.
+        .field(newFieldDefinition()
+            .name("routes")
+            .type(new GraphQLList(routeType))
+            .dataFetcher(new JDBCFetcher(Route.TABLE_NAME, FareLegRule.NETWORK_ID_COLUMN_NAME))
+            .build())
+        .field(newFieldDefinition()
+            .name("networks")
+            .type(new GraphQLList(networkType))
+            .dataFetcher(new JDBCFetcher(Network.TABLE_NAME, Network.NETWORK_ID_COLUMN_NAME))
+            .build())
+        .field(newFieldDefinition()
+            .name("fareProducts")
+            .type(new GraphQLList(fareProductType))
+            .dataFetcher(new JDBCFetcher(FareProduct.TABLE_NAME, FareLegRule.FARE_PRODUCT_ID_COLUMN_NAME))
+            .build())
+        // fromTimeFrame and toTimeFrame may return multiple time frames.
+        .field(newFieldDefinition()
+            .name("fromTimeFrame")
+            .type(new GraphQLList(timeFrameType))
+            .dataFetcher(new JDBCFetcher(
+                TimeFrame.TABLE_NAME,
+                FareLegRule.FROM_TIMEFRAME_GROUP_ID_COLUMN_NAME,
+                null,
+                false,
+                TimeFrame.TIME_FRAME_GROUP_ID_COLUMN_NAME)
+            )
+            .build())
+        .field(newFieldDefinition()
+            .name("toTimeFrame")
+            .type(new GraphQLList(timeFrameType))
+            .dataFetcher(new JDBCFetcher(
+                TimeFrame.TABLE_NAME,
+                FareLegRule.TO_TIMEFRAME_GROUP_ID_COLUMN_NAME,
+                null,
+                false,
+                TimeFrame.TIME_FRAME_GROUP_ID_COLUMN_NAME)
+            )
+            .build())
+        .field(newFieldDefinition()
+            .name("toArea")
+            .type(new GraphQLList(areaType))
+            .dataFetcher(new JDBCFetcher(
+                Area.TABLE_NAME,
+                FareLegRule.TO_AREA_ID_COLUMN_NAME,
+                null,
+                false,
+                Area.AREA_ID_COLUMN_NAME)
+            )
+            .build())
+        .field(newFieldDefinition()
+            .name("fromArea")
+            .type(new GraphQLList(areaType))
+            .dataFetcher(new JDBCFetcher(
+                Area.TABLE_NAME,
+                FareLegRule.FROM_AREA_ID_COLUMN_NAME,
+                null,
+                false,
+                Area.AREA_ID_COLUMN_NAME)
+            )
+            .build())
+        .build();
+
+    public static final GraphQLObjectType fareTransferRuleType = newObject().name("fareTransferRule")
+        .description("A GTFS fare transfer rule object")
+        .field(MapFetcher.field("id", GraphQLInt))
+        .field(MapFetcher.field(FareTransferRule.FROM_LEG_GROUP_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareTransferRule.TO_LEG_GROUP_ID_COLUMN_NAME))
+        .field(MapFetcher.field(FareTransferRule.TRANSFER_COUNT_COLUMN_NAME))
+        .field(MapFetcher.field(FareTransferRule.DURATION_LIMIT_COLUMN_NAME))
+        .field(MapFetcher.field(FareTransferRule.DURATION_LIMIT_TYPE_COLUMN_NAME))
+        .field(MapFetcher.field(FareTransferRule.FARE_PRODUCT_ID_COLUMN_NAME))
+        .field(newFieldDefinition()
+            .name("fareProducts")
+            .type(new GraphQLList(fareProductType))
+            .dataFetcher(new JDBCFetcher(FareProduct.TABLE_NAME, FareProduct.FARE_PRODUCT_ID_COLUMN_NAME))
+            .build())
+        .field(newFieldDefinition()
+            .name("fromFareLegRule")
+            .type(new GraphQLList(fareLegRuleType))
+            .dataFetcher(new JDBCFetcher(
+                FareLegRule.TABLE_NAME,
+                FareTransferRule.FROM_LEG_GROUP_ID_COLUMN_NAME,
+                null,
+                false,
+                FareLegRule.LEG_GROUP_ID_COLUMN_NAME)
+            )
+            .build())
+        .field(newFieldDefinition()
+            .name("toFareLegRule")
+            .type(new GraphQLList(fareLegRuleType))
+            .dataFetcher(new JDBCFetcher(
+                FareLegRule.TABLE_NAME,
+                FareTransferRule.TO_LEG_GROUP_ID_COLUMN_NAME,
+                null,
+                false,
+                FareLegRule.LEG_GROUP_ID_COLUMN_NAME)
+            )
+            .build())
+        .build();
+
+    public static final GraphQLObjectType routeNetworkType = newObject().name("routeNetwork")
+        .description("A GTFS route network object")
+        .field(MapFetcher.field("id", GraphQLInt))
+        .field(MapFetcher.field(RouteNetwork.NETWORK_ID_COLUMN_NAME))
+        .field(MapFetcher.field(RouteNetwork.ROUTE_ID_COLUMN_NAME))
+        .field(newFieldDefinition()
+            .name("networks")
+            .type(new GraphQLList(networkType))
+            .dataFetcher(new JDBCFetcher(Network.TABLE_NAME, RouteNetwork.NETWORK_ID_COLUMN_NAME))
+            .build())
+        .build();
+
     /**
      * The GraphQL API type representing entries in the top-level table listing all the feeds imported into a gtfs-api
      * database, and with sub-fields for each table of GTFS entities within a single feed.
@@ -821,6 +1018,98 @@ public class GraphQLGtfsSchema {
                 .argument(intArg(LIMIT_ARG))
                 .argument(intArg(OFFSET_ARG))
                 .dataFetcher(new JDBCFetcher("translations"))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("area")
+                .type(new GraphQLList(GraphQLGtfsSchema.areaType))
+                .argument(stringArg("namespace"))
+                .argument(multiStringArg("area_id"))
+                .argument(intArg(ID_ARG))
+                .argument(intArg(LIMIT_ARG))
+                .argument(intArg(OFFSET_ARG))
+                .dataFetcher(new JDBCFetcher("areas"))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("stopArea")
+                .type(new GraphQLList(GraphQLGtfsSchema.stopAreaType))
+                .argument(stringArg("namespace"))
+                .argument(multiStringArg("area_id"))
+                .argument(intArg(ID_ARG))
+                .argument(intArg(LIMIT_ARG))
+                .argument(intArg(OFFSET_ARG))
+                .dataFetcher(new JDBCFetcher("stop_areas"))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("fareTransferRule")
+                .type(new GraphQLList(GraphQLGtfsSchema.fareTransferRuleType))
+                .argument(stringArg("namespace"))
+                .argument(intArg(ID_ARG))
+                .argument(intArg(LIMIT_ARG))
+                .argument(intArg(OFFSET_ARG))
+                .dataFetcher(new JDBCFetcher("fare_transfer_rules"))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("fareProduct")
+                .type(new GraphQLList(GraphQLGtfsSchema.fareProductType))
+                .argument(stringArg("namespace"))
+                .argument(intArg(ID_ARG))
+                .argument(intArg(LIMIT_ARG))
+                .argument(intArg(OFFSET_ARG))
+                .dataFetcher(new JDBCFetcher("fare_products"))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("fareMedia")
+                .type(new GraphQLList(GraphQLGtfsSchema.fareMediaType))
+                .argument(stringArg("namespace"))
+                .argument(intArg(ID_ARG))
+                .argument(intArg(LIMIT_ARG))
+                .argument(intArg(OFFSET_ARG))
+                .dataFetcher(new JDBCFetcher("fare_media"))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("fareLegRule")
+                .type(new GraphQLList(GraphQLGtfsSchema.fareLegRuleType))
+                .argument(stringArg("namespace"))
+                .argument(intArg(ID_ARG))
+                .argument(intArg(LIMIT_ARG))
+                .argument(intArg(OFFSET_ARG))
+                .dataFetcher(new JDBCFetcher("fare_leg_rules"))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("timeFrame")
+                .type(new GraphQLList(GraphQLGtfsSchema.timeFrameType))
+                .argument(stringArg("namespace"))
+                .argument(intArg(ID_ARG))
+                .argument(intArg(LIMIT_ARG))
+                .argument(intArg(OFFSET_ARG))
+                .dataFetcher(new JDBCFetcher(TimeFrame.TABLE_NAME))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("network")
+                .type(new GraphQLList(GraphQLGtfsSchema.networkType))
+                .argument(stringArg("namespace"))
+                .argument(intArg(ID_ARG))
+                .argument(intArg(LIMIT_ARG))
+                .argument(intArg(OFFSET_ARG))
+                .dataFetcher(new JDBCFetcher(Network.TABLE_NAME))
+                .build()
+            )
+            .field(newFieldDefinition()
+                .name("routeNetwork")
+                .type(new GraphQLList(GraphQLGtfsSchema.routeNetworkType))
+                .argument(stringArg("namespace"))
+                .argument(intArg(ID_ARG))
+                .argument(intArg(LIMIT_ARG))
+                .argument(intArg(OFFSET_ARG))
+                .dataFetcher(new JDBCFetcher(RouteNetwork.TABLE_NAME))
                 .build()
             )
             .build();

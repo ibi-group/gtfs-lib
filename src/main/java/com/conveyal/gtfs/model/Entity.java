@@ -36,11 +36,13 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -497,5 +499,16 @@ public abstract class Entity implements Serializable {
         if (n >= 1000000) return String.format("%.1fM", n/1000000.0);
         if (n >= 1000) return String.format("%.1fk", n/1000.0);
         else return String.format("%d", n);
+    }
+
+    /**
+     * Creates a primary key from the provided fields. It is acceptable for a field that makes up the primary key to be
+     * optional! In this case the null value is represented with "empty".
+     */
+    protected static String createPrimaryKey(Object... fields) {
+        return Arrays
+            .stream(fields)
+            .map(id -> id == null ? "empty" : id.toString())
+            .collect(Collectors.joining("_"));
     }
 }
