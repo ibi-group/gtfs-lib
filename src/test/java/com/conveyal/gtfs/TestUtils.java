@@ -1,24 +1,11 @@
 package com.conveyal.gtfs;
 
 import com.conveyal.gtfs.error.NewGTFSErrorType;
-import com.conveyal.gtfs.loader.FeedLoadResult;
-import com.conveyal.gtfs.loader.SnapshotResult;
 import com.conveyal.gtfs.loader.Table;
-import com.conveyal.gtfs.storage.ErrorExpectation;
-import com.conveyal.gtfs.storage.ExpectedFieldType;
-import com.conveyal.gtfs.storage.PersistenceExpectation;
-import com.conveyal.gtfs.storage.RecordExpectation;
-import com.conveyal.gtfs.util.InvalidNamespaceException;
-import com.conveyal.gtfs.validator.FeedValidatorCreator;
-import com.conveyal.gtfs.validator.ValidationResult;
 import com.csvreader.CsvReader;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.hamcrest.Matcher;
-import org.hamcrest.comparator.ComparatorMatcherBuilder;
-import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,25 +15,19 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static com.conveyal.gtfs.util.Util.randomIdString;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestUtils {
@@ -300,5 +281,48 @@ public class TestUtils {
                 String.format("Data Expectation record not found in %s", fileTestCase.filename)
             );
         }
+    }
+
+
+    /**
+     * Asserts that a given value for the specified field in result set matches provided matcher.
+     */
+    public static void assertResultValue(ResultSet resultSet, String field, Matcher matcher) throws SQLException {
+        assertThat(resultSet.getObject(field), matcher);
+    }
+
+    /**
+     * Executes SQL query for the specified ID and columns and returns the resulting result set.
+     */
+    public static ResultSet getResultSetForId(DataSource dataSource, String namespace, int id, Table table, String... columns) throws SQLException {
+        String sql = getColumnsForId(namespace, id, table, columns);
+        return dataSource.getConnection().prepareStatement(sql).executeQuery();
+    }
+
+    /**
+     * Constructs SQL query for the specified ID and columns and returns the resulting result set.
+     */
+    public static String getColumnsForId(String namespace, int id, Table table, String... columns) {
+        String sql = String.format(
+            "select %s from %s.%s where id=%d",
+            columns.length > 0 ? String.join(", ", columns) : "*",
+            namespace,
+            table.name,
+            id
+        );
+        LOG.info(sql);
+        return sql;
+    }
+
+    public static void assertThatSqlQueryYieldsRowCount(DataSource dataSource, String sql, int expectedRowCount) throws SQLException {
+        LOG.info(sql);
+        int recordCount = 0;
+        ResultSet rs = dataSource.getConnection().prepareStatement(sql).executeQuery();
+        while (rs.next()) recordCount++;
+        assertThat("Records matching query should equal expected count.", recordCount, equalTo(expectedRowCount));
+    }
+
+    public static void assertThatSqlQueryYieldsZeroRows(DataSource dataSource, String sql) throws SQLException {
+        assertThatSqlQueryYieldsRowCount(dataSource, sql, 0);
     }
 }
