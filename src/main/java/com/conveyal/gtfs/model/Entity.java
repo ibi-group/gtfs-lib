@@ -30,6 +30,7 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.sql.JDBCType;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -282,15 +283,16 @@ public abstract class Entity implements Serializable {
          * @param zip the zip file from which to read a table
          */
         public void loadTable(ZipFile zip) throws IOException {
-            ZipEntry entry = zip.getEntry(tableName + ".txt");
+            String fileName = tableName + ".txt";
+            ZipEntry entry = zip.getEntry(fileName);
             if (entry == null) {
                 Enumeration<? extends ZipEntry> entries = zip.entries();
                 // check if table is contained within sub-directory
                 while (entries.hasMoreElements()) {
                     ZipEntry e = entries.nextElement();
-                    if (e.getName().equals(tableName + ".txt")) {
+                    if (Paths.get(e.getName()).getFileName().toString().equals(fileName)) {
                         entry = e;
-                        feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(tableName + ".txt", "")));
+                        feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(fileName, "")));
                     }
                 }
                 /* This GTFS table did not exist in the zip. */
