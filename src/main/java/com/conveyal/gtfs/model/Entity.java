@@ -288,7 +288,7 @@ public abstract class Entity implements Serializable {
                 // check if table is contained within sub-directory
                 while (entries.hasMoreElements()) {
                     ZipEntry e = entries.nextElement();
-                    if (e.getName().endsWith(tableName + ".txt")) {
+                    if (e.getName().equals(tableName + ".txt")) {
                         entry = e;
                         feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(tableName + ".txt", "")));
                     }

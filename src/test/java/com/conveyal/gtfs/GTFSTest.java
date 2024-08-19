@@ -344,7 +344,7 @@ public class GTFSTest {
     }
 
     /**
-     * Persistence expectations for use with the GTFS contained within the "MBTA_GTFS_Fares_v2.zip" feed.
+     * Persistence expectations for use with the GTFS contained within the "fake-agency-with-fares-v2" feed.
      */
     private final PersistenceExpectation[] faresV2PersistenceExpectations = new PersistenceExpectation[]{
         new PersistenceExpectation(
