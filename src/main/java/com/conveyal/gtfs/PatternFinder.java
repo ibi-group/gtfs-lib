@@ -234,7 +234,7 @@ public class PatternFinder {
     }
 
     /**
-     * Using the order stop or location id return the object it actually relates to. Under flex, a stop can either be a
+     * Using the ordered stop or location id, return the object it actually relates to. Under flex, a stop can either be a
      * stop, location or location group stop, this method decides which.
      */
     private static Object getStopType(
