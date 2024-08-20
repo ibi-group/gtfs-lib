@@ -212,7 +212,7 @@ public class JdbcTableWriter implements TableWriter {
                         jsonObject,
                         "trips",
                         "route_id",
-                        new String[]{"wheelchair_accessible"}
+                       new String[] {"wheelchair_accessible"}
                     );
                     break;
                 case "patterns":
