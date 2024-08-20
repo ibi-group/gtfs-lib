@@ -141,7 +141,7 @@ public class FlexValidator extends FeedValidator {
     }
 
     /**
-     * Check location group conforms to flex specification constraints.
+     * Check that a location group conforms to flex specification constraints.
      */
     public static List<NewGTFSError> validateLocationGroup(
         LocationGroup locationGroup,
