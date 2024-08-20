@@ -52,7 +52,7 @@ public enum NewGTFSErrorType {
     FLEX_REQUIRED_PRIOR_NOTICE_DURATION_MIN(Priority.HIGH, "Prior notice duration min is required for booking type 1 (Up to same-day booking with advance notice)."),
     FLEX_REQUIRED_PRIOR_NOTICE_LAST_DAY(Priority.HIGH, "Prior notice last day is required if a stop id refers to a stop area or location."),
     FLEX_REQUIRED_PRIOR_NOTICE_START_TIME(Priority.HIGH, "Prior notice start time is required if prior notice start day is defined."),
-    FLEX_REQUIRED_STOP_ID(Priority.HIGH, "A stop id is required if a location group id or location id are not defined."),
+    FLEX_REQUIRED_STOP_ID(Priority.HIGH, "A stop id is required if both location group id and location id are not defined."),
     FLEX_REQUIRED_START_PICKUP_DROP_OFF_WINDOW(Priority.HIGH, "Start pickup drop off window is required if a location group id, location id or end pickup drop off window is defined."),
     FLEX_MISSING_FARE_RULE(Priority.HIGH, "A location zone id must reference a fare rule. One of contains id, destination id or origin id."),
     FLOATING_FORMAT(Priority.MEDIUM, "Incorrect floating point number format."),
