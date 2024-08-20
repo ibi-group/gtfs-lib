@@ -87,7 +87,7 @@ public class ReferencesTripValidator extends TripValidator {
                 registerError(route, ROUTE_UNUSED);
             }
         }
-        // If a stop time reference a location, make sure that location is used.
+        // If a stop time references a location, make sure that the referenced location is used.
         List<Location> locations = Lists.newArrayList(feed.locations);
         feed.stopTimes.forEach(stopTime -> {
             if (stopTime.location_id != null && !referencedLocations.contains(stopTime.location_id)) {
