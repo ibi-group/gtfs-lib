@@ -221,7 +221,7 @@ public class JdbcTableWriter implements TableWriter {
                         jsonObject,
                         "trips",
                         "pattern_id",
-                        new String[]{"direction_id", "shape_id"}
+                        new String[] {"direction_id", "shape_id"}
                     );
                     break;
                 default:
