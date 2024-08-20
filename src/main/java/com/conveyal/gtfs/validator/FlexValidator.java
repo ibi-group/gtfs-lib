@@ -190,7 +190,7 @@ public class FlexValidator extends FeedValidator {
     }
 
     /**
-     * Check that a stop time fields conform to flex specification constraints.
+     * Check that the fields of a stop time object conform to flex specification constraints.
      */
     public static List<NewGTFSError> validateStopTime(StopTime stopTime) {
         List<NewGTFSError> errors = new ArrayList<>();
