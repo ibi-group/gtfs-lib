@@ -23,7 +23,7 @@ query ($namespace: String) {
       stops {
         stop_id
       }
-      locationGroups {
+      location_groups {
         location_group_id
       }
       locations {

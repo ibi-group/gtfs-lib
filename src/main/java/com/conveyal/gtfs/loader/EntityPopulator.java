@@ -260,55 +260,55 @@ public interface EntityPopulator<T> {
 
     EntityPopulator<BookingRule> BOOKING_RULE = (result, columnForName) -> {
         BookingRule bookingRule = new BookingRule();
-        bookingRule.booking_rule_id = getStringIfPresent(result, "bookingRule", columnForName);
-        bookingRule.booking_type = getIntIfPresent(result, "booking_type", columnForName);
-        bookingRule.prior_notice_duration_min = getIntIfPresent(result, "prior_notice_duration_min", columnForName);
-        bookingRule.prior_notice_duration_max = getIntIfPresent(result, "prior_notice_duration_max", columnForName);
-        bookingRule.prior_notice_last_day = getIntIfPresent(result, "prior_notice_last_day", columnForName);
-        bookingRule.prior_notice_last_time = getStringIfPresent(result, "prior_notice_last_time", columnForName);
-        bookingRule.prior_notice_start_day = getIntIfPresent(result, "prior_notice_start_day", columnForName);
-        bookingRule.prior_notice_start_time = getStringIfPresent(result, "prior_notice_start_time", columnForName);
-        bookingRule.prior_notice_service_id = getStringIfPresent(result, "prior_notice_service_id", columnForName);
-        bookingRule.message = getStringIfPresent(result, "message", columnForName);
-        bookingRule.pickup_message = getStringIfPresent(result, "pickup_message", columnForName);
-        bookingRule.drop_off_message = getStringIfPresent(result, "drop_off_message", columnForName);
-        bookingRule.phone_number = getStringIfPresent(result, "phone_number", columnForName);
-        bookingRule.info_url = getUrlIfPresent(result, "info_url", columnForName);
-        bookingRule.booking_url = getUrlIfPresent(result, "booking_url", columnForName);
+        bookingRule.booking_rule_id = getStringIfPresent(result, BookingRule.BOOKING_RULE_ID_COLUMN_NAME, columnForName);
+        bookingRule.booking_type = getIntIfPresent(result, BookingRule.BOOKING_TYPE_COLUMN_NAME, columnForName);
+        bookingRule.prior_notice_duration_min = getIntIfPresent(result, BookingRule.PRIOR_NOTICE_DURATION_MIN_COLUMN_NAME, columnForName);
+        bookingRule.prior_notice_duration_max = getIntIfPresent(result, BookingRule.PRIOR_NOTICE_DURATION_MAX_COLUMN_NAME, columnForName);
+        bookingRule.prior_notice_last_day = getIntIfPresent(result, BookingRule.PRIOR_NOTICE_LAST_DAY_COLUMN_NAME, columnForName);
+        bookingRule.prior_notice_last_time = getStringIfPresent(result, BookingRule.PRIOR_NOTICE_LAST_TIME_COLUMN_NAME, columnForName);
+        bookingRule.prior_notice_start_day = getIntIfPresent(result, BookingRule.PRIOR_NOTICE_START_DAY_COLUMN_NAME, columnForName);
+        bookingRule.prior_notice_start_time = getStringIfPresent(result, BookingRule.PRIOR_NOTICE_START_TIME_COLUMN_NAME, columnForName);
+        bookingRule.prior_notice_service_id = getStringIfPresent(result, BookingRule.PRIOR_NOTICE_SERVICE_ID_COLUMN_NAME, columnForName);
+        bookingRule.message = getStringIfPresent(result, BookingRule.MESSAGE_COLUMN_NAME, columnForName);
+        bookingRule.pickup_message = getStringIfPresent(result, BookingRule.PICKUP_MESSAGE_COLUMN_NAME, columnForName);
+        bookingRule.drop_off_message = getStringIfPresent(result, BookingRule.DROP_OFF_MESSAGE_COLUMN_NAME, columnForName);
+        bookingRule.phone_number = getStringIfPresent(result, BookingRule.PHONE_NUMBER_COLUMN_NAME, columnForName);
+        bookingRule.info_url = getUrlIfPresent(result, BookingRule.INFO_URL_COLUMN_NAME, columnForName);
+        bookingRule.booking_url = getUrlIfPresent(result, BookingRule.BOOKING_URL_COLUMN_NAME, columnForName);
         return bookingRule;
     };
 
     EntityPopulator<Location> LOCATION = (result, columnForName) -> {
         Location location = new Location();
-        location.location_id = getStringIfPresent(result, "location_id", columnForName);
-        location.stop_name = getStringIfPresent(result, "stop_name", columnForName);
-        location.stop_desc = getStringIfPresent(result, "stop_desc", columnForName);
-        location.zone_id = getStringIfPresent(result, "zone_id", columnForName);
-        location.stop_url = getUrlIfPresent(result, "stop_url", columnForName);
-        location.geometry_type = getStringIfPresent(result, "geometry_type", columnForName);
+        location.location_id = getStringIfPresent(result, Location.LOCATION_ID_COLUMN_NAME, columnForName);
+        location.stop_name = getStringIfPresent(result, Location.STOP_NAME_COLUMN_NAME, columnForName);
+        location.stop_desc = getStringIfPresent(result, Location.STOP_DESC_COLUMN_NAME, columnForName);
+        location.zone_id = getStringIfPresent(result, Location.ZONE_ID_COLUMN_NAME, columnForName);
+        location.stop_url = getUrlIfPresent(result, Location.STOP_URL_COLUMN_NAME, columnForName);
+        location.geometry_type = getStringIfPresent(result, Location.GEOMETRY_TYPE_COLUMN_NAME, columnForName);
         return location;
     };
 
     EntityPopulator<LocationGroupStop> LOCATION_GROUP_STOPS = (result, columnForName) -> {
         LocationGroupStop locationGroupStop = new LocationGroupStop();
-        locationGroupStop.location_group_id = getStringIfPresent(result, "location_group_id", columnForName);
-        locationGroupStop.stop_id = getStringIfPresent(result, "stop_id", columnForName);
+        locationGroupStop.location_group_id = getStringIfPresent(result, LocationGroupStop.LOCATION_GROUP_ID_COLUMN_NAME, columnForName);
+        locationGroupStop.stop_id = getStringIfPresent(result, LocationGroupStop.STOP_ID_COLUMN_NAME, columnForName);
         return locationGroupStop;
     };
 
     EntityPopulator<LocationGroup> LOCATION_GROUPS = (result, columnForName) -> {
         LocationGroup locationGroup = new LocationGroup();
-        locationGroup.location_group_id = getStringIfPresent(result, "location_group_id", columnForName);
-        locationGroup.location_group_name = getStringIfPresent(result, "location_group_name", columnForName);
+        locationGroup.location_group_id = getStringIfPresent(result, LocationGroup.LOCATION_GROUP_ID_COLUMN_NAME, columnForName);
+        locationGroup.location_group_name = getStringIfPresent(result, LocationGroup.LOCATION_GROUP_NAME_COLUMN_NAME, columnForName);
         return locationGroup;
     };
 
     EntityPopulator<LocationShape> LOCATION_SHAPES = (result, columnForName) -> {
         LocationShape locationShape = new LocationShape();
-        locationShape.location_id = getStringIfPresent(result, "location_id", columnForName);
-        locationShape.geometry_id = getStringIfPresent(result, "geometry_id", columnForName);
-        locationShape.geometry_pt_lat = getDoubleIfPresent(result, "geometry_pt_lat", columnForName);
-        locationShape.geometry_pt_lon = getDoubleIfPresent(result, "geometry_pt_lon", columnForName);
+        locationShape.location_id = getStringIfPresent(result, LocationShape.LOCATION_ID_COLUMN_NAME, columnForName);
+        locationShape.geometry_id = getStringIfPresent(result, LocationShape.GEOMETRY_ID_COLUMN_NAME, columnForName);
+        locationShape.geometry_pt_lat = getDoubleIfPresent(result, LocationShape.GEOMETRY_PT_LAT_COLUMN_NAME, columnForName);
+        locationShape.geometry_pt_lon = getDoubleIfPresent(result, LocationShape.GEOMETRY_PT_LON_COLUMN_NAME, columnForName);
         return locationShape;
     };
 

@@ -21,6 +21,7 @@ import java.util.Map;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.CONDITIONALLY_REQUIRED;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.MISSING_ARRIVAL_OR_DEPARTURE;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.TRIP_TOO_FEW_STOP_TIMES;
+import static com.conveyal.gtfs.validator.FlexValidator.hasNoHalt;
 
 /**
  * Check that the travel times between adjacent stops in trips are reasonable.
@@ -53,7 +54,7 @@ public class NewTripTimesValidator extends FeedValidator {
         super(feed, errorStorage);
         standardTripValidators = new TripValidator[] {
             new SpeedTripValidator(feed, errorStorage),
-            new ReferencesTripValidator(feed, errorStorage),
+            new ReferencedTripValidator(feed, errorStorage),
             new ReversedTripValidator(feed, errorStorage),
         };
         additionalTripValidators = new TripValidator[] {
@@ -163,7 +164,7 @@ public class NewTripTimesValidator extends FeedValidator {
             if (hasContinuousBehavior(stopTime.continuous_drop_off, stopTime.continuous_pickup)) {
                 hasContinuousBehavior = true;
             }
-            if (stopTime.stop_id == null && stopTime.location_group_id == null && stopTime.location_id == null) {
+            if (hasNoHalt(stopTime)) {
                 // All bad references should have been recorded at import, we can just remove them from the trips.
                 it.remove();
             } else {

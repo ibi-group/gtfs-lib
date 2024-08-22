@@ -14,17 +14,18 @@ import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.VALIDATOR_FAILED;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
 import static com.conveyal.gtfs.model.StopTime.getFlexStopTimesForValidation;
+import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
 /**
  * Spec validation checks for flex additions as defined here:
@@ -102,7 +103,7 @@ public class FlexValidator extends FeedValidator {
     }
 
     /**
-     * A route can not define a continuous_pickup nor continuous_drop_off if these values are defined for one or more
+     * A route cannot define a continuous_pickup nor continuous_drop_off if these values are defined for one or more
      * stop times for any trip.
      */
     public static List<NewGTFSError> validateRoute(Route route, List<Trip> trips, List<StopTime> stopTimes) {
@@ -111,32 +112,29 @@ public class FlexValidator extends FeedValidator {
             return errors;
         }
 
-        List<Trip> routeTrips = trips
+        trips
             .stream()
             .filter(trip -> trip.route_id.equalsIgnoreCase(route.route_id))
-            .collect(Collectors.toList());
-
-        for (Trip trip : routeTrips) {
-            boolean match = stopTimes
-                .stream()
-                .filter(stopTime -> stopTime.trip_id.equalsIgnoreCase(trip.trip_id))
-                .anyMatch(stopTime -> stopTime.start_pickup_drop_off_window != INT_MISSING || stopTime.end_pickup_drop_off_window != INT_MISSING);
-            if (match) {
-                if (route.continuous_drop_off != INT_MISSING) {
-                    errors.add(NewGTFSError
-                        .forEntity(route, NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF)
-                        .setBadValue(String.valueOf(route.continuous_drop_off))
-                    );
+            .forEach(trip -> {
+                boolean match = stopTimes
+                    .stream()
+                    .filter(stopTime -> stopTime.trip_id.equalsIgnoreCase(trip.trip_id))
+                    .anyMatch(FlexValidator::hasStartOrEndPickupDropOffWindow);
+                if (match) {
+                    if (route.continuous_drop_off != INT_MISSING) {
+                        errors.add(NewGTFSError
+                            .forEntity(route, NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF)
+                            .setBadValue(String.valueOf(route.continuous_drop_off))
+                        );
+                    }
+                    if (route.continuous_pickup != INT_MISSING) {
+                        errors.add(NewGTFSError
+                            .forEntity(route, NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP)
+                            .setBadValue(String.valueOf(route.continuous_pickup))
+                        );
+                    }
                 }
-                if (route.continuous_pickup != INT_MISSING) {
-                    errors.add(NewGTFSError
-                        .forEntity(route, NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP)
-                        .setBadValue(String.valueOf(route.continuous_pickup))
-                    );
-                }
-                break;
-            }
-        }
+            });
         return errors;
     }
 
@@ -208,15 +206,17 @@ public class FlexValidator extends FeedValidator {
         return errors;
     }
 
+    private static boolean hasStartOrEndPickupDropOffWindow(StopTime stopTime) {
+        return stopTime.start_pickup_drop_off_window != INT_MISSING || stopTime.end_pickup_drop_off_window != INT_MISSING;
+    }
+
     /**
      * Conditionally Required:
      * - Forbidden when start_pickup_drop_off_window or end_pickup_drop_off_window are defined.
      * - Optional otherwise.
      */
     public static void validateArrivalTime(StopTime stopTime, List<NewGTFSError> errors) {
-        if (
-            stopTime.arrival_time != INT_MISSING &&
-            (stopTime.start_pickup_drop_off_window != INT_MISSING || stopTime.end_pickup_drop_off_window != INT_MISSING)
+        if (stopTime.arrival_time != INT_MISSING && hasStartOrEndPickupDropOffWindow(stopTime)
         ) {
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_FORBIDDEN_ARRIVAL_TIME)
@@ -233,7 +233,7 @@ public class FlexValidator extends FeedValidator {
     public static void validateDepartureTime(StopTime stopTime, List<NewGTFSError> errors) {
         if (
             stopTime.departure_time != INT_MISSING &&
-            (stopTime.start_pickup_drop_off_window != INT_MISSING || stopTime.end_pickup_drop_off_window != INT_MISSING)
+            hasStartOrEndPickupDropOffWindow(stopTime)
         ) {
             // Departure time must not be defined if start/end pickup drop off window is defined.
             errors.add(NewGTFSError
@@ -249,8 +249,8 @@ public class FlexValidator extends FeedValidator {
      * - Forbidden if stop_times.location_group_id or stop_times.location_id are defined.
      */
     public static void validateStopId(StopTime stopTime, List<NewGTFSError> errors) {
-        if (isStopIdRequired(stopTime)) {
-            // No location group id or location id defined, a stop id is required.
+        if (hasNoHalt(stopTime)) {
+            // No stop id, location group id or location id defined, a stop id is required.
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_REQUIRED_STOP_ID)
                 .setBadValue(stopTime.stop_id)
@@ -374,10 +374,7 @@ public class FlexValidator extends FeedValidator {
      * - Optional otherwise.
      */
     public static void validatePickUpType(StopTime stopTime, List<NewGTFSError> errors) {
-        if (
-            (stopTime.pickup_type == 0 || stopTime.pickup_type == 3) &&
-            (stopTime.start_pickup_drop_off_window != INT_MISSING || stopTime.end_pickup_drop_off_window != INT_MISSING)
-        ) {
+        if ((stopTime.pickup_type == 0 || stopTime.pickup_type == 3) && hasStartOrEndPickupDropOffWindow(stopTime)) {
             // pickup_type 0 (Regularly scheduled pickup) and 3 (Must coordinate with driver to arrange pickup) are
             // forbidden if start/end pick up drop off window are defined.
             errors.add(NewGTFSError
@@ -393,10 +390,7 @@ public class FlexValidator extends FeedValidator {
      * - Optional otherwise.
      */
     public static void validateDropOffType(StopTime stopTime, List<NewGTFSError> errors) {
-        if (
-            stopTime.drop_off_type == 0 &&
-            (stopTime.start_pickup_drop_off_window != INT_MISSING || stopTime.end_pickup_drop_off_window != INT_MISSING)
-        ) {
+        if (stopTime.drop_off_type == 0 && hasStartOrEndPickupDropOffWindow(stopTime)) {
             // drop_off_type 0 (Regularly scheduled pickup) is forbidden if start/end pick up drop off window are defined.
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_FORBIDDEN_DROP_OFF_TYPE)
@@ -411,7 +405,7 @@ public class FlexValidator extends FeedValidator {
      * - Optional otherwise.
      */
     public static void validateContinuousPickup(StopTime stopTime, List<NewGTFSError> errors) {
-        if (stopTime.start_pickup_drop_off_window != INT_MISSING || stopTime.end_pickup_drop_off_window != INT_MISSING) {
+        if (hasStartOrEndPickupDropOffWindow(stopTime)) {
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP)
                 .setBadValue(Integer.toString(stopTime.drop_off_type))
@@ -425,7 +419,7 @@ public class FlexValidator extends FeedValidator {
      * - Optional otherwise.
      */
     public static void validateContinuousDropOff(StopTime stopTime, List<NewGTFSError> errors) {
-        if (stopTime.start_pickup_drop_off_window != INT_MISSING || stopTime.end_pickup_drop_off_window != INT_MISSING) {
+        if (hasStartOrEndPickupDropOffWindow(stopTime)) {
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF)
                 .setBadValue(Integer.toString(stopTime.drop_off_type))
@@ -518,9 +512,7 @@ public class FlexValidator extends FeedValidator {
                 .setBadValue(bookingRule.prior_notice_start_time)
             );
         }
-        if ((bookingRule.prior_notice_service_id != null &&
-            !bookingRule.prior_notice_service_id.isEmpty()) &&
-            bookingRule.booking_type != 2) {
+        if (StringUtils.isNotBlank(bookingRule.prior_notice_service_id) && bookingRule.booking_type != 2) {
             // prior_notice_service_id is forbidden for all but booking_type 2 (Up to prior day(s) booking).
             errors.add(NewGTFSError.forEntity(
                     bookingRule,
@@ -536,8 +528,7 @@ public class FlexValidator extends FeedValidator {
      */
     private static boolean hasMatchOnStopId(List<Stop> stops, String id) {
         return
-            stops != null &&
-            !stops.isEmpty() &&
+            isNotEmpty(stops) &&
             stops.stream().anyMatch(stop -> stop.stop_id != null && stop.stop_id.equals(id));
     }
 
@@ -546,7 +537,7 @@ public class FlexValidator extends FeedValidator {
      */
     private static boolean hasMatchOnLocationId(List<Location> locations, String id) {
         return
-            !locations.isEmpty() &&
+            isNotEmpty(locations) &&
             locations.stream().anyMatch(location -> location.location_id != null && location.location_id.equals(id));
     }
 
@@ -555,8 +546,7 @@ public class FlexValidator extends FeedValidator {
      */
     private static boolean hasMatchOnLocationGroupId(List<LocationGroup> locationGroups, String id) {
         return
-            locationGroups != null &&
-            !locationGroups.isEmpty() &&
+            isNotEmpty(locationGroups) &&
             locationGroups.stream().anyMatch(locationGroup -> locationGroup.location_group_id.equals(id));
     }
 
@@ -564,8 +554,8 @@ public class FlexValidator extends FeedValidator {
      * If fare rules are defined, check there is a match on zone id.
      */
     private static boolean hasFareRules(List<FareRule> fareRules, String zoneId) {
-        return fareRules != null &&
-            !fareRules.isEmpty() &&
+        return
+            isNotEmpty(fareRules) &&
             fareRules.stream().anyMatch(fareRule ->
                 (fareRule.contains_id != null && fareRule.destination_id != null && fareRule.origin_id != null) &&
                     !fareRule.contains_id.equals(zoneId) &&
@@ -574,10 +564,10 @@ public class FlexValidator extends FeedValidator {
     }
 
     /**
-     * If a location group id or a location id are not defined, a stop id is required.
+     * Stop time does not have a stop id, location group id or location id.
      */
-    public static boolean isStopIdRequired(StopTime stopTime) {
-        return stopTime.stop_id == null && (stopTime.location_group_id == null && stopTime.location_id == null);
+    public static boolean hasNoHalt(StopTime stopTime) {
+        return stopTime.stop_id == null && stopTime.location_group_id == null && stopTime.location_id == null;
     }
 
     /**
@@ -614,10 +604,7 @@ public class FlexValidator extends FeedValidator {
      */
     public static boolean hasFlexLocation(Trip trip, List<StopTime> stopTimes) {
         for (StopTime stopTime : stopTimes) {
-            if (
-                trip.trip_id.equals(stopTime.trip_id) &&
-                (stopTime.location_group_id != null || stopTime.location_id != null)
-            ) {
+            if (trip.trip_id.equals(stopTime.trip_id) && isLocationOrLocationGroupDefined(stopTime)) {
                 return true;
             }
         }

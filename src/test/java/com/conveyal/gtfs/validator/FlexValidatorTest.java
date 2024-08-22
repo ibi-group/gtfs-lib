@@ -12,6 +12,7 @@ import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.common.collect.Lists;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
@@ -26,67 +27,70 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createLocationGroupChecks")
-    void validateLocationGroupTests(LocationGroupArguments locationGroupArguments) {
-        List<NewGTFSError> errors = FlexValidator.validateLocationGroup(
-            (LocationGroup) locationGroupArguments.testObject,
-            locationGroupArguments.stops,
-            locationGroupArguments.locations
-        );
-        checkValidationErrorsMatchExpectedErrors(errors, locationGroupArguments.expectedErrors);
+    void validateLocationGroupTests(
+        LocationGroup locationGroup,
+        List<Stop> stops,
+        List<Location> locations,
+        List<NewGTFSErrorType> expectedErrors
+    ) {
+        List<NewGTFSError> errors = FlexValidator.validateLocationGroup(locationGroup, stops, locations);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<LocationGroupArguments> createLocationGroupChecks() {
+    private static Stream<Arguments> createLocationGroupChecks() {
         return Stream.of(
-            new LocationGroupArguments(
-                "1","2", "3",
+            Arguments.of(
+                createLocationGroup("1"),
+                Lists.newArrayList(createStop("2")),
+                Lists.newArrayList(createLocation("3")),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_LOCATION_GROUP_ID)
             ),
-            new LocationGroupArguments(
-                "1","2", "1",
+            Arguments.of(
+                createLocationGroup("1"),
+                Lists.newArrayList(createStop("2")),
+                Lists.newArrayList(createLocation("1")),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_DUPLICATE_LOCATION_GROUP_ID)
             ),
-            new LocationGroupArguments(
-                "2","2", "1",
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_DUPLICATE_LOCATION_GROUP_ID)
-            ),
-            new LocationGroupArguments(
-                "1",null, null,
-                null
-            )
+            Arguments.of(createLocationGroup("1"), null, null, null)
         );
     }
 
     @ParameterizedTest
     @MethodSource("createRouteChecks")
-    void validateRouteTests(RouteArguments routeArguments) {
-        List<NewGTFSError> errors = FlexValidator.validateRoute(
-            (Route) routeArguments.testObject,
-            routeArguments.trips,
-            routeArguments.stopTimes
-        );
-        checkValidationErrorsMatchExpectedErrors(errors, routeArguments.expectedErrors);
+    void validateRouteTests(Route route, List<Trip> trips, List<StopTime> stopTimes, List<NewGTFSErrorType> expectedErrors) {
+        checkValidationErrorsMatchExpectedErrors(FlexValidator.validateRoute(route, trips, stopTimes), expectedErrors);
     }
 
-    private static Stream<RouteArguments> createRouteChecks() {
+    private static Stream<Arguments> createRouteChecks() {
         return Stream.of(
-            new RouteArguments(
-                creeateRoute(INT_MISSING, INT_MISSING), 1, 1,
+            Arguments.of(
+                creeateRoute(INT_MISSING, INT_MISSING),
+                Lists.newArrayList(createTrip()),
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
                 null
             ),
-            new RouteArguments(
-                creeateRoute(1, INT_MISSING), 1, 1,
+            Arguments.of(
+                creeateRoute(1, INT_MISSING),
+                Lists.newArrayList(createTrip()),
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF)
             ),
-            new RouteArguments(
-                creeateRoute(INT_MISSING, 1), 1, 1,
+            Arguments.of(
+                creeateRoute(INT_MISSING, 1),
+                Lists.newArrayList(createTrip()),
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP)
             ),
-            new RouteArguments(
-                creeateRoute(INT_MISSING, 1), INT_MISSING, INT_MISSING,
+            Arguments.of(
+                creeateRoute(INT_MISSING, 1),
+                Lists.newArrayList(createTrip()),
+                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING)),
                 null
             ),
-            new RouteArguments(
-                creeateRoute(1, INT_MISSING), INT_MISSING, INT_MISSING,
+            Arguments.of(
+                creeateRoute(1, INT_MISSING),
+                Lists.newArrayList(createTrip()),
+                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING)),
                 null
             )
         );
@@ -94,47 +98,61 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createLocationChecks")
-    void validateLocationTests(LocationArguments locationArguments) {
-        List<NewGTFSError> errors = FlexValidator.validateLocation(
-            null,
-            (Location) locationArguments.testObject,
-            locationArguments.stops,
-            locationArguments.fareRules
-        );
-        checkValidationErrorsMatchExpectedErrors(errors, locationArguments.expectedErrors);
+    void validateLocationTests(
+        Location location,
+        List<Stop> stops,
+        List<FareRule> fareRules,
+        List<NewGTFSErrorType> expectedErrors
+    ) {
+        List<NewGTFSError> errors = FlexValidator.validateLocation(null, location, stops, fareRules);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<LocationArguments> createLocationChecks() {
+    private static Stream<Arguments> createLocationChecks() {
         return Stream.of(
-            // Pass, no id conflicts
-            new LocationArguments(
-                createLocation("1", null),"2", null, null, null,
+            // Pass, no id conflicts.
+            Arguments.of(
+                createLocation("1", null),
+                Lists.newArrayList(createStop("2")),
+                null,
                 null
             ),
-            new LocationArguments(
-                createLocation("1", null),"1", null, null, null,
+            Arguments.of(
+                createLocation("1", null),
+                Lists.newArrayList(createStop("1")),
+                null,
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_DUPLICATE_LOCATION_ID)
             ),
-            // Pass, zone id is not required if no fare rules
-            new LocationArguments(
-                createLocation("1", "1"),"2", null, null, null,
+            // Pass, zone id is not required if no fare rules.
+            Arguments.of(
+                createLocation("1", "1"),
+                Lists.newArrayList(createStop("2")),
+                null,
                 null
             ),
-            new LocationArguments(
-                createLocation("1", "1"),"2", "3", "", "",
+            Arguments.of(
+                createLocation("1", "1"),
+                Lists.newArrayList(createStop("2")),
+                Lists.newArrayList(createFareRule("3", "", "")),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_MISSING_FARE_RULE)
             ),
-            new LocationArguments(
-                createLocation("1", "1"),"2", "", "3", "",
+            Arguments.of(
+                createLocation("1", "1"),
+                Lists.newArrayList(createStop("2")),
+                Lists.newArrayList(createFareRule("", "3", "")),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_MISSING_FARE_RULE)
             ),
-            new LocationArguments(
-                createLocation("1", "1"),"2", "", "", "3",
+            Arguments.of(
+                createLocation("1", "1"),
+                Lists.newArrayList(createStop("2")),
+                Lists.newArrayList(createFareRule("", "", "3")),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_MISSING_FARE_RULE)
             ),
-            // Pass, zone id matches fare rule
-            new LocationArguments(
-                createLocation("1", "1"),"2", "1", "", "",
+            // Pass, zone id matches fare rule.
+            Arguments.of(
+                createLocation("1", "1"),
+                Lists.newArrayList(createStop("2")),
+                Lists.newArrayList(createFareRule("1", "", "")),
                 null
             )
         );
@@ -142,23 +160,24 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createArrivalTimeTests")
-    void validateArrivalTime(BaseArguments baseArguments) {
+    void validateArrivalTime(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateArrivalTime((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validateArrivalTime(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createArrivalTimeTests() {
+    private static Stream<Arguments> createArrivalTimeTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForArrivalTimeTest(1130, INT_MISSING, INT_MISSING, INT_MISSING),null
+            Arguments.of(
+                createStopTimeForArrivalTimeTest(INT_MISSING, INT_MISSING),
+                null
             ),
-            new BaseArguments(
-                createStopTimeForArrivalTimeTest(1130, INT_MISSING, 1200, INT_MISSING),
+            Arguments.of(
+                createStopTimeForArrivalTimeTest(1200, INT_MISSING),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ARRIVAL_TIME)
             ),
-            new BaseArguments(
-                createStopTimeForArrivalTimeTest(1130, INT_MISSING, INT_MISSING, 1200),
+            Arguments.of(
+                createStopTimeForArrivalTimeTest(INT_MISSING, 1200),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ARRIVAL_TIME)
             )
         );
@@ -166,23 +185,24 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createDepartureTimeTests")
-    void validateDepartureTime(BaseArguments baseArguments) {
+    void validateDepartureTime(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateDepartureTime((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validateDepartureTime(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createDepartureTimeTests() {
+    private static Stream<Arguments> createDepartureTimeTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForDepartureTimeTest(1130, INT_MISSING, INT_MISSING, INT_MISSING),null
+            Arguments.of(
+                createStopTimeForDepartureTimeTest(INT_MISSING, INT_MISSING),
+                null
             ),
-            new BaseArguments(
-                createStopTimeForDepartureTimeTest(1130, INT_MISSING, 1200, INT_MISSING),
+            Arguments.of(
+                createStopTimeForDepartureTimeTest(1200, INT_MISSING),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_DEPARTURE_TIME)
             ),
-            new BaseArguments(
-                createStopTimeForDepartureTimeTest(1130, INT_MISSING, INT_MISSING, 1200),
+            Arguments.of(
+                createStopTimeForDepartureTimeTest(INT_MISSING, 1200),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_DEPARTURE_TIME)
             )
         );
@@ -190,26 +210,27 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createStopIdTests")
-    void validateStopId(BaseArguments baseArguments) {
+    void validateStopId(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateStopId((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validateStopId(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createStopIdTests() {
+    private static Stream<Arguments> createStopIdTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForStopIdTest("stop-id-1", null, null),null
+            Arguments.of(
+                createStopTimeForStopIdTest("stop-id-1", null, null),
+                null
             ),
-            new BaseArguments(
+            Arguments.of(
                 createStopTimeForStopIdTest(null, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_STOP_ID)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createStopTimeForStopIdTest("stop-id-1", "location-group-id-1", null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_STOP_ID)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createStopTimeForStopIdTest("stop-id-1", null, "location-id-1"),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_STOP_ID)
             )
@@ -218,26 +239,27 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createLocationGroupIdTests")
-    void validateLocationGroupId(BaseArguments baseArguments) {
+    void validateLocationGroupId(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateLocationGroupId((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validateLocationGroupId(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createLocationGroupIdTests() {
+    private static Stream<Arguments> createLocationGroupIdTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForStopIdTest(null, "location-group-id-1", null),null
+            Arguments.of(
+                createStopTimeForStopIdTest(null, "location-group-id-1", null),
+                null
             ),
-            new BaseArguments(
+            Arguments.of(
                 createStopTimeForStopIdTest(null, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_LOCATION_GROUP_ID)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createStopTimeForStopIdTest("stop-id-1", "location-group-id-1", null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_LOCATION_GROUP_ID)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createStopTimeForStopIdTest(null, "location-group-id-1", "location-id-1"),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_LOCATION_GROUP_ID)
             )
@@ -246,26 +268,27 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createLocationIdTests")
-    void validateLocationId(BaseArguments baseArguments) {
+    void validateLocationId(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateLocationId((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validateLocationId(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createLocationIdTests() {
+    private static Stream<Arguments> createLocationIdTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForStopIdTest(null, null, "location-id-1"), null
+            Arguments.of(
+                createStopTimeForStopIdTest(null, null, "location-id-1"),
+                null
             ),
-            new BaseArguments(
+            Arguments.of(
                 createStopTimeForStopIdTest(null, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_LOCATION_ID)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createStopTimeForStopIdTest("stop-id-1", null, "location-id-1"),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_LOCATION_ID)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createStopTimeForStopIdTest(null, "location-group-id-1", "location-id-1"),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_LOCATION_ID)
             )
@@ -274,27 +297,28 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createStartPickupDropOffWindowTests")
-    void validateStartPickupDropOffWindowTest(BaseArguments baseArguments) {
+    void validateStartPickupDropOffWindowTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateStartPickupDropOffWindow((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validateStartPickupDropOffWindow(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createStartPickupDropOffWindowTests() {
+    private static Stream<Arguments> createStartPickupDropOffWindowTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, "location-group-id-1", 1200, 1300), null
+            Arguments.of(
+                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, 1200, 1300),
+                null
             ),
-            new BaseArguments(
-                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, "location-group-id-1", INT_MISSING, INT_MISSING),
+            Arguments.of(
+                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, INT_MISSING, INT_MISSING),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_START_PICKUP_DROP_OFF_WINDOW)
             ),
-            new BaseArguments(
-                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, "location-group-id-1", 1200, INT_MISSING),
+            Arguments.of(
+                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, 1200, INT_MISSING),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_START_PICKUP_DROP_OFF_WINDOW)
             ),
-            new BaseArguments(
-                createStopTimeForStartPickupDropOffWindowTest(1200, "location-group-id-1", 1200, 1300),
+            Arguments.of(
+                createStopTimeForStartPickupDropOffWindowTest(1200, 1200, 1300),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_START_PICKUP_DROP_OFF_WINDOW)
             )
         );
@@ -302,27 +326,28 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createEndPickupDropOffWindowTests")
-    void validateEndPickupDropOffWindowTest(BaseArguments baseArguments) {
+    void validateEndPickupDropOffWindowTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateEndPickupDropOffWindow((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validateEndPickupDropOffWindow(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createEndPickupDropOffWindowTests() {
+    private static Stream<Arguments> createEndPickupDropOffWindowTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, "location-group-id-1", 1200, 1300), null
+            Arguments.of(
+                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, 1200, 1300),
+                null
             ),
-            new BaseArguments(
-                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, "location-group-id-1", INT_MISSING, INT_MISSING),
+            Arguments.of(
+                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, INT_MISSING, INT_MISSING),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_END_PICKUP_DROP_OFF_WINDOW)
             ),
-            new BaseArguments(
-                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, "location-group-id-1", INT_MISSING, 1200),
+            Arguments.of(
+                createStopTimeForStartPickupDropOffWindowTest(INT_MISSING, INT_MISSING, 1200),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_END_PICKUP_DROP_OFF_WINDOW)
             ),
-            new BaseArguments(
-                createStopTimeForStartPickupDropOffWindowTest(1200, "location-group-id-1", 1200, 1300),
+            Arguments.of(
+                createStopTimeForStartPickupDropOffWindowTest(1200, 1200, 1300),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_END_PICKUP_DROP_OFF_WINDOW)
             )
         );
@@ -330,28 +355,22 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createPickupTypeTests")
-    void validatePickUpTypeTest(BaseArguments baseArguments) {
+    void validatePickUpTypeTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validatePickUpType((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validatePickUpType(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createPickupTypeTests() {
+    private static Stream<Arguments> createPickupTypeTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForPickupTypeTest(1, INT_MISSING), null
-            ),
-            new BaseArguments(
-                createStopTimeForPickupTypeTest(0, INT_MISSING), null
-            ),
-            new BaseArguments(
-                createStopTimeForPickupTypeTest(3, INT_MISSING), null
-            ),
-            new BaseArguments(
+            Arguments.of(createStopTimeForPickupTypeTest(1), null),
+            Arguments.of(createStopTimeForPickupTypeTest(0), null),
+            Arguments.of(createStopTimeForPickupTypeTest(3), null),
+            Arguments.of(
                 createStopTimeForPickUpTypeTest(0, 1300),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PICKUP_TYPE)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createStopTimeForPickUpTypeTest(3, 1200),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PICKUP_TYPE)
             )
@@ -360,24 +379,18 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createDropOffTests")
-    void validateDropOffTest(BaseArguments baseArguments) {
+    void validateDropOffTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateDropOffType((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validateDropOffType(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createDropOffTests() {
+    private static Stream<Arguments> createDropOffTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForDropOffTypeTest(1, INT_MISSING), null
-            ),
-            new BaseArguments(
-                createStopTimeForDropOffTypeTest(0, INT_MISSING), null
-            ),
-            new BaseArguments(
-                createStopTimeForDropOffTypeTest(3, 1300), null
-            ),
-            new BaseArguments(
+            Arguments.of(createStopTimeForDropOffTypeTest(1, INT_MISSING), null),
+            Arguments.of(createStopTimeForDropOffTypeTest(0, INT_MISSING), null),
+            Arguments.of(createStopTimeForDropOffTypeTest(3, 1300), null),
+            Arguments.of(
                 createStopTimeForDropOffTypeTest(0, 1300),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_DROP_OFF_TYPE)
             )
@@ -386,18 +399,16 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createContinuousPickupTests")
-    void validateContinuousPickupTest(BaseArguments baseArguments) {
+    void validateContinuousPickupTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateContinuousPickup((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validateContinuousPickup(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createContinuousPickupTests() {
+    private static Stream<Arguments> createContinuousPickupTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForContinuousPickupTest(INT_MISSING), null
-            ),
-            new BaseArguments(
+            Arguments.of(createStopTimeForContinuousPickupTest(INT_MISSING), null),
+            Arguments.of(
                 createStopTimeForContinuousPickupTest(1300),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP)
             )
@@ -406,18 +417,16 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createContinuousDropOffTests")
-    void validateContinuousDropOffTest(BaseArguments baseArguments) {
+    void validateContinuousDropOffTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateContinuousDropOff((StopTime) baseArguments.testObject, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+        FlexValidator.validateContinuousDropOff(stopTime, errors);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createContinuousDropOffTests() {
+    private static Stream<Arguments> createContinuousDropOffTests() {
         return Stream.of(
-            new BaseArguments(
-                createStopTimeForContinuousPickupTest(INT_MISSING), null
-            ),
-            new BaseArguments(
+            Arguments.of(createStopTimeForContinuousPickupTest(INT_MISSING), null),
+            Arguments.of(
                 createStopTimeForContinuousPickupTest(1300),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF)
             )
@@ -426,50 +435,50 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createBookingRuleChecks")
-    void validateBookingRuleTests(BaseArguments baseArguments) {
-        List<NewGTFSError> errors = FlexValidator.validateBookingRule((BookingRule) baseArguments.testObject);
-        checkValidationErrorsMatchExpectedErrors(errors, baseArguments.expectedErrors);
+    void validateBookingRuleTests(BookingRule bookingRule, List<NewGTFSErrorType> expectedErrors) {
+        List<NewGTFSError> errors = FlexValidator.validateBookingRule(bookingRule);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<BaseArguments> createBookingRuleChecks() {
+    private static Stream<Arguments> createBookingRuleChecks() {
         return Stream.of(
-            new BaseArguments(
+            Arguments.of(
                 createBookingRule(INT_MISSING, 1, INT_MISSING, INT_MISSING, INT_MISSING, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_DURATION_MIN)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createBookingRule(30, INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MIN)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createBookingRule(INT_MISSING, 0, 30, INT_MISSING, INT_MISSING, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MAX)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createBookingRule(INT_MISSING, 2, 30, INT_MISSING, INT_MISSING, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MAX, NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_DAY)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createBookingRule(INT_MISSING, 2, INT_MISSING, 1, INT_MISSING, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createBookingRule(INT_MISSING, 0, INT_MISSING, INT_MISSING, 1, "07:00:00", null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createBookingRule(30, 1, 30, INT_MISSING, 1, "10:30:00", null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createBookingRule(INT_MISSING, INT_MISSING, 30, INT_MISSING, 2, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_START_TIME)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createBookingRule(INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, "19:00:00", null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_START_TIME)
             ),
-            new BaseArguments(
+            Arguments.of(
                 createBookingRule(INT_MISSING, 0, INT_MISSING, INT_MISSING, INT_MISSING, null, "1"),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_SERVICE_ID)
             )
@@ -478,117 +487,31 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createTripChecks")
-    void validateTripTests(TripArguments tripArguments) {
-        List<NewGTFSError> errors = FlexValidator.validateTrip(
-            (Trip) tripArguments.testObject,
-            tripArguments.stopTimes
-        );
-        checkValidationErrorsMatchExpectedErrors(errors, tripArguments.expectedErrors);
+    void validateTripTests(Trip trip, List<StopTime> stopTimes, List<NewGTFSErrorType> expectedErrors) {
+        List<NewGTFSError> errors = FlexValidator.validateTrip(trip, stopTimes);
+        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
     }
 
-    private static Stream<TripArguments> createTripChecks() {
+    private static Stream<Arguments> createTripChecks() {
+        Trip trip = createTrip();
         return Stream.of(
-            new TripArguments(
-                createTrip(), "1", "0","0",
+            Arguments.of(
+                trip,
+                Lists.newArrayList(createStopTime("1", null, null, trip.trip_id)),
                 null
             ),
-            new TripArguments(
-                createTrip(), "1", "1","0",
+            Arguments.of(
+                trip,
+                Lists.newArrayList(createStopTime(null, "1", null, trip.trip_id)),
                 Lists.newArrayList(NewGTFSErrorType.TRIP_SPEED_NOT_VALIDATED)
             ),
-            new TripArguments(
-                createTrip(), "1", "0","1",
+            Arguments.of(
+                trip,
+                Lists.newArrayList(createStopTime(null, null, "1", trip.trip_id)),
                 Lists.newArrayList(NewGTFSErrorType.TRIP_SPEED_NOT_VALIDATED)
             )
         );
     }
-
-    private static class BaseArguments {
-        public Object testObject;
-        public List<NewGTFSErrorType> expectedErrors;
-
-        private BaseArguments(Object testData, List<NewGTFSErrorType> expectedErrors) {
-            this.testObject = testData;
-            this.expectedErrors = expectedErrors;
-        }
-    }
-
-    private static class LocationArguments extends BaseArguments {
-        public final List<Stop> stops;
-        public List<FareRule> fareRules = new ArrayList<>();
-
-        private LocationArguments(
-            Object location,
-            String stopId,
-            String containsId,
-            String destinationId,
-            String originId,
-            List<NewGTFSErrorType> expectedErrors
-        ) {
-            super(location, expectedErrors);
-            this.stops = Lists.newArrayList(createStop(stopId));
-            if (containsId != null || destinationId != null || originId != null) {
-                FareRule fareRule = new FareRule();
-                fareRule.contains_id = containsId;
-                fareRule.destination_id = destinationId;
-                fareRule.origin_id = originId;
-                fareRules = Lists.newArrayList(fareRule);
-            }
-
-        }
-    }
-
-    private static class LocationGroupArguments extends BaseArguments {
-        public final List<Stop> stops;
-        public List<Location> locations;
-
-        private LocationGroupArguments(
-            String locationGroupId,
-            String locationId,
-            String stopId,
-            List<NewGTFSErrorType> expectedErrors
-        ) {
-            super(createLocationGroup(locationGroupId), expectedErrors);
-            this.stops = Lists.newArrayList(createStop(stopId));
-            this.locations = Lists.newArrayList(createLocation(locationId));
-        }
-    }
-
-    private static class TripArguments extends BaseArguments {
-        public final List<StopTime> stopTimes;
-        public final List<LocationGroup> locationGroups;
-        public final List<Location> locations;
-
-        private TripArguments(
-            Object trip,
-            String stopId,
-            String locationId,
-            String locationGroupId,
-            List<NewGTFSErrorType> expectedErrors
-        ) {
-            super(trip, expectedErrors);
-            this.stopTimes = (stopId != null) ? Lists.newArrayList(createStopTime(stopId, ((Trip)trip).trip_id)) : null;
-            this.locationGroups = (locationGroupId != null) ? Lists.newArrayList(createLocationGroup(locationGroupId)) : null;
-            this.locations = (locationId != null) ? Lists.newArrayList(createLocation(locationId)) : null;
-        }
-    }
-
-    private static class RouteArguments extends BaseArguments {
-        public final List<Trip> trips;
-        public final List<StopTime> stopTimes;
-
-        private RouteArguments(
-            Object route,
-            int startPickupDropOffWindow,
-            int endPickupDropOffWindow,
-            List<NewGTFSErrorType> expectedErrors
-        ) {
-            super(route, expectedErrors);
-            this.trips = Lists.newArrayList(createTrip("trip-id-1", "route-id-1"));
-            this.stopTimes = Lists.newArrayList(createStopTime("trip-id-1", startPickupDropOffWindow, endPickupDropOffWindow));
-        }
-    }
-
 
     /**
      * Check that the errors produced by the flex validator match the expected errors. If no errors are expected, check
@@ -607,6 +530,14 @@ class FlexValidatorTest {
             // No errors expected, so the reported errors should be empty.
             assertTrue(validationErrors.isEmpty());
         }
+    }
+
+    private static FareRule createFareRule(String containsId, String destinationId, String originId) {
+        FareRule fareRule = new FareRule();
+        fareRule.contains_id = containsId;
+        fareRule.destination_id = destinationId;
+        fareRule.origin_id = originId;
+        return fareRule;
     }
 
     private static BookingRule createBookingRule(
@@ -652,9 +583,11 @@ class FlexValidatorTest {
         return stop;
     }
 
-    private static StopTime createStopTime(String stopId, String tripId) {
+    private static StopTime createStopTime(String stopId, String locationId, String locationGroupId, String tripId) {
         StopTime stopTime = new StopTime();
         stopTime.stop_id = stopId;
+        stopTime.location_id = locationId;
+        stopTime.location_group_id = locationGroupId;
         stopTime.trip_id = tripId;
         return stopTime;
     }
@@ -668,27 +601,23 @@ class FlexValidatorTest {
     }
 
     private static StopTime createStopTimeForArrivalTimeTest(
-        int arrivalTime,
-        int startPickupDropOffWindow,
         int endPickupDropOffWindow,
         int timePoint
     ) {
         StopTime stopTime = new StopTime();
-        stopTime.arrival_time = arrivalTime;
-        stopTime.start_pickup_drop_off_window = startPickupDropOffWindow;
+        stopTime.arrival_time = 1130;
+        stopTime.start_pickup_drop_off_window = com.conveyal.gtfs.model.Entity.INT_MISSING;
         stopTime.end_pickup_drop_off_window = endPickupDropOffWindow;
         stopTime.timepoint = timePoint;
         return stopTime;
     }
     private static StopTime createStopTimeForDepartureTimeTest(
-        int departureTime,
-        int startPickupDropOffWindow,
         int endPickupDropOffWindow,
         int timePoint
     ) {
         StopTime stopTime = new StopTime();
-        stopTime.departure_time = departureTime;
-        stopTime.start_pickup_drop_off_window = startPickupDropOffWindow;
+        stopTime.departure_time = 1130;
+        stopTime.start_pickup_drop_off_window = com.conveyal.gtfs.model.Entity.INT_MISSING;
         stopTime.end_pickup_drop_off_window = endPickupDropOffWindow;
         stopTime.timepoint = timePoint;
         return stopTime;
@@ -724,10 +653,7 @@ class FlexValidatorTest {
         return stopTime;
     }
 
-    private static StopTime createStopTimeForPickUpTypeTest(
-        int pickupType,
-        int startPickupDropOffWindow
-    ) {
+    private static StopTime createStopTimeForPickUpTypeTest(int pickupType, int startPickupDropOffWindow) {
         StopTime stopTime = new StopTime();
         stopTime.pickup_type = pickupType;
         stopTime.start_pickup_drop_off_window = startPickupDropOffWindow;
@@ -736,25 +662,21 @@ class FlexValidatorTest {
 
     private static StopTime createStopTimeForStartPickupDropOffWindowTest(
         int arrivalTime,
-        String locationGroupId,
         int startPickupDropOffWindow,
         int endPickupDropOffWindow
     ) {
         StopTime stopTime = new StopTime();
         stopTime.arrival_time = arrivalTime;
-        stopTime.location_group_id = locationGroupId;
+        stopTime.location_group_id = "location-group-id-1";
         stopTime.start_pickup_drop_off_window = startPickupDropOffWindow;
         stopTime.end_pickup_drop_off_window = endPickupDropOffWindow;
         return stopTime;
     }
 
-    private static StopTime createStopTimeForPickupTypeTest(
-        int pickupType,
-        int startPickupDropOffWindow
-    ) {
+    private static StopTime createStopTimeForPickupTypeTest(int pickupType) {
         StopTime stopTime = new StopTime();
         stopTime.pickup_type = pickupType;
-        stopTime.start_pickup_drop_off_window = startPickupDropOffWindow;
+        stopTime.start_pickup_drop_off_window = com.conveyal.gtfs.model.Entity.INT_MISSING;
         return stopTime;
     }
 
@@ -768,14 +690,8 @@ class FlexValidatorTest {
 
     private static Trip createTrip() {
         Trip trip = new Trip();
-        trip.trip_id = "12345";
-        return trip;
-    }
-
-    private static Trip createTrip(String tripId, String routeId) {
-        Trip trip = new Trip();
-        trip.trip_id = tripId;
-        trip.route_id = routeId;
+        trip.trip_id = "trip-id-1";
+        trip.route_id = "route-id-1";
         return trip;
     }
 }

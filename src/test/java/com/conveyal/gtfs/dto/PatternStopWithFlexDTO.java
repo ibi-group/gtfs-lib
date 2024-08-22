@@ -33,12 +33,12 @@ public class PatternStopWithFlexDTO extends PatternStopDTO {
         default_dwell_time = defaultDwellTime;
     }
 
-    public PatternStopWithFlexDTO(String patternId, String stopId, int stopSequence, int timePoint, double shape_dist_traveledValue) {
+    public PatternStopWithFlexDTO(String patternId, String stopId, int stopSequence, int timePoint, double shapeDistTraveled) {
         timepoint = timePoint;
         pattern_id = patternId;
         stop_id = stopId;
         stop_sequence = stopSequence;
-        shape_dist_traveled = shape_dist_traveledValue;
+        shape_dist_traveled = shapeDistTraveled;
     }
 
     /**

@@ -191,17 +191,16 @@ public class PatternFinder {
                 }
 
                 // check for unique via stop
-                pattern.orderedHalts.stream().map(
-                    orderedStopOrLocationId -> getStopType(orderedStopOrLocationId, stopById, locationById, locationGroupStopById)
-                ).forEach(entity -> {
-                    Set<Pattern> viaIntersection = new HashSet<>(intersection);
-                    String stopName = getStopName(entity, locationGroupById);
-                    viaIntersection.retainAll(info.vias.get(stopName));
-
-                    if (viaIntersection.size() == 1) {
-                        pattern.name = String.format(Locale.US, "from %s to %s via %s", fromName, toName, stopName);
-                    }
-                });
+                pattern.orderedHalts.stream()
+                    .map(haltId -> getStopType(haltId, stopById, locationById, locationGroupStopById))
+                    .forEach(entity -> {
+                        Set<Pattern> viaIntersection = new HashSet<>(intersection);
+                        String stopName = getStopName(entity, locationGroupById);
+                        viaIntersection.retainAll(info.vias.get(stopName));
+                        if (viaIntersection.size() == 1) {
+                            pattern.name = String.format(Locale.US, "from %s to %s via %s", fromName, toName, stopName);
+                        }
+                    });
 
                 if (pattern.name == null) {
                     // no unique via, one pattern is subset of other.
@@ -238,19 +237,20 @@ public class PatternFinder {
      * stop, location or location group stop, this method decides which.
      */
     private static Object getStopType(
-        String orderedStopOrLocationId,
+        String orderedHaltId,
         Map<String, Stop> stopById,
         Map<String, Location> locationById,
         Map<String, LocationGroupStop> locationGroupStopById
     ) {
-        if (stopById.get(orderedStopOrLocationId) != null) {
-            return stopById.get(orderedStopOrLocationId);
-        } else if (locationById.get(orderedStopOrLocationId) != null) {
-            return locationById.get(orderedStopOrLocationId);
-        } else if (locationGroupStopById.get(orderedStopOrLocationId) != null) {
-            return locationGroupStopById.get(orderedStopOrLocationId);
+        Object stop = stopById.get(orderedHaltId);
+        Object location = locationById.get(orderedHaltId);
+        Object locationGroupStop = locationGroupStopById.get(orderedHaltId);
+        if (stop != null) {
+            return stop;
+        } else if (location != null) {
+            return location;
         } else {
-            return null;
+            return locationGroupStop;
         }
     }
 

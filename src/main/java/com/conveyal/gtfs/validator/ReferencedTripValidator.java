@@ -25,7 +25,7 @@ import static com.conveyal.gtfs.error.NewGTFSErrorType.*;
  *
  * Created by abyrd on 2017-04-18
  */
-public class ReferencesTripValidator extends TripValidator {
+public class ReferencedTripValidator extends TripValidator {
 
     Set<String> referencedStops = new HashSet<>();
     Set<String> referencedTrips = new HashSet<>();
@@ -33,7 +33,7 @@ public class ReferencesTripValidator extends TripValidator {
     Set<String> referencedLocations = new HashSet<>();
     Set<String> referencedLocationGroups = new HashSet<>();
 
-    public ReferencesTripValidator(Feed feed, SQLErrorStorage errorStorage) {
+    public ReferencedTripValidator(Feed feed, SQLErrorStorage errorStorage) {
         super(feed, errorStorage);
     }
 
@@ -87,6 +87,7 @@ public class ReferencesTripValidator extends TripValidator {
                 registerError(route, ROUTE_UNUSED);
             }
         }
+
         // If a stop time references a location, make sure that the referenced location is used.
         List<Location> locations = Lists.newArrayList(feed.locations);
         feed.stopTimes.forEach(stopTime -> {
@@ -95,12 +96,10 @@ public class ReferencesTripValidator extends TripValidator {
             }
         });
 
-        // A stop area is used as a stop id within stop times. If the stop id is a stop area check for a
-        // match against the referenced stop areas.
+        // If a stop time references a location group, make sure that the referenced location group is used.
         List<LocationGroup> locationGroups = Lists.newArrayList(feed.locationGroups);
         feed.stopTimes.forEach(stopTime -> {
-            if (stopTime.location_group_id != null && !referencedLocationGroups.contains(stopTime.location_group_id)
-            ) {
+            if (stopTime.location_group_id != null && !referencedLocationGroups.contains(stopTime.location_group_id)) {
                 registerError(
                     getLocationGroupById(locationGroups, stopTime.location_group_id),
                     LOCATION_GROUP_UNUSED,

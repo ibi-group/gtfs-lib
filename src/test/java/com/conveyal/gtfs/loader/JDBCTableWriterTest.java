@@ -172,7 +172,6 @@ public class JDBCTableWriterTest {
         TripDTO tripInput = constructTimetableTrip(pattern.pattern_id, pattern.route_id, stopTimes);
 
         JdbcTableWriter createTripWriter = createTestTableWriter(Table.TRIPS);
-        System.out.println(mapper.writeValueAsString(tripInput));
         String createdTripOutput = createTripWriter.create(mapper.writeValueAsString(tripInput), true);
         createdTrip = mapper.readValue(createdTripOutput, TripDTO.class);
     }
@@ -1712,7 +1711,7 @@ public class JDBCTableWriterTest {
                 ),
                 70, 70, 13, 6
             ),
-//            // Delete stop from middle.
+            // Delete stop from middle.
             new PatternArguments(
                 new PatternStopWithFlexDTO[] {
                     new PatternStopWithFlexDTO(patternId, stopTwo.stop_id, 0, 13, 6),

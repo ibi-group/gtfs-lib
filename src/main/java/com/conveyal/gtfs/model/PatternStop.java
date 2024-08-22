@@ -1,5 +1,7 @@
 package com.conveyal.gtfs.model;
 
+import com.conveyal.gtfs.TripPatternKey;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
@@ -34,6 +36,26 @@ public class PatternStop extends PatternHalt {
     public int end_pickup_drop_off_window = INT_MISSING;
 
     public PatternStop () {}
+    public PatternStop (String patternId, int stopSequence, TripPatternKey tripPattern, int travelTime, int timeInLocation) {
+        pattern_id = patternId;
+        stop_sequence = stopSequence;
+        stop_id = tripPattern.stops.get(stopSequence);
+        location_group_id = tripPattern.locationGroupIds.get(stopSequence);
+        location_id = tripPattern.locationIds.get(stopSequence);
+        stop_headsign = tripPattern.stopHeadsigns.get(stopSequence);
+        default_travel_time = travelTime;
+        default_dwell_time = timeInLocation;
+        drop_off_type = tripPattern.dropoffTypes.get(stopSequence);
+        pickup_type = tripPattern.pickupTypes.get(stopSequence);
+        shape_dist_traveled = tripPattern.shapeDistances.get(stopSequence);
+        timepoint = tripPattern.timepoints.get(stopSequence);
+        continuous_pickup = tripPattern.continuous_pickup.get(stopSequence);
+        continuous_drop_off = tripPattern.continuous_drop_off.get(stopSequence);
+        pickup_booking_rule_id = tripPattern.pickup_booking_rule_id.get(stopSequence);
+        drop_off_booking_rule_id = tripPattern.drop_off_booking_rule_id.get(stopSequence);
+        start_pickup_drop_off_window = tripPattern.start_pickup_drop_off_window.get(stopSequence);
+        end_pickup_drop_off_window = tripPattern.end_pickup_drop_off_window.get(stopSequence);
+    }
 
     @Override
     public void setStatementParameters(PreparedStatement statement, boolean setDefaultId) throws SQLException {

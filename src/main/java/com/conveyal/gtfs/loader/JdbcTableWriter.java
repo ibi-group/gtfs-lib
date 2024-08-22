@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -40,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.INSERT_BATCH_SIZE;
 import static com.conveyal.gtfs.util.Util.ensureValidNamespace;
@@ -212,7 +214,7 @@ public class JdbcTableWriter implements TableWriter {
                         jsonObject,
                         "trips",
                         "route_id",
-                       new String[] {"wheelchair_accessible"}
+                        Sets.newHashSet("wheelchair_accessible")
                     );
                     break;
                 case "patterns":
@@ -221,7 +223,7 @@ public class JdbcTableWriter implements TableWriter {
                         jsonObject,
                         "trips",
                         "pattern_id",
-                        new String[] {"direction_id", "shape_id"}
+                        Sets.newHashSet("direction_id", "shape_id")
                     );
                     break;
                 default:
@@ -334,7 +336,7 @@ public class JdbcTableWriter implements TableWriter {
         ObjectNode exemplarEntity,
         String linkedTableName,
         String keyField,
-        String[] linkedFieldsToUpdate
+        Set<String> linkedFieldsToUpdate
     ) throws SQLException {
         boolean updatingStopTimes = "stop_times".equals(linkedTableName);
         // Collect fields, the JSON values for these fields, and the strings to add to the prepared statement into Lists.
@@ -717,13 +719,12 @@ public class JdbcTableWriter implements TableWriter {
     }
 
     /**
-     * Defined the linked fields to be updated. This will depend on the fields that are provided. Optional, editor and
+     * Define the linked fields to be updated. This will depend on the fields that are provided. Optional, editor and
      * extension fields can be undefined and therefore not provided. To prevent a mismatch between provided and expected
      * a linked field is only defined if the entity provides a value for it.
      */
-    private String[] getLinkedFields(ObjectNode entity) {
-        Set<String> linkedFields = new HashSet<>();
-        String[] linkedFieldsToCheck = {
+    private Set<String> getLinkedFields(ObjectNode entity) {
+        Set<String> linkedFieldsToCheck = Sets.newHashSet(
             "timepoint",
             "drop_off_type",
             "stop_headsign",
@@ -735,13 +736,11 @@ public class JdbcTableWriter implements TableWriter {
             "drop_off_booking_rule_id",
             "start_pickup_drop_off_window",
             "end_pickup_drop_off_window"
-        };
-        for (String field : linkedFieldsToCheck) {
-            if (entity.get(field) != null) {
-                linkedFields.add(field);
-            }
-        }
-        return linkedFields.toArray(new String[0]);
+        );
+        return linkedFieldsToCheck
+            .stream()
+            .filter(field -> entity.get(field) != null)
+            .collect(Collectors.toSet());
     }
 
     /**
@@ -809,12 +808,16 @@ public class JdbcTableWriter implements TableWriter {
             String referenceFieldName = referencedTable.getKeyFieldName();
             Set<String> foundReferences = checkTableForReferences(referenceStrings, referencedTable);
             if (referenceStrings.size() != foundReferences.size()) {
+                Set<String> invalidReferences = referenceStrings
+                    .stream()
+                    .filter(reference -> !foundReferences.contains(reference))
+                    .collect(Collectors.toSet());
                 throw new SQLException(
                     String.format(
                         "%s entities must contain valid %s references. (Invalid references: %s)",
                         referringTableName,
                         referenceFieldName,
-                        String.join(", ", referenceStrings)
+                        String.join(", ", invalidReferences)
                     )
                 );
             } else {

@@ -1,6 +1,8 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.graphql.fetchers.MapFetcher;
+import graphql.schema.GraphQLObjectType;
 
 import java.io.IOException;
 import java.net.URL;
@@ -8,6 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Objects;
+
+import static graphql.Scalars.GraphQLInt;
+import static graphql.schema.GraphQLObjectType.newObject;
 
 public class BookingRule extends Entity {
 
@@ -28,6 +33,23 @@ public class BookingRule extends Entity {
     public String phone_number;
     public URL info_url;
     public URL booking_url;
+
+    public static final String TABLE_NAME = "booking_rules";
+    public static final String BOOKING_RULE_ID_COLUMN_NAME = "booking_rule_id";
+    public static final String BOOKING_TYPE_COLUMN_NAME = "booking_type";
+    public static final String PRIOR_NOTICE_DURATION_MIN_COLUMN_NAME = "prior_notice_duration_min";
+    public static final String PRIOR_NOTICE_DURATION_MAX_COLUMN_NAME = "prior_notice_duration_max";
+    public static final String PRIOR_NOTICE_LAST_DAY_COLUMN_NAME = "prior_notice_last_day";
+    public static final String PRIOR_NOTICE_LAST_TIME_COLUMN_NAME = "prior_notice_last_time";
+    public static final String PRIOR_NOTICE_START_DAY_COLUMN_NAME = "prior_notice_start_day";
+    public static final String PRIOR_NOTICE_START_TIME_COLUMN_NAME = "prior_notice_start_time";
+    public static final String PRIOR_NOTICE_SERVICE_ID_COLUMN_NAME = "prior_notice_service_id";
+    public static final String MESSAGE_COLUMN_NAME = "message";
+    public static final String PICKUP_MESSAGE_COLUMN_NAME = "pickup_message";
+    public static final String DROP_OFF_MESSAGE_COLUMN_NAME = "drop_off_message";
+    public static final String PHONE_NUMBER_COLUMN_NAME = "phone_number";
+    public static final String INFO_URL_COLUMN_NAME = "info_url";
+    public static final String BOOKING_URL_COLUMN_NAME = "booking_url";
 
     @Override
     public String getId() {
@@ -62,7 +84,7 @@ public class BookingRule extends Entity {
     public static class Loader extends Entity.Loader<BookingRule> {
 
         public Loader(GTFSFeed feed) {
-            super(feed, "booking_rules");
+            super(feed, TABLE_NAME);
         }
 
         @Override
@@ -74,21 +96,21 @@ public class BookingRule extends Entity {
         public void loadOneRow() throws IOException {
             BookingRule bookingRule = new BookingRule();
             bookingRule.id = row + 1; // offset line number by 1 to account for 0-based row index
-            bookingRule.booking_rule_id = getStringField("booking_rule_id", true);
-            bookingRule.booking_type = getIntField("booking_type", true, 0, 2);
-            bookingRule.prior_notice_duration_min = getIntField("prior_notice_duration_min", false, 0, Integer.MAX_VALUE);
-            bookingRule.prior_notice_duration_max = getIntField("prior_notice_duration_max", false, 0, Integer.MAX_VALUE);
-            bookingRule.prior_notice_last_day = getIntField("prior_notice_last_day", false, 0, Integer.MAX_VALUE);
-            bookingRule.prior_notice_last_time = getStringField("prior_notice_last_time", false);
-            bookingRule.prior_notice_start_day = getIntField("prior_notice_start_day", false, 0, Integer.MAX_VALUE);
-            bookingRule.prior_notice_start_time = getStringField("prior_notice_start_time", false);
-            bookingRule.prior_notice_service_id = getStringField("prior_notice_service_id", false);
-            bookingRule.message = getStringField("message", false);
-            bookingRule.pickup_message = getStringField("pickup_message", false);
-            bookingRule.drop_off_message = getStringField("drop_off_message", false);
-            bookingRule.phone_number = getStringField("phone_number", false);
-            bookingRule.info_url = getUrlField("info_url", false);
-            bookingRule.booking_url = getUrlField("booking_url", false);
+            bookingRule.booking_rule_id = getStringField(BOOKING_RULE_ID_COLUMN_NAME, true);
+            bookingRule.booking_type = getIntField(BOOKING_TYPE_COLUMN_NAME, true, 0, 2);
+            bookingRule.prior_notice_duration_min = getIntField(PRIOR_NOTICE_DURATION_MIN_COLUMN_NAME, false, 0, Integer.MAX_VALUE);
+            bookingRule.prior_notice_duration_max = getIntField(PRIOR_NOTICE_DURATION_MAX_COLUMN_NAME, false, 0, Integer.MAX_VALUE);
+            bookingRule.prior_notice_last_day = getIntField(PRIOR_NOTICE_LAST_DAY_COLUMN_NAME, false, 0, Integer.MAX_VALUE);
+            bookingRule.prior_notice_last_time = getStringField(PRIOR_NOTICE_LAST_TIME_COLUMN_NAME, false);
+            bookingRule.prior_notice_start_day = getIntField(PRIOR_NOTICE_START_DAY_COLUMN_NAME, false, 0, Integer.MAX_VALUE);
+            bookingRule.prior_notice_start_time = getStringField(PRIOR_NOTICE_START_TIME_COLUMN_NAME, false);
+            bookingRule.prior_notice_service_id = getStringField(PRIOR_NOTICE_SERVICE_ID_COLUMN_NAME, false);
+            bookingRule.message = getStringField(MESSAGE_COLUMN_NAME, false);
+            bookingRule.pickup_message = getStringField(PICKUP_MESSAGE_COLUMN_NAME, false);
+            bookingRule.drop_off_message = getStringField(DROP_OFF_MESSAGE_COLUMN_NAME, false);
+            bookingRule.phone_number = getStringField(PHONE_NUMBER_COLUMN_NAME, false);
+            bookingRule.info_url = getUrlField(INFO_URL_COLUMN_NAME, false);
+            bookingRule.booking_url = getUrlField(BOOKING_URL_COLUMN_NAME, false);
 
             // Attempting to put a null key or value will cause an NPE in BTreeMap
             if (bookingRule.booking_rule_id != null) {
@@ -99,21 +121,34 @@ public class BookingRule extends Entity {
               Check referential integrity without storing references. BookingRule cannot directly reference Calendars
               because they would be serialized into the MapDB.
              */
-            getRefField("prior_notice_service_id", bookingRule.prior_notice_service_id != null, feed.calendars);
+            getRefField(PRIOR_NOTICE_SERVICE_ID_COLUMN_NAME, bookingRule.prior_notice_service_id != null, feed.calendars);
         }
     }
 
     public static class Writer extends Entity.Writer<BookingRule> {
         public Writer(GTFSFeed feed) {
-            super(feed, "booking_rules");
+            super(feed, TABLE_NAME);
         }
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[]{"booking_rule_id", "booking_type", "prior_notice_duration_min",
-                "prior_notice_duration_max", "prior_notice_last_day", "prior_notice_last_time", "prior_notice_start_day",
-                "prior_notice_start_time", "prior_notice_service_id", "message", "pickup_message", "drop_off_message",
-                "phone_number", "info_url", "booking_url"});
+            writer.writeRecord(new String[]{
+                BOOKING_RULE_ID_COLUMN_NAME,
+                BOOKING_TYPE_COLUMN_NAME,
+                PRIOR_NOTICE_DURATION_MIN_COLUMN_NAME,
+                PRIOR_NOTICE_DURATION_MAX_COLUMN_NAME,
+                PRIOR_NOTICE_LAST_DAY_COLUMN_NAME,
+                PRIOR_NOTICE_LAST_TIME_COLUMN_NAME,
+                PRIOR_NOTICE_START_DAY_COLUMN_NAME,
+                PRIOR_NOTICE_START_TIME_COLUMN_NAME,
+                PRIOR_NOTICE_SERVICE_ID_COLUMN_NAME,
+                MESSAGE_COLUMN_NAME,
+                PICKUP_MESSAGE_COLUMN_NAME,
+                DROP_OFF_MESSAGE_COLUMN_NAME,
+                PHONE_NUMBER_COLUMN_NAME,
+                INFO_URL_COLUMN_NAME,
+                BOOKING_URL_COLUMN_NAME
+            });
         }
 
         @Override
@@ -142,6 +177,26 @@ public class BookingRule extends Entity {
         }
     }
 
+    public static final GraphQLObjectType bookingRulesType = newObject().name(TABLE_NAME)
+        .description("A GTFS booking rule object")
+        .field(MapFetcher.field("id", GraphQLInt))
+        .field(MapFetcher.field(BOOKING_RULE_ID_COLUMN_NAME))
+        .field(MapFetcher.field(BOOKING_TYPE_COLUMN_NAME, GraphQLInt))
+        .field(MapFetcher.field(PRIOR_NOTICE_DURATION_MIN_COLUMN_NAME, GraphQLInt))
+        .field(MapFetcher.field(PRIOR_NOTICE_DURATION_MAX_COLUMN_NAME, GraphQLInt))
+        .field(MapFetcher.field(PRIOR_NOTICE_LAST_DAY_COLUMN_NAME, GraphQLInt))
+        .field(MapFetcher.field(PRIOR_NOTICE_LAST_TIME_COLUMN_NAME))
+        .field(MapFetcher.field(PRIOR_NOTICE_START_DAY_COLUMN_NAME, GraphQLInt))
+        .field(MapFetcher.field(PRIOR_NOTICE_START_TIME_COLUMN_NAME))
+        .field(MapFetcher.field(PRIOR_NOTICE_SERVICE_ID_COLUMN_NAME))
+        .field(MapFetcher.field(MESSAGE_COLUMN_NAME))
+        .field(MapFetcher.field(PICKUP_MESSAGE_COLUMN_NAME))
+        .field(MapFetcher.field(DROP_OFF_MESSAGE_COLUMN_NAME))
+        .field(MapFetcher.field(PHONE_NUMBER_COLUMN_NAME))
+        .field(MapFetcher.field(INFO_URL_COLUMN_NAME))
+        .field(MapFetcher.field(BOOKING_URL_COLUMN_NAME))
+        .build();
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -151,9 +206,9 @@ public class BookingRule extends Entity {
             prior_notice_duration_min == that.prior_notice_duration_min &&
             prior_notice_duration_max == that.prior_notice_duration_max &&
             prior_notice_last_day == that.prior_notice_last_day &&
-            prior_notice_last_time == that.prior_notice_last_time &&
+            Objects.equals(prior_notice_last_time, that.prior_notice_last_time) &&
             prior_notice_start_day == that.prior_notice_start_day &&
-            prior_notice_start_time == that.prior_notice_start_time &&
+            Objects.equals(prior_notice_start_time, that.prior_notice_start_time) &&
             Objects.equals(booking_rule_id, that.booking_rule_id) &&
             Objects.equals(prior_notice_service_id, that.prior_notice_service_id) &&
             Objects.equals(message, that.message) &&

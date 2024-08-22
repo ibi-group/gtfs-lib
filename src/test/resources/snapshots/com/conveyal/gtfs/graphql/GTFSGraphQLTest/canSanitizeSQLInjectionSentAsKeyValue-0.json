@@ -6,7 +6,7 @@
         "agency_id" : "1",
         "count" : 1,
         "id" : 2,
-        "locationGroups" : [ {
+        "location_groups" : [ {
           "location_group_id" : "1"
         } ],
         "locations" : [ {
