@@ -17,9 +17,9 @@ public class FareMedia extends Entity {
     public String feed_id;
 
     public static final String TABLE_NAME = "fare_media";
-    public static final String FARE_MEDIA_ID_COLUMN_NAME = "fare_media_id";
-    public static final String FARE_MEDIA_NAME_COLUMN_NAME = "fare_media_name";
-    public static final String FARE_MEDIA_TYPE_COLUMN_NAME = "fare_media_type";
+    public static final String FARE_MEDIA_ID_NAME = "fare_media_id";
+    public static final String FARE_MEDIA_NAME_NAME = "fare_media_name";
+    public static final String FARE_MEDIA_TYPE_NAME = "fare_media_type";
 
     @Override
     public String getId () {
@@ -54,9 +54,9 @@ public class FareMedia extends Entity {
         public void loadOneRow() throws IOException {
             FareMedia fareMedia = new FareMedia();
             fareMedia.id = row + 1; // offset line number by 1 to account for 0-based row index
-            fareMedia.fare_media_id = getStringField(FARE_MEDIA_ID_COLUMN_NAME, true);
-            fareMedia.fare_media_name = getStringField(FARE_MEDIA_NAME_COLUMN_NAME, false);
-            fareMedia.fare_media_type = getIntField(FARE_MEDIA_TYPE_COLUMN_NAME, true, 0, 4);
+            fareMedia.fare_media_id = getStringField(FARE_MEDIA_ID_NAME, true);
+            fareMedia.fare_media_name = getStringField(FARE_MEDIA_NAME_NAME, false);
+            fareMedia.fare_media_type = getIntField(FARE_MEDIA_TYPE_NAME, true, 0, 4);
             fareMedia.feed = feed;
             fareMedia.feed_id = feed.feedId;
             feed.fare_medias.put(fareMedia.getId(), fareMedia);
@@ -72,9 +72,9 @@ public class FareMedia extends Entity {
         @Override
         public void writeHeaders() throws IOException {
             writer.writeRecord(new String[] {
-                FARE_MEDIA_ID_COLUMN_NAME,
-                FARE_MEDIA_NAME_COLUMN_NAME,
-                FARE_MEDIA_TYPE_COLUMN_NAME
+                FARE_MEDIA_ID_NAME,
+                FARE_MEDIA_NAME_NAME,
+                FARE_MEDIA_TYPE_NAME
             });
         }
 

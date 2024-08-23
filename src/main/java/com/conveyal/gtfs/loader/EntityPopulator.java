@@ -241,80 +241,80 @@ public interface EntityPopulator<T> {
 
     EntityPopulator<Area> AREA = (result, columnForName) -> {
         Area area = new Area();
-        area.area_id = getStringIfPresent(result, Area.AREA_ID_COLUMN_NAME, columnForName);
-        area.area_name = getStringIfPresent(result, Area.AREA_NAME_COLUMN_NAME, columnForName);
+        area.area_id = getStringIfPresent(result, Area.AREA_ID_NAME, columnForName);
+        area.area_name = getStringIfPresent(result, Area.AREA_NAME_NAME, columnForName);
         return area;
     };
 
     EntityPopulator<StopArea> STOP_AREA = (result, columnForName) -> {
         StopArea stopArea = new StopArea();
-        stopArea.area_id = getStringIfPresent(result, StopArea.AREA_ID_COLUMN_NAME, columnForName);
-        stopArea.stop_id = getStringIfPresent(result, StopArea.STOP_ID_COLUMN_NAME, columnForName);
+        stopArea.area_id = getStringIfPresent(result, StopArea.AREA_ID_NAME, columnForName);
+        stopArea.stop_id = getStringIfPresent(result, StopArea.STOP_ID_NAME, columnForName);
         return stopArea;
     };
 
     EntityPopulator<FareMedia> FARE_MEDIA = (result, columnForName) -> {
         FareMedia fareMedia = new FareMedia();
-        fareMedia.fare_media_id = getStringIfPresent(result, FareMedia.FARE_MEDIA_ID_COLUMN_NAME, columnForName);
-        fareMedia.fare_media_name = getStringIfPresent(result, FareMedia.FARE_MEDIA_NAME_COLUMN_NAME, columnForName);
-        fareMedia.fare_media_type = getIntIfPresent(result, FareMedia.FARE_MEDIA_TYPE_COLUMN_NAME, columnForName);
+        fareMedia.fare_media_id = getStringIfPresent(result, FareMedia.FARE_MEDIA_ID_NAME, columnForName);
+        fareMedia.fare_media_name = getStringIfPresent(result, FareMedia.FARE_MEDIA_NAME_NAME, columnForName);
+        fareMedia.fare_media_type = getIntIfPresent(result, FareMedia.FARE_MEDIA_TYPE_NAME, columnForName);
         return fareMedia;
     };
 
     EntityPopulator<FareProduct> FARE_PRODUCT = (result, columnForName) -> {
         FareProduct fareProduct = new FareProduct();
-        fareProduct.fare_product_id = getStringIfPresent(result, FareProduct.FARE_PRODUCT_ID_COLUMN_NAME, columnForName);
-        fareProduct.fare_product_name = getStringIfPresent(result, FareProduct.FARE_PRODUCT_NAME_COLUMN_NAME, columnForName);
-        fareProduct.fare_media_id = getStringIfPresent(result, FareProduct.FARE_MEDIA_ID_COLUMN_NAME, columnForName);
-        fareProduct.amount = getDoubleIfPresent(result, FareProduct.AMOUNT_COLUMN_NAME, columnForName);
-        fareProduct.currency = getStringIfPresent(result, FareProduct.CURRENCY_COLUMN_NAME, columnForName);
+        fareProduct.fare_product_id = getStringIfPresent(result, FareProduct.FARE_PRODUCT_ID_NAME, columnForName);
+        fareProduct.fare_product_name = getStringIfPresent(result, FareProduct.FARE_PRODUCT_NAME_NAME, columnForName);
+        fareProduct.fare_media_id = getStringIfPresent(result, FareProduct.FARE_MEDIA_ID_NAME, columnForName);
+        fareProduct.amount = getDoubleIfPresent(result, FareProduct.AMOUNT_NAME, columnForName);
+        fareProduct.currency = getStringIfPresent(result, FareProduct.CURRENCY_NAME, columnForName);
         return fareProduct;
     };
 
     EntityPopulator<TimeFrame> TIME_FRAME = (result, columnForName) -> {
         TimeFrame timeFrame = new TimeFrame();
-        timeFrame.timeframe_group_id = getStringIfPresent(result, TimeFrame.TIME_FRAME_GROUP_ID_COLUMN_NAME, columnForName);
-        timeFrame.start_time = getIntIfPresent(result, TimeFrame.START_TIME_COLUMN_NAME, columnForName);
-        timeFrame.end_time = getIntIfPresent(result, TimeFrame.END_TIME_COLUMN_NAME, columnForName);
-        timeFrame.service_id = getStringIfPresent(result, FareProduct.FARE_MEDIA_ID_COLUMN_NAME, columnForName);
+        timeFrame.timeframe_group_id = getStringIfPresent(result, TimeFrame.TIME_FRAME_GROUP_ID_NAME, columnForName);
+        timeFrame.start_time = getIntIfPresent(result, TimeFrame.START_TIME_NAME, columnForName);
+        timeFrame.end_time = getIntIfPresent(result, TimeFrame.END_TIME_NAME, columnForName);
+        timeFrame.service_id = getStringIfPresent(result, FareProduct.FARE_MEDIA_ID_NAME, columnForName);
         return timeFrame;
     };
 
     EntityPopulator<FareLegRule> FARE_LEG_RULE = (result, columnForName) -> {
         FareLegRule fareLegRule = new FareLegRule();
-        fareLegRule.leg_group_id = getStringIfPresent(result, FareLegRule.LEG_GROUP_ID_COLUMN_NAME, columnForName);
-        fareLegRule.from_timeframe_group_id = getStringIfPresent(result, FareLegRule.FROM_AREA_ID_COLUMN_NAME, columnForName);
-        fareLegRule.to_timeframe_group_id = getStringIfPresent(result, FareLegRule.TO_AREA_ID_COLUMN_NAME, columnForName);
-        fareLegRule.from_timeframe_group_id = getStringIfPresent(result, FareLegRule.FROM_TIMEFRAME_GROUP_ID_COLUMN_NAME, columnForName);
-        fareLegRule.to_timeframe_group_id = getStringIfPresent(result, FareLegRule.TO_TIMEFRAME_GROUP_ID_COLUMN_NAME, columnForName);
-        fareLegRule.fare_product_id = getStringIfPresent(result, FareLegRule.FARE_PRODUCT_ID_COLUMN_NAME, columnForName);
-        fareLegRule.rule_priority = getIntIfPresent(result, FareLegRule.RULE_PRIORITY_COLUMN_NAME, columnForName);
+        fareLegRule.leg_group_id = getStringIfPresent(result, FareLegRule.LEG_GROUP_ID_NAME, columnForName);
+        fareLegRule.from_timeframe_group_id = getStringIfPresent(result, FareLegRule.FROM_AREA_ID_NAME, columnForName);
+        fareLegRule.to_timeframe_group_id = getStringIfPresent(result, FareLegRule.TO_AREA_ID_NAME, columnForName);
+        fareLegRule.from_timeframe_group_id = getStringIfPresent(result, FareLegRule.FROM_TIMEFRAME_GROUP_ID_NAME, columnForName);
+        fareLegRule.to_timeframe_group_id = getStringIfPresent(result, FareLegRule.TO_TIMEFRAME_GROUP_ID_NAME, columnForName);
+        fareLegRule.fare_product_id = getStringIfPresent(result, FareLegRule.FARE_PRODUCT_ID_NAME, columnForName);
+        fareLegRule.rule_priority = getIntIfPresent(result, FareLegRule.RULE_PRIORITY_NAME, columnForName);
         return fareLegRule;
     };
 
     EntityPopulator<FareTransferRule> FARE_TRANSFER_RULE = (result, columnForName) -> {
         FareTransferRule fareTransferRule = new FareTransferRule();
-        fareTransferRule.from_leg_group_id = getStringIfPresent(result, FareTransferRule.FROM_LEG_GROUP_ID_COLUMN_NAME, columnForName);
-        fareTransferRule.to_leg_group_id = getStringIfPresent(result, FareTransferRule.TO_LEG_GROUP_ID_COLUMN_NAME, columnForName);
-        fareTransferRule.transfer_count = getIntIfPresent(result, FareTransferRule.TRANSFER_COUNT_COLUMN_NAME, columnForName);
-        fareTransferRule.duration_limit = getIntIfPresent(result, FareTransferRule.DURATION_LIMIT_COLUMN_NAME, columnForName);
-        fareTransferRule.duration_limit_type = getIntIfPresent(result, FareTransferRule.DURATION_LIMIT_TYPE_COLUMN_NAME, columnForName);
-        fareTransferRule.fare_transfer_type = getIntIfPresent(result, FareTransferRule.FARE_TRANSFER_TYPE_COLUMN_NAME, columnForName);
-        fareTransferRule.fare_product_id = getStringIfPresent(result, FareTransferRule.FARE_PRODUCT_ID_COLUMN_NAME, columnForName);
+        fareTransferRule.from_leg_group_id = getStringIfPresent(result, FareTransferRule.FROM_LEG_GROUP_ID_NAME, columnForName);
+        fareTransferRule.to_leg_group_id = getStringIfPresent(result, FareTransferRule.TO_LEG_GROUP_ID_NAME, columnForName);
+        fareTransferRule.transfer_count = getIntIfPresent(result, FareTransferRule.TRANSFER_COUNT_NAME, columnForName);
+        fareTransferRule.duration_limit = getIntIfPresent(result, FareTransferRule.DURATION_LIMIT_NAME, columnForName);
+        fareTransferRule.duration_limit_type = getIntIfPresent(result, FareTransferRule.DURATION_LIMIT_TYPE_NAME, columnForName);
+        fareTransferRule.fare_transfer_type = getIntIfPresent(result, FareTransferRule.FARE_TRANSFER_TYPE_NAME, columnForName);
+        fareTransferRule.fare_product_id = getStringIfPresent(result, FareTransferRule.FARE_PRODUCT_ID_NAME, columnForName);
         return fareTransferRule;
     };
 
     EntityPopulator<Network> NETWORK = (result, columnForName) -> {
         Network network = new Network();
-        network.network_id = getStringIfPresent(result, Network.NETWORK_ID_COLUMN_NAME, columnForName);
-        network.network_name = getStringIfPresent(result, Network.NETWORK_NAME_COLUMN_NAME, columnForName);
+        network.network_id = getStringIfPresent(result, Network.NETWORK_ID_NAME, columnForName);
+        network.network_name = getStringIfPresent(result, Network.NETWORK_NAME_NAME, columnForName);
         return network;
     };
 
     EntityPopulator<RouteNetwork> ROUTE_NETWORK = (result, columnForName) -> {
         RouteNetwork routeNetwork = new RouteNetwork();
-        routeNetwork.network_id = getStringIfPresent(result, RouteNetwork.NETWORK_ID_COLUMN_NAME, columnForName);
-        routeNetwork.route_id = getStringIfPresent(result, RouteNetwork.ROUTE_ID_COLUMN_NAME, columnForName);
+        routeNetwork.network_id = getStringIfPresent(result, RouteNetwork.NETWORK_ID_NAME, columnForName);
+        routeNetwork.route_id = getStringIfPresent(result, RouteNetwork.ROUTE_ID_NAME, columnForName);
         return routeNetwork;
     };
 

@@ -15,8 +15,8 @@ public class Area extends Entity {
     public String feed_id;
 
     public static final String TABLE_NAME = "areas";
-    public static final String AREA_ID_COLUMN_NAME = "area_id";
-    public static final String AREA_NAME_COLUMN_NAME = "area_name";
+    public static final String AREA_ID_NAME = "area_id";
+    public static final String AREA_NAME_NAME = "area_name";
 
 
     @Override
@@ -51,8 +51,8 @@ public class Area extends Entity {
         public void loadOneRow() throws IOException {
             Area area = new Area();
             area.id = row + 1; // offset line number by 1 to account for 0-based row index
-            area.area_id    = getStringField(AREA_ID_COLUMN_NAME, true);
-            area.area_name  = getStringField(AREA_NAME_COLUMN_NAME, false);
+            area.area_id    = getStringField(AREA_ID_NAME, true);
+            area.area_name  = getStringField(AREA_NAME_NAME, false);
             area.feed = feed;
             area.feed_id = feed.feedId;
             feed.areas.put(area.getId(), area);
@@ -67,7 +67,7 @@ public class Area extends Entity {
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {AREA_ID_COLUMN_NAME, AREA_NAME_COLUMN_NAME});
+            writer.writeRecord(new String[] {AREA_ID_NAME, AREA_NAME_NAME});
         }
 
         @Override

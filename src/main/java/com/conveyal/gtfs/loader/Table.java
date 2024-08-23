@@ -300,106 +300,106 @@ public class Table {
     .addPrimaryKeyNames("stop_id");
 
     public static final Table AREAS = new Table(Area.TABLE_NAME, Area.class, OPTIONAL,
-        new StringField(Area.AREA_ID_COLUMN_NAME, REQUIRED),
-        new StringField(Area.AREA_NAME_COLUMN_NAME, OPTIONAL)
+        new StringField(Area.AREA_ID_NAME, REQUIRED),
+        new StringField(Area.AREA_NAME_NAME, OPTIONAL)
     )
     .restrictDelete()
-    .addPrimaryKeyNames(Area.AREA_ID_COLUMN_NAME);
+    .addPrimaryKeyNames(Area.AREA_ID_NAME);
 
     public static final Table STOP_AREAS = new Table(StopArea.TABLE_NAME, StopArea.class, OPTIONAL,
-        new StringField(StopArea.AREA_ID_COLUMN_NAME, REQUIRED).isReferenceTo(AREAS),
-        new StringField(StopArea.STOP_ID_COLUMN_NAME, REQUIRED).isReferenceTo(STOPS)
+        new StringField(StopArea.AREA_ID_NAME, REQUIRED).isReferenceTo(AREAS),
+        new StringField(StopArea.STOP_ID_NAME, REQUIRED).isReferenceTo(STOPS)
     )
     .keyFieldIsNotUnique()
-    .addPrimaryKeyNames(StopArea.AREA_ID_COLUMN_NAME, StopArea.STOP_ID_COLUMN_NAME);
+    .addPrimaryKeyNames(StopArea.AREA_ID_NAME, StopArea.STOP_ID_NAME);
 
     public static final Table FARE_MEDIAS = new Table(FareMedia.TABLE_NAME, FareMedia.class, OPTIONAL,
-        new StringField(FareMedia.FARE_MEDIA_ID_COLUMN_NAME, REQUIRED),
-        new StringField(FareMedia.FARE_MEDIA_NAME_COLUMN_NAME, OPTIONAL),
-        new IntegerField(FareMedia.FARE_MEDIA_TYPE_COLUMN_NAME, REQUIRED)
+        new StringField(FareMedia.FARE_MEDIA_ID_NAME, REQUIRED),
+        new StringField(FareMedia.FARE_MEDIA_NAME_NAME, OPTIONAL),
+        new IntegerField(FareMedia.FARE_MEDIA_TYPE_NAME, REQUIRED)
     )
     .restrictDelete()
-    .addPrimaryKeyNames(FareMedia.FARE_MEDIA_ID_COLUMN_NAME);
+    .addPrimaryKeyNames(FareMedia.FARE_MEDIA_ID_NAME);
 
     public static final Table FARE_PRODUCTS = new Table(FareProduct.TABLE_NAME, FareProduct.class, OPTIONAL,
-        new StringField(FareProduct.FARE_PRODUCT_ID_COLUMN_NAME, REQUIRED),
-        new StringField(FareProduct.FARE_PRODUCT_NAME_COLUMN_NAME, OPTIONAL),
-        new StringField(FareProduct.FARE_MEDIA_ID_COLUMN_NAME, OPTIONAL).isReferenceTo(FARE_MEDIAS),
-        new DoubleField(FareProduct.AMOUNT_COLUMN_NAME, REQUIRED, 0.0, Double.MAX_VALUE, 2),
-        new StringField(FareProduct.CURRENCY_COLUMN_NAME, REQUIRED)
+        new StringField(FareProduct.FARE_PRODUCT_ID_NAME, REQUIRED),
+        new StringField(FareProduct.FARE_PRODUCT_NAME_NAME, OPTIONAL),
+        new StringField(FareProduct.FARE_MEDIA_ID_NAME, OPTIONAL).isReferenceTo(FARE_MEDIAS),
+        new DoubleField(FareProduct.AMOUNT_NAME, REQUIRED, 0.0, Double.MAX_VALUE, 2),
+        new StringField(FareProduct.CURRENCY_NAME, REQUIRED)
     )
     .restrictDelete()
     .keyFieldIsNotUnique()
-    .addPrimaryKeyNames(FareProduct.FARE_PRODUCT_ID_COLUMN_NAME, FareProduct.FARE_MEDIA_ID_COLUMN_NAME);
+    .addPrimaryKeyNames(FareProduct.FARE_PRODUCT_ID_NAME, FareProduct.FARE_MEDIA_ID_NAME);
 
     public static final Table TIME_FRAMES = new Table(TimeFrame.TABLE_NAME, TimeFrame.class, OPTIONAL,
-        new StringField(TimeFrame.TIME_FRAME_GROUP_ID_COLUMN_NAME, REQUIRED),
-        new TimeField(TimeFrame.START_TIME_COLUMN_NAME, OPTIONAL),
-        new TimeField(TimeFrame.END_TIME_COLUMN_NAME, OPTIONAL),
-        new StringField(TimeFrame.SERVICE_ID_COLUMN_NAME, OPTIONAL).isReferenceTo(CALENDAR).isReferenceTo(CALENDAR_DATES)
+        new StringField(TimeFrame.TIME_FRAME_GROUP_ID_NAME, REQUIRED),
+        new TimeField(TimeFrame.START_TIME_NAME, OPTIONAL),
+        new TimeField(TimeFrame.END_TIME_NAME, OPTIONAL),
+        new StringField(TimeFrame.SERVICE_ID_NAME, OPTIONAL).isReferenceTo(CALENDAR).isReferenceTo(CALENDAR_DATES)
     )
     .restrictDelete()
     .keyFieldIsNotUnique()
     .addPrimaryKeyNames(
-        TimeFrame.TIME_FRAME_GROUP_ID_COLUMN_NAME,
-        TimeFrame.START_TIME_COLUMN_NAME,
-        TimeFrame.END_TIME_COLUMN_NAME,
-        TimeFrame.SERVICE_ID_COLUMN_NAME
+        TimeFrame.TIME_FRAME_GROUP_ID_NAME,
+        TimeFrame.START_TIME_NAME,
+        TimeFrame.END_TIME_NAME,
+        TimeFrame.SERVICE_ID_NAME
     );
 
     public static final Table FARE_LEG_RULES = new Table(FareLegRule.TABLE_NAME, FareLegRule.class, OPTIONAL,
-        new StringField(FareLegRule.LEG_GROUP_ID_COLUMN_NAME, OPTIONAL),
-        new StringField(FareLegRule.NETWORK_ID_COLUMN_NAME, OPTIONAL),
-        new StringField(FareLegRule.FROM_AREA_ID_COLUMN_NAME, OPTIONAL).isReferenceTo(AREAS),
-        new StringField(FareLegRule.TO_AREA_ID_COLUMN_NAME, OPTIONAL).isReferenceTo(AREAS),
-        new StringField(FareLegRule.FROM_TIMEFRAME_GROUP_ID_COLUMN_NAME, OPTIONAL).isReferenceTo(TIME_FRAMES),
-        new StringField(FareLegRule.TO_TIMEFRAME_GROUP_ID_COLUMN_NAME, OPTIONAL).isReferenceTo(TIME_FRAMES),
-        new StringField(FareLegRule.FARE_PRODUCT_ID_COLUMN_NAME, REQUIRED).isReferenceTo(FARE_PRODUCTS),
-        new IntegerField(FareLegRule.RULE_PRIORITY_COLUMN_NAME, OPTIONAL)
+        new StringField(FareLegRule.LEG_GROUP_ID_NAME, OPTIONAL),
+        new StringField(FareLegRule.NETWORK_ID_NAME, OPTIONAL),
+        new StringField(FareLegRule.FROM_AREA_ID_NAME, OPTIONAL).isReferenceTo(AREAS),
+        new StringField(FareLegRule.TO_AREA_ID_NAME, OPTIONAL).isReferenceTo(AREAS),
+        new StringField(FareLegRule.FROM_TIMEFRAME_GROUP_ID_NAME, OPTIONAL).isReferenceTo(TIME_FRAMES),
+        new StringField(FareLegRule.TO_TIMEFRAME_GROUP_ID_NAME, OPTIONAL).isReferenceTo(TIME_FRAMES),
+        new StringField(FareLegRule.FARE_PRODUCT_ID_NAME, REQUIRED).isReferenceTo(FARE_PRODUCTS),
+        new IntegerField(FareLegRule.RULE_PRIORITY_NAME, OPTIONAL)
     )
     .restrictDelete()
     .keyFieldIsNotUnique()
     .addPrimaryKeyNames(
-        FareLegRule.NETWORK_ID_COLUMN_NAME,
-        FareLegRule.FROM_AREA_ID_COLUMN_NAME,
-        FareLegRule.TO_AREA_ID_COLUMN_NAME,
-        FareLegRule.FROM_TIMEFRAME_GROUP_ID_COLUMN_NAME,
-        FareLegRule.TO_TIMEFRAME_GROUP_ID_COLUMN_NAME,
-        FareLegRule.FARE_PRODUCT_ID_COLUMN_NAME
+        FareLegRule.NETWORK_ID_NAME,
+        FareLegRule.FROM_AREA_ID_NAME,
+        FareLegRule.TO_AREA_ID_NAME,
+        FareLegRule.FROM_TIMEFRAME_GROUP_ID_NAME,
+        FareLegRule.TO_TIMEFRAME_GROUP_ID_NAME,
+        FareLegRule.FARE_PRODUCT_ID_NAME
     );
 
     public static final Table FARE_TRANSFER_RULES = new Table(FareTransferRule.TABLE_NAME, FareTransferRule.class, OPTIONAL,
-        new StringField(FareTransferRule.FROM_LEG_GROUP_ID_COLUMN_NAME, OPTIONAL).isReferenceTo(FARE_LEG_RULES),
-        new StringField(FareTransferRule.TO_LEG_GROUP_ID_COLUMN_NAME, OPTIONAL).isReferenceTo(FARE_LEG_RULES),
-        new IntegerField(FareTransferRule.TRANSFER_COUNT_COLUMN_NAME, OPTIONAL, -1, Integer.MAX_VALUE),
-        new IntegerField(FareTransferRule.DURATION_LIMIT_COLUMN_NAME, OPTIONAL),
-        new IntegerField(FareTransferRule.DURATION_LIMIT_TYPE_COLUMN_NAME, OPTIONAL),
-        new IntegerField(FareTransferRule.FARE_TRANSFER_TYPE_COLUMN_NAME, REQUIRED),
-        new StringField(FareTransferRule.FARE_PRODUCT_ID_COLUMN_NAME, OPTIONAL).isReferenceTo(FARE_PRODUCTS)
+        new StringField(FareTransferRule.FROM_LEG_GROUP_ID_NAME, OPTIONAL).isReferenceTo(FARE_LEG_RULES),
+        new StringField(FareTransferRule.TO_LEG_GROUP_ID_NAME, OPTIONAL).isReferenceTo(FARE_LEG_RULES),
+        new IntegerField(FareTransferRule.TRANSFER_COUNT_NAME, OPTIONAL, -1, Integer.MAX_VALUE),
+        new IntegerField(FareTransferRule.DURATION_LIMIT_NAME, OPTIONAL),
+        new IntegerField(FareTransferRule.DURATION_LIMIT_TYPE_NAME, OPTIONAL),
+        new IntegerField(FareTransferRule.FARE_TRANSFER_TYPE_NAME, REQUIRED),
+        new StringField(FareTransferRule.FARE_PRODUCT_ID_NAME, OPTIONAL).isReferenceTo(FARE_PRODUCTS)
     )
     .restrictDelete()
     .keyFieldIsNotUnique()
     .addPrimaryKeyNames(
-        FareTransferRule.FROM_LEG_GROUP_ID_COLUMN_NAME,
-        FareTransferRule.TO_LEG_GROUP_ID_COLUMN_NAME,
-        FareTransferRule.FARE_PRODUCT_ID_COLUMN_NAME,
-        FareTransferRule.TRANSFER_COUNT_COLUMN_NAME,
-        FareTransferRule.DURATION_LIMIT_COLUMN_NAME
+        FareTransferRule.FROM_LEG_GROUP_ID_NAME,
+        FareTransferRule.TO_LEG_GROUP_ID_NAME,
+        FareTransferRule.FARE_PRODUCT_ID_NAME,
+        FareTransferRule.TRANSFER_COUNT_NAME,
+        FareTransferRule.DURATION_LIMIT_NAME
     );
 
     public static final Table NETWORKS = new Table(Network.TABLE_NAME, Network.class, OPTIONAL,
-        new StringField(Network.NETWORK_ID_COLUMN_NAME, REQUIRED),
-        new StringField(Network.NETWORK_NAME_COLUMN_NAME, OPTIONAL)
+        new StringField(Network.NETWORK_ID_NAME, REQUIRED),
+        new StringField(Network.NETWORK_NAME_NAME, OPTIONAL)
     )
     .restrictDelete()
-    .addPrimaryKeyNames(Network.NETWORK_ID_COLUMN_NAME);
+    .addPrimaryKeyNames(Network.NETWORK_ID_NAME);
 
     public static final Table ROUTE_NETWORKS = new Table(RouteNetwork.TABLE_NAME, RouteNetwork.class, OPTIONAL,
-        new StringField(RouteNetwork.NETWORK_ID_COLUMN_NAME, REQUIRED).isReferenceTo(NETWORKS),
-        new StringField(RouteNetwork.ROUTE_ID_COLUMN_NAME, REQUIRED).isReferenceTo(ROUTES)
+        new StringField(RouteNetwork.NETWORK_ID_NAME, REQUIRED).isReferenceTo(NETWORKS),
+        new StringField(RouteNetwork.ROUTE_ID_NAME, REQUIRED).isReferenceTo(ROUTES)
     )
     .keyFieldIsNotUnique()
-    .addPrimaryKeyNames(RouteNetwork.ROUTE_ID_COLUMN_NAME);
+    .addPrimaryKeyNames(RouteNetwork.ROUTE_ID_NAME);
 
 
     // GTFS reference: https://developers.google.com/transit/gtfs/reference#fare_rulestxt

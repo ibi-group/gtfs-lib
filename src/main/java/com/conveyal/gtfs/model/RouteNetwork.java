@@ -15,8 +15,8 @@ public class RouteNetwork extends Entity {
     public String feed_id;
 
     public static final String TABLE_NAME = "route_networks";
-    public static final String NETWORK_ID_COLUMN_NAME = "network_id";
-    public static final String ROUTE_ID_COLUMN_NAME = "route_id";
+    public static final String NETWORK_ID_NAME = "network_id";
+    public static final String ROUTE_ID_NAME = "route_id";
 
     @Override
     public String getId () {
@@ -50,13 +50,13 @@ public class RouteNetwork extends Entity {
         public void loadOneRow() throws IOException {
             RouteNetwork routeNetwork = new RouteNetwork();
             routeNetwork.id = row + 1; // offset line number by 1 to account for 0-based row index
-            routeNetwork.network_id  = getStringField(NETWORK_ID_COLUMN_NAME, true);
-            routeNetwork.route_id = getStringField(ROUTE_ID_COLUMN_NAME, true);
+            routeNetwork.network_id  = getStringField(NETWORK_ID_NAME, true);
+            routeNetwork.route_id = getStringField(ROUTE_ID_NAME, true);
             routeNetwork.feed = feed;
             routeNetwork.feed_id = feed.feedId;
             feed.route_networks.put(routeNetwork.getId(), routeNetwork);
-            getRefField(NETWORK_ID_COLUMN_NAME, true, feed.networks);
-            getRefField(ROUTE_ID_COLUMN_NAME, true, feed.routes);
+            getRefField(NETWORK_ID_NAME, true, feed.networks);
+            getRefField(ROUTE_ID_NAME, true, feed.routes);
         }
 
     }
@@ -68,7 +68,7 @@ public class RouteNetwork extends Entity {
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {NETWORK_ID_COLUMN_NAME, ROUTE_ID_COLUMN_NAME});
+            writer.writeRecord(new String[] {NETWORK_ID_NAME, ROUTE_ID_NAME});
         }
 
         @Override

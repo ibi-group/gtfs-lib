@@ -23,14 +23,14 @@ public class FareLegRule extends Entity {
     public String feed_id;
 
     public static final String TABLE_NAME = "fare_leg_rules";
-    public static final String LEG_GROUP_ID_COLUMN_NAME = "leg_group_id";
-    public static final String NETWORK_ID_COLUMN_NAME = "network_id";
-    public static final String FROM_AREA_ID_COLUMN_NAME = "from_area_id";
-    public static final String TO_AREA_ID_COLUMN_NAME = "to_area_id";
-    public static final String FROM_TIMEFRAME_GROUP_ID_COLUMN_NAME = "from_timeframe_group_id";
-    public static final String TO_TIMEFRAME_GROUP_ID_COLUMN_NAME = "to_timeframe_group_id";
-    public static final String FARE_PRODUCT_ID_COLUMN_NAME = "fare_product_id";
-    public static final String RULE_PRIORITY_COLUMN_NAME = "rule_priority";
+    public static final String LEG_GROUP_ID_NAME = "leg_group_id";
+    public static final String NETWORK_ID_NAME = "network_id";
+    public static final String FROM_AREA_ID_NAME = "from_area_id";
+    public static final String TO_AREA_ID_NAME = "to_area_id";
+    public static final String FROM_TIMEFRAME_GROUP_ID_NAME = "from_timeframe_group_id";
+    public static final String TO_TIMEFRAME_GROUP_ID_NAME = "to_timeframe_group_id";
+    public static final String FARE_PRODUCT_ID_NAME = "fare_product_id";
+    public static final String RULE_PRIORITY_NAME = "rule_priority";
 
     @Override
     public String getId () {
@@ -77,14 +77,14 @@ public class FareLegRule extends Entity {
         public void loadOneRow() throws IOException {
             FareLegRule fareLegRule = new FareLegRule();
             fareLegRule.id = row + 1; // offset line number by 1 to account for 0-based row index
-            fareLegRule.leg_group_id = getStringField(LEG_GROUP_ID_COLUMN_NAME, false);
-            fareLegRule.network_id = getStringField(NETWORK_ID_COLUMN_NAME, false);
-            fareLegRule.from_area_id = getStringField(FROM_AREA_ID_COLUMN_NAME, false);
-            fareLegRule.to_area_id = getStringField(TO_AREA_ID_COLUMN_NAME, false);
-            fareLegRule.from_timeframe_group_id = getStringField(FROM_TIMEFRAME_GROUP_ID_COLUMN_NAME, false);
-            fareLegRule.to_timeframe_group_id = getStringField(TO_TIMEFRAME_GROUP_ID_COLUMN_NAME, false);
-            fareLegRule.fare_product_id = getStringField(FARE_PRODUCT_ID_COLUMN_NAME, true);
-            fareLegRule.rule_priority = getIntField(RULE_PRIORITY_COLUMN_NAME, false, 0, Integer.MAX_VALUE);
+            fareLegRule.leg_group_id = getStringField(LEG_GROUP_ID_NAME, false);
+            fareLegRule.network_id = getStringField(NETWORK_ID_NAME, false);
+            fareLegRule.from_area_id = getStringField(FROM_AREA_ID_NAME, false);
+            fareLegRule.to_area_id = getStringField(TO_AREA_ID_NAME, false);
+            fareLegRule.from_timeframe_group_id = getStringField(FROM_TIMEFRAME_GROUP_ID_NAME, false);
+            fareLegRule.to_timeframe_group_id = getStringField(TO_TIMEFRAME_GROUP_ID_NAME, false);
+            fareLegRule.fare_product_id = getStringField(FARE_PRODUCT_ID_NAME, true);
+            fareLegRule.rule_priority = getIntField(RULE_PRIORITY_NAME, false, 0, Integer.MAX_VALUE);
             if (fareLegRule.rule_priority == INT_MISSING) {
                 // An empty value for rule_priority is treated as zero.
                 fareLegRule.rule_priority = 0;
@@ -104,14 +104,14 @@ public class FareLegRule extends Entity {
         @Override
         public void writeHeaders() throws IOException {
             writer.writeRecord(new String[] {
-                LEG_GROUP_ID_COLUMN_NAME,
-                NETWORK_ID_COLUMN_NAME,
-                FROM_AREA_ID_COLUMN_NAME,
-                TO_AREA_ID_COLUMN_NAME,
-                FROM_TIMEFRAME_GROUP_ID_COLUMN_NAME,
-                TO_TIMEFRAME_GROUP_ID_COLUMN_NAME,
-                FARE_PRODUCT_ID_COLUMN_NAME,
-                RULE_PRIORITY_COLUMN_NAME
+                LEG_GROUP_ID_NAME,
+                NETWORK_ID_NAME,
+                FROM_AREA_ID_NAME,
+                TO_AREA_ID_NAME,
+                FROM_TIMEFRAME_GROUP_ID_NAME,
+                TO_TIMEFRAME_GROUP_ID_NAME,
+                FARE_PRODUCT_ID_NAME,
+                RULE_PRIORITY_NAME
             });
         }
 

@@ -5,9 +5,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.stream.Collectors;
 
 public class FareProduct extends Entity {
 
@@ -21,11 +19,11 @@ public class FareProduct extends Entity {
     public String feed_id;
 
     public static final String TABLE_NAME = "fare_products";
-    public static final String FARE_PRODUCT_ID_COLUMN_NAME = "fare_product_id";
-    public static final String FARE_PRODUCT_NAME_COLUMN_NAME = "fare_product_name";
-    public static final String FARE_MEDIA_ID_COLUMN_NAME = "fare_media_id";
-    public static final String AMOUNT_COLUMN_NAME = "amount";
-    public static final String CURRENCY_COLUMN_NAME = "currency";
+    public static final String FARE_PRODUCT_ID_NAME = "fare_product_id";
+    public static final String FARE_PRODUCT_NAME_NAME = "fare_product_name";
+    public static final String FARE_MEDIA_ID_NAME = "fare_media_id";
+    public static final String AMOUNT_NAME = "amount";
+    public static final String CURRENCY_NAME = "currency";
 
 
     @Override
@@ -63,11 +61,11 @@ public class FareProduct extends Entity {
         public void loadOneRow() throws IOException {
             FareProduct fareProduct = new FareProduct();
             fareProduct.id = row + 1; // offset line number by 1 to account for 0-based row index
-            fareProduct.fare_product_id = getStringField(FARE_PRODUCT_ID_COLUMN_NAME, true);
-            fareProduct.fare_product_name = getStringField(FARE_PRODUCT_NAME_COLUMN_NAME, false);
-            fareProduct.fare_media_id = getStringField(FARE_MEDIA_ID_COLUMN_NAME, false);
-            fareProduct.amount = getDoubleField(AMOUNT_COLUMN_NAME, true, 0.0, Double.MAX_VALUE);
-            fareProduct.currency = getStringField(CURRENCY_COLUMN_NAME, true);
+            fareProduct.fare_product_id = getStringField(FARE_PRODUCT_ID_NAME, true);
+            fareProduct.fare_product_name = getStringField(FARE_PRODUCT_NAME_NAME, false);
+            fareProduct.fare_media_id = getStringField(FARE_MEDIA_ID_NAME, false);
+            fareProduct.amount = getDoubleField(AMOUNT_NAME, true, 0.0, Double.MAX_VALUE);
+            fareProduct.currency = getStringField(CURRENCY_NAME, true);
             fareProduct.feed = feed;
             fareProduct.feed_id = feed.feedId;
             feed.fare_products.put(fareProduct.getId(), fareProduct);
@@ -75,7 +73,7 @@ public class FareProduct extends Entity {
             /*
               Check referential integrity without storing references.
              */
-            getRefField(FARE_MEDIA_ID_COLUMN_NAME, false, feed.fare_medias);
+            getRefField(FARE_MEDIA_ID_NAME, false, feed.fare_medias);
         }
 
     }
@@ -88,10 +86,10 @@ public class FareProduct extends Entity {
         @Override
         public void writeHeaders() throws IOException {
             writer.writeRecord(new String[] {
-                FARE_PRODUCT_ID_COLUMN_NAME,
-                FARE_PRODUCT_NAME_COLUMN_NAME,
-                FARE_MEDIA_ID_COLUMN_NAME,
-                AMOUNT_COLUMN_NAME,CURRENCY_COLUMN_NAME
+                FARE_PRODUCT_ID_NAME,
+                FARE_PRODUCT_NAME_NAME,
+                FARE_MEDIA_ID_NAME,
+                AMOUNT_NAME, CURRENCY_NAME
             });
         }
 

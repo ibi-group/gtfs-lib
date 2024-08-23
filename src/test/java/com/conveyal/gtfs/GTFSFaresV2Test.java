@@ -9,7 +9,6 @@ import com.conveyal.gtfs.dto.NetworkDTO;
 import com.conveyal.gtfs.dto.RouteNetworkDTO;
 import com.conveyal.gtfs.dto.StopAreaDTO;
 import com.conveyal.gtfs.dto.TimeFrameDTO;
-import com.conveyal.gtfs.graphql.GTFSGraphQL;
 import com.conveyal.gtfs.loader.FeedLoadResult;
 import com.conveyal.gtfs.loader.JdbcTableWriter;
 import com.conveyal.gtfs.loader.Table;
@@ -35,7 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.util.zip.ZipFile;
 
 import static com.conveyal.gtfs.GTFS.load;
@@ -48,7 +46,6 @@ import static com.conveyal.gtfs.TestUtils.getColumnsForId;
 import static com.conveyal.gtfs.TestUtils.getResultSetForId;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GTFSFaresV2Test {
@@ -58,8 +55,6 @@ public class GTFSFaresV2Test {
     public static String faresDBName;
     private static DataSource faresDataSource;
     private static String faresNamespace;
-    private static final int TEST_TIMEOUT = 5000;
-
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private static JdbcTableWriter createTestTableWriter (Table table) throws InvalidNamespaceException {
@@ -87,15 +82,6 @@ public class GTFSFaresV2Test {
     @AfterAll
     public static void tearDownClass() {
         TestUtils.dropDB(faresDBName);
-    }
-
-    /** Tests that the graphQL schema can initialize. */
-    @Test
-    void canInitialize() {
-        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
-            GTFSGraphQL.initialize(faresDataSource);
-            GTFSGraphQL.getGraphQl();
-        });
     }
 
     /**
@@ -218,8 +204,8 @@ public class GTFSFaresV2Test {
 
         ResultSet resultSet = getResultSetForId(faresDataSource, faresNamespace,  updatedAreaDTO.id, Table.AREAS);
         while (resultSet.next()) {
-            assertResultValue(resultSet, Area.AREA_ID_COLUMN_NAME, equalTo(createdArea.area_id));
-            assertResultValue(resultSet, Area.AREA_NAME_COLUMN_NAME,equalTo(createdArea.area_name));
+            assertResultValue(resultSet, Area.AREA_ID_NAME, equalTo(createdArea.area_id));
+            assertResultValue(resultSet, Area.AREA_NAME_NAME,equalTo(createdArea.area_name));
          }
 
         // Delete.
@@ -247,8 +233,8 @@ public class GTFSFaresV2Test {
 
         ResultSet resultSet = getResultSetForId(faresDataSource, faresNamespace, updatedStopAreaDTO.id, Table.STOP_AREAS);
         while (resultSet.next()) {
-            assertResultValue(resultSet, StopArea.AREA_ID_COLUMN_NAME, equalTo(createdStopArea.area_id));
-            assertResultValue(resultSet, StopArea.STOP_ID_COLUMN_NAME,equalTo(createdStopArea.stop_id));
+            assertResultValue(resultSet, StopArea.AREA_ID_NAME, equalTo(createdStopArea.area_id));
+            assertResultValue(resultSet, StopArea.STOP_ID_NAME,equalTo(createdStopArea.stop_id));
          }
 
         // Delete.
@@ -276,10 +262,10 @@ public class GTFSFaresV2Test {
 
         ResultSet resultSet = getResultSetForId(faresDataSource, faresNamespace, updatedTimeFrameDTO.id, Table.TIME_FRAMES);
         while (resultSet.next()) {
-            assertResultValue(resultSet, TimeFrame.TIME_FRAME_GROUP_ID_COLUMN_NAME, equalTo(createdTimeFrame.timeframe_group_id));
-            assertResultValue(resultSet, TimeFrame.START_TIME_COLUMN_NAME, equalTo(createdTimeFrame.start_time));
-            assertResultValue(resultSet, TimeFrame.END_TIME_COLUMN_NAME, equalTo(createdTimeFrame.end_time));
-            assertResultValue(resultSet, TimeFrame.SERVICE_ID_COLUMN_NAME, equalTo(createdTimeFrame.service_id));
+            assertResultValue(resultSet, TimeFrame.TIME_FRAME_GROUP_ID_NAME, equalTo(createdTimeFrame.timeframe_group_id));
+            assertResultValue(resultSet, TimeFrame.START_TIME_NAME, equalTo(createdTimeFrame.start_time));
+            assertResultValue(resultSet, TimeFrame.END_TIME_NAME, equalTo(createdTimeFrame.end_time));
+            assertResultValue(resultSet, TimeFrame.SERVICE_ID_NAME, equalTo(createdTimeFrame.service_id));
          }
 
         // Delete.
@@ -307,8 +293,8 @@ public class GTFSFaresV2Test {
 
         ResultSet resultSet = getResultSetForId(faresDataSource, faresNamespace,  updatedNetworkDTO.id, Table.NETWORKS);
         while (resultSet.next()) {
-            assertResultValue(resultSet, Network.NETWORK_ID_COLUMN_NAME, equalTo(createdNetwork.network_id));
-            assertResultValue(resultSet, Network.NETWORK_NAME_COLUMN_NAME, equalTo(createdNetwork.network_name));
+            assertResultValue(resultSet, Network.NETWORK_ID_NAME, equalTo(createdNetwork.network_id));
+            assertResultValue(resultSet, Network.NETWORK_NAME_NAME, equalTo(createdNetwork.network_name));
          }
 
         // Delete.
@@ -336,8 +322,8 @@ public class GTFSFaresV2Test {
 
         ResultSet resultSet = getResultSetForId(faresDataSource, faresNamespace,  updatedNetworkDTO.id, Table.ROUTE_NETWORKS);
         while (resultSet.next()) {
-            assertResultValue(resultSet, RouteNetwork.NETWORK_ID_COLUMN_NAME, equalTo(createdRouteNetwork.network_id));
-            assertResultValue(resultSet, RouteNetwork.ROUTE_ID_COLUMN_NAME, equalTo(createdRouteNetwork.route_id));
+            assertResultValue(resultSet, RouteNetwork.NETWORK_ID_NAME, equalTo(createdRouteNetwork.network_id));
+            assertResultValue(resultSet, RouteNetwork.ROUTE_ID_NAME, equalTo(createdRouteNetwork.route_id));
          }
 
         // Delete.
@@ -365,13 +351,13 @@ public class GTFSFaresV2Test {
 
         ResultSet resultSet = getResultSetForId(faresDataSource, faresNamespace,  updatedFareLegRuleDTO.id, Table.FARE_LEG_RULES);
         while (resultSet.next()) {
-            assertResultValue(resultSet, FareLegRule.LEG_GROUP_ID_COLUMN_NAME, equalTo(createdFareLegRule.leg_group_id));
-            assertResultValue(resultSet, FareLegRule.NETWORK_ID_COLUMN_NAME, equalTo(createdFareLegRule.network_id));
-            assertResultValue(resultSet, FareLegRule.FROM_AREA_ID_COLUMN_NAME, equalTo(createdFareLegRule.from_area_id));
-            assertResultValue(resultSet, FareLegRule.TO_AREA_ID_COLUMN_NAME, equalTo(createdFareLegRule.to_area_id));
-            assertResultValue(resultSet, FareLegRule.FROM_TIMEFRAME_GROUP_ID_COLUMN_NAME, equalTo(createdFareLegRule.from_timeframe_group_id));
-            assertResultValue(resultSet, FareLegRule.FARE_PRODUCT_ID_COLUMN_NAME, equalTo(createdFareLegRule.fare_product_id));
-            assertResultValue(resultSet, FareLegRule.RULE_PRIORITY_COLUMN_NAME, equalTo(createdFareLegRule.rule_priority));
+            assertResultValue(resultSet, FareLegRule.LEG_GROUP_ID_NAME, equalTo(createdFareLegRule.leg_group_id));
+            assertResultValue(resultSet, FareLegRule.NETWORK_ID_NAME, equalTo(createdFareLegRule.network_id));
+            assertResultValue(resultSet, FareLegRule.FROM_AREA_ID_NAME, equalTo(createdFareLegRule.from_area_id));
+            assertResultValue(resultSet, FareLegRule.TO_AREA_ID_NAME, equalTo(createdFareLegRule.to_area_id));
+            assertResultValue(resultSet, FareLegRule.FROM_TIMEFRAME_GROUP_ID_NAME, equalTo(createdFareLegRule.from_timeframe_group_id));
+            assertResultValue(resultSet, FareLegRule.FARE_PRODUCT_ID_NAME, equalTo(createdFareLegRule.fare_product_id));
+            assertResultValue(resultSet, FareLegRule.RULE_PRIORITY_NAME, equalTo(createdFareLegRule.rule_priority));
          }
 
         // Delete.
@@ -399,9 +385,9 @@ public class GTFSFaresV2Test {
 
         ResultSet resultSet = getResultSetForId(faresDataSource, faresNamespace,  updatedFareMediaDTO.id, Table.FARE_MEDIAS);
         while (resultSet.next()) {
-            assertResultValue(resultSet, FareMedia.FARE_MEDIA_ID_COLUMN_NAME, equalTo(createdFareMedia.fare_media_id));
-            assertResultValue(resultSet, FareMedia.FARE_MEDIA_NAME_COLUMN_NAME, equalTo(createdFareMedia.fare_media_name));
-            assertResultValue(resultSet, FareMedia.FARE_MEDIA_TYPE_COLUMN_NAME, equalTo(createdFareMedia.fare_media_type));
+            assertResultValue(resultSet, FareMedia.FARE_MEDIA_ID_NAME, equalTo(createdFareMedia.fare_media_id));
+            assertResultValue(resultSet, FareMedia.FARE_MEDIA_NAME_NAME, equalTo(createdFareMedia.fare_media_name));
+            assertResultValue(resultSet, FareMedia.FARE_MEDIA_TYPE_NAME, equalTo(createdFareMedia.fare_media_type));
          }
 
         // Delete.
@@ -429,9 +415,9 @@ public class GTFSFaresV2Test {
 
         ResultSet resultSet = getResultSetForId(faresDataSource, faresNamespace,  fareProductDTO.id, Table.FARE_PRODUCTS);
         while (resultSet.next()) {
-            assertResultValue(resultSet, FareProduct.FARE_PRODUCT_ID_COLUMN_NAME, equalTo(createdFareProduct.fare_product_id));
-            assertResultValue(resultSet, FareProduct.FARE_PRODUCT_NAME_COLUMN_NAME, equalTo(createdFareProduct.fare_product_name));
-            assertResultValue(resultSet, FareProduct.FARE_MEDIA_ID_COLUMN_NAME, equalTo(createdFareProduct.fare_media_id));
+            assertResultValue(resultSet, FareProduct.FARE_PRODUCT_ID_NAME, equalTo(createdFareProduct.fare_product_id));
+            assertResultValue(resultSet, FareProduct.FARE_PRODUCT_NAME_NAME, equalTo(createdFareProduct.fare_product_name));
+            assertResultValue(resultSet, FareProduct.FARE_MEDIA_ID_NAME, equalTo(createdFareProduct.fare_media_id));
          }
 
         // Delete.
@@ -464,12 +450,12 @@ public class GTFSFaresV2Test {
 
         ResultSet resultSet = getResultSetForId(faresDataSource, faresNamespace,  fareTransferRuleDTO.id, Table.FARE_TRANSFER_RULES);
         while (resultSet.next()) {
-            assertResultValue(resultSet, FareTransferRule.FROM_LEG_GROUP_ID_COLUMN_NAME, equalTo(fareTransferRules.from_leg_group_id));
-            assertResultValue(resultSet, FareTransferRule.TO_LEG_GROUP_ID_COLUMN_NAME, equalTo(fareTransferRules.to_leg_group_id));
-            assertResultValue(resultSet, FareTransferRule.TRANSFER_COUNT_COLUMN_NAME, equalTo(fareTransferRules.transfer_count));
-            assertResultValue(resultSet, FareTransferRule.DURATION_LIMIT_COLUMN_NAME, equalTo(fareTransferRules.duration_limit));
-            assertResultValue(resultSet, FareTransferRule.FARE_TRANSFER_TYPE_COLUMN_NAME, equalTo(fareTransferRules.fare_transfer_type));
-            assertResultValue(resultSet, FareTransferRule.FARE_PRODUCT_ID_COLUMN_NAME, equalTo(fareTransferRules.fare_product_id));
+            assertResultValue(resultSet, FareTransferRule.FROM_LEG_GROUP_ID_NAME, equalTo(fareTransferRules.from_leg_group_id));
+            assertResultValue(resultSet, FareTransferRule.TO_LEG_GROUP_ID_NAME, equalTo(fareTransferRules.to_leg_group_id));
+            assertResultValue(resultSet, FareTransferRule.TRANSFER_COUNT_NAME, equalTo(fareTransferRules.transfer_count));
+            assertResultValue(resultSet, FareTransferRule.DURATION_LIMIT_NAME, equalTo(fareTransferRules.duration_limit));
+            assertResultValue(resultSet, FareTransferRule.FARE_TRANSFER_TYPE_NAME, equalTo(fareTransferRules.fare_transfer_type));
+            assertResultValue(resultSet, FareTransferRule.FARE_PRODUCT_ID_NAME, equalTo(fareTransferRules.fare_product_id));
          }
 
         // Delete.

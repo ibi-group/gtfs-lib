@@ -15,8 +15,8 @@ public class Network extends Entity {
     public String feed_id;
 
     public static final String TABLE_NAME = "networks";
-    public static final String NETWORK_ID_COLUMN_NAME = "network_id";
-    public static final String NETWORK_NAME_COLUMN_NAME = "network_name";
+    public static final String NETWORK_ID_NAME = "network_id";
+    public static final String NETWORK_NAME_NAME = "network_name";
 
     @Override
     public String getId () {
@@ -50,8 +50,8 @@ public class Network extends Entity {
         public void loadOneRow() throws IOException {
             Network network = new Network();
             network.id = row + 1; // offset line number by 1 to account for 0-based row index
-            network.network_id    = getStringField(NETWORK_ID_COLUMN_NAME, true);
-            network.network_name  = getStringField(NETWORK_NAME_COLUMN_NAME, false);
+            network.network_id    = getStringField(NETWORK_ID_NAME, true);
+            network.network_name  = getStringField(NETWORK_NAME_NAME, false);
             network.feed = feed;
             network.feed_id = feed.feedId;
             feed.networks.put(network.getId(), network);
@@ -66,7 +66,7 @@ public class Network extends Entity {
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {NETWORK_ID_COLUMN_NAME, NETWORK_NAME_COLUMN_NAME});
+            writer.writeRecord(new String[] {NETWORK_ID_NAME, NETWORK_NAME_NAME});
         }
 
         @Override

@@ -18,10 +18,10 @@ public class TimeFrame extends Entity {
     public String feed_id;
 
     public static final String TABLE_NAME = "timeframes";
-    public static final String TIME_FRAME_GROUP_ID_COLUMN_NAME = "timeframe_group_id";
-    public static final String START_TIME_COLUMN_NAME = "start_time";
-    public static final String END_TIME_COLUMN_NAME = "end_time";
-    public static final String SERVICE_ID_COLUMN_NAME = "service_id";
+    public static final String TIME_FRAME_GROUP_ID_NAME = "timeframe_group_id";
+    public static final String START_TIME_NAME = "start_time";
+    public static final String END_TIME_NAME = "end_time";
+    public static final String SERVICE_ID_NAME = "service_id";
 
     @Override
     public String getId () {
@@ -57,18 +57,18 @@ public class TimeFrame extends Entity {
         public void loadOneRow() throws IOException {
             TimeFrame timeFrame = new TimeFrame();
             timeFrame.id = row + 1; // offset line number by 1 to account for 0-based row index
-            timeFrame.timeframe_group_id = getStringField(TIME_FRAME_GROUP_ID_COLUMN_NAME, true);
-            timeFrame.start_time = getTimeField(START_TIME_COLUMN_NAME, false);
+            timeFrame.timeframe_group_id = getStringField(TIME_FRAME_GROUP_ID_NAME, true);
+            timeFrame.start_time = getTimeField(START_TIME_NAME, false);
             if (timeFrame.start_time == INT_MISSING) {
                 // An empty value is considered the start of the day (00:00:00).
                 timeFrame.start_time = 0;
             }
-            timeFrame.end_time = getTimeField(END_TIME_COLUMN_NAME, false);
+            timeFrame.end_time = getTimeField(END_TIME_NAME, false);
             if (timeFrame.end_time == INT_MISSING) {
                 // An empty value is considered the end of the day (24:00:00).
                 timeFrame.end_time = 86400;
             }
-            timeFrame.service_id = getStringField(SERVICE_ID_COLUMN_NAME, true);
+            timeFrame.service_id = getStringField(SERVICE_ID_NAME, true);
             timeFrame.feed = feed;
             timeFrame.feed_id = feed.feedId;
             feed.time_frames.put(timeFrame.getId(), timeFrame);
@@ -84,10 +84,10 @@ public class TimeFrame extends Entity {
         @Override
         public void writeHeaders() throws IOException {
             writer.writeRecord(new String[] {
-                TIME_FRAME_GROUP_ID_COLUMN_NAME,
-                START_TIME_COLUMN_NAME,
-                END_TIME_COLUMN_NAME,
-                SERVICE_ID_COLUMN_NAME
+                TIME_FRAME_GROUP_ID_NAME,
+                START_TIME_NAME,
+                END_TIME_NAME,
+                SERVICE_ID_NAME
             });
         }
 

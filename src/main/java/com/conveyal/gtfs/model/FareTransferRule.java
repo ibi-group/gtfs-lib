@@ -22,13 +22,13 @@ public class FareTransferRule extends Entity {
     public String feed_id;
 
     public static final String TABLE_NAME = "fare_transfer_rules";
-    public static final String FROM_LEG_GROUP_ID_COLUMN_NAME = "from_leg_group_id";
-    public static final String TO_LEG_GROUP_ID_COLUMN_NAME = "to_leg_group_id";
-    public static final String TRANSFER_COUNT_COLUMN_NAME = "transfer_count";
-    public static final String DURATION_LIMIT_COLUMN_NAME = "duration_limit";
-    public static final String DURATION_LIMIT_TYPE_COLUMN_NAME = "duration_limit_type";
-    public static final String FARE_TRANSFER_TYPE_COLUMN_NAME = "fare_transfer_type";
-    public static final String FARE_PRODUCT_ID_COLUMN_NAME = "fare_product_id";
+    public static final String FROM_LEG_GROUP_ID_NAME = "from_leg_group_id";
+    public static final String TO_LEG_GROUP_ID_NAME = "to_leg_group_id";
+    public static final String TRANSFER_COUNT_NAME = "transfer_count";
+    public static final String DURATION_LIMIT_NAME = "duration_limit";
+    public static final String DURATION_LIMIT_TYPE_NAME = "duration_limit_type";
+    public static final String FARE_TRANSFER_TYPE_NAME = "fare_transfer_type";
+    public static final String FARE_PRODUCT_ID_NAME = "fare_product_id";
 
     @Override
     public String getId () {
@@ -73,13 +73,13 @@ public class FareTransferRule extends Entity {
         public void loadOneRow() throws IOException {
             FareTransferRule fareTransferRule = new FareTransferRule();
             fareTransferRule.id = row + 1; // offset line number by 1 to account for 0-based row index
-            fareTransferRule.from_leg_group_id = getStringField(FROM_LEG_GROUP_ID_COLUMN_NAME, false);
-            fareTransferRule.to_leg_group_id = getStringField(TO_LEG_GROUP_ID_COLUMN_NAME, false);
-            fareTransferRule.transfer_count = getIntField(TRANSFER_COUNT_COLUMN_NAME, false, -1, Integer.MAX_VALUE, INT_MISSING);
-            fareTransferRule.duration_limit = getIntField(DURATION_LIMIT_COLUMN_NAME, false, 0, Integer.MAX_VALUE);
-            fareTransferRule.duration_limit_type = getIntField(DURATION_LIMIT_TYPE_COLUMN_NAME, false, 0, 3);
-            fareTransferRule.fare_transfer_type = getIntField(FARE_TRANSFER_TYPE_COLUMN_NAME, true, 0, 2);
-            fareTransferRule.fare_product_id = getStringField(FARE_PRODUCT_ID_COLUMN_NAME, false);
+            fareTransferRule.from_leg_group_id = getStringField(FROM_LEG_GROUP_ID_NAME, false);
+            fareTransferRule.to_leg_group_id = getStringField(TO_LEG_GROUP_ID_NAME, false);
+            fareTransferRule.transfer_count = getIntField(TRANSFER_COUNT_NAME, false, -1, Integer.MAX_VALUE, INT_MISSING);
+            fareTransferRule.duration_limit = getIntField(DURATION_LIMIT_NAME, false, 0, Integer.MAX_VALUE);
+            fareTransferRule.duration_limit_type = getIntField(DURATION_LIMIT_TYPE_NAME, false, 0, 3);
+            fareTransferRule.fare_transfer_type = getIntField(FARE_TRANSFER_TYPE_NAME, true, 0, 2);
+            fareTransferRule.fare_product_id = getStringField(FARE_PRODUCT_ID_NAME, false);
             fareTransferRule.feed = feed;
             fareTransferRule.feed_id = feed.feedId;
             feed.fare_transfer_rules.put(fareTransferRule.getId(), fareTransferRule);
@@ -95,13 +95,13 @@ public class FareTransferRule extends Entity {
         @Override
         public void writeHeaders() throws IOException {
             writer.writeRecord(new String[] {
-                FROM_LEG_GROUP_ID_COLUMN_NAME,
-                TO_LEG_GROUP_ID_COLUMN_NAME,
-                TRANSFER_COUNT_COLUMN_NAME,
-                DURATION_LIMIT_COLUMN_NAME,
-                DURATION_LIMIT_TYPE_COLUMN_NAME,
-                FARE_TRANSFER_TYPE_COLUMN_NAME,
-                FARE_PRODUCT_ID_COLUMN_NAME,
+                FROM_LEG_GROUP_ID_NAME,
+                TO_LEG_GROUP_ID_NAME,
+                TRANSFER_COUNT_NAME,
+                DURATION_LIMIT_NAME,
+                DURATION_LIMIT_TYPE_NAME,
+                FARE_TRANSFER_TYPE_NAME,
+                FARE_PRODUCT_ID_NAME,
             });
         }
 

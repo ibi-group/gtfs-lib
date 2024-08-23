@@ -15,8 +15,8 @@ public class StopArea extends Entity {
     public String feed_id;
 
     public static final String TABLE_NAME = "stop_areas";
-    public static final String AREA_ID_COLUMN_NAME = "area_id";
-    public static final String STOP_ID_COLUMN_NAME = "stop_id";
+    public static final String AREA_ID_NAME = "area_id";
+    public static final String STOP_ID_NAME = "stop_id";
 
     @Override
     public String getId () {
@@ -50,8 +50,8 @@ public class StopArea extends Entity {
         public void loadOneRow() throws IOException {
             StopArea stopArea = new StopArea();
             stopArea.id = row + 1; // offset line number by 1 to account for 0-based row index
-            stopArea.area_id = getStringField(AREA_ID_COLUMN_NAME, true);
-            stopArea.stop_id = getStringField(STOP_ID_COLUMN_NAME, true);
+            stopArea.area_id = getStringField(AREA_ID_NAME, true);
+            stopArea.stop_id = getStringField(STOP_ID_NAME, true);
             stopArea.feed = feed;
             stopArea.feed_id = feed.feedId;
             feed.stop_areas.put(stopArea.getId(), stopArea);
@@ -59,8 +59,8 @@ public class StopArea extends Entity {
             /*
               Check referential integrity without storing references.
              */
-            getRefField(AREA_ID_COLUMN_NAME, true, feed.areas);
-            getRefField(STOP_ID_COLUMN_NAME, true, feed.stops);
+            getRefField(AREA_ID_NAME, true, feed.areas);
+            getRefField(STOP_ID_NAME, true, feed.stops);
 
         }
 
@@ -73,7 +73,7 @@ public class StopArea extends Entity {
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {AREA_ID_COLUMN_NAME, STOP_ID_COLUMN_NAME});
+            writer.writeRecord(new String[] {AREA_ID_NAME, STOP_ID_NAME});
         }
 
         @Override
