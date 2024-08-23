@@ -1,0 +1,12 @@
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_version
+    timeFrame {
+      timeframe_group_id
+      start_time
+      end_time
+      service_id
+      id
+    }
+  }
+}

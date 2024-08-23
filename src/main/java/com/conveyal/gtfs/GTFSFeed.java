@@ -110,6 +110,16 @@ public class GTFSFeed implements Cloneable, Closeable {
     /* A place to store an event bus that is passed through constructor. */
     public transient EventBus eventBus;
 
+    public final Map<String, Area> areas;
+    public final Map<String, StopArea> stop_areas;
+    public final Map<String, FareProduct> fare_products;
+    public final Map<String, FareMedia> fare_medias;
+    public final Map<String, TimeFrame> time_frames;
+    public final Map<String, FareLegRule> fare_leg_rules;
+    public final Map<String, FareTransferRule> fare_transfer_rules;
+    public final Map<String, Network> networks;
+    public final Map<String, RouteNetwork> route_networks;
+
     /**
      * The order in which we load the tables is important for two reasons.
      * 1. We must load feed_info first so we know the feed ID before loading any other entities. This could be relaxed
@@ -177,6 +187,18 @@ public class GTFSFeed implements Cloneable, Closeable {
         new Trip.Loader(this).loadTable(zip);
         new Frequency.Loader(this).loadTable(zip);
         new StopTime.Loader(this).loadTable(zip); // comment out this line for quick testing using NL feed
+
+        // Fares v2.
+        new Area.Loader(this).loadTable(zip);
+        new StopArea.Loader(this).loadTable(zip);
+        new TimeFrame.Loader(this).loadTable(zip);
+        new Network.Loader(this).loadTable(zip);
+        new RouteNetwork.Loader(this).loadTable(zip);
+        new FareMedia.Loader(this).loadTable(zip);
+        new FareProduct.Loader(this).loadTable(zip);
+        new FareLegRule.Loader(this).loadTable(zip);
+        new FareTransferRule.Loader(this).loadTable(zip);
+
         LOG.info("{} errors", errors.size());
         for (GTFSError error : errors) {
             LOG.info("{}", error);
@@ -218,6 +240,17 @@ public class GTFSFeed implements Cloneable, Closeable {
             new Trip.Writer(this).writeTable(zip);
             new StopTime.Writer(this).writeTable(zip);
             new Pattern.Writer(this).writeTable(zip);
+
+            // Fares v2.
+            new Area.Writer(this).writeTable(zip);
+            new StopArea.Writer(this).writeTable(zip);
+            new TimeFrame.Writer(this).writeTable(zip);
+            new Network.Writer(this).writeTable(zip);
+            new RouteNetwork.Writer(this).writeTable(zip);
+            new FareMedia.Writer(this).writeTable(zip);
+            new FareProduct.Writer(this).writeTable(zip);
+            new FareLegRule.Writer(this).writeTable(zip);
+            new FareTransferRule.Writer(this).writeTable(zip);
 
             zip.close();
 
@@ -608,8 +641,15 @@ public class GTFSFeed implements Cloneable, Closeable {
         this.db = db;
 
         agency = db.getTreeMap("agency");
+        areas = db.getTreeMap("area");
+        fare_leg_rules = db.getTreeMap("fare_leg_rules");
+        fare_medias = db.getTreeMap("fare_medias");
+        fare_products = db.getTreeMap("fare_products");
+        fare_transfer_rules = db.getTreeMap("fare_transfer_rules");
         feedInfo = db.getTreeMap("feed_info");
+        networks = db.getTreeMap("networks");
         routes = db.getTreeMap("routes");
+        route_networks = db.getTreeMap("route_networks");
         trips = db.getTreeMap("trips");
         stop_times = db.getTreeMap("stop_times");
         frequencies = db.getTreeSet("frequencies");
@@ -618,6 +658,8 @@ public class GTFSFeed implements Cloneable, Closeable {
         fares = db.getTreeMap("fares");
         services = db.getTreeMap("services");
         shape_points = db.getTreeMap("shape_points");
+        stop_areas = db.getTreeMap("stop_areas");
+        time_frames = db.getTreeMap("time_frames");
         translations = db.getTreeMap("translations");
         attributions = db.getTreeMap("attributions");
 

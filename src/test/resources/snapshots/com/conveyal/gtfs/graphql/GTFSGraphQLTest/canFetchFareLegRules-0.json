@@ -1,0 +1,416 @@
+{
+  "data" : {
+    "feed" : {
+      "fareLegRule" : [ {
+        "fareProducts" : [ {
+          "amount" : "2.4",
+          "currency" : "USD",
+          "fare_media_id" : "charlieticket",
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "fare_product_name" : "Subway Quick Ticket"
+        } ],
+        "fare_product_id" : "prod_rapid_transit_quick_subway",
+        "fromArea" : [ {
+          "area_id" : "area_bl_airport",
+          "area_name" : "Blue Line - Airport Station"
+        } ],
+        "fromTimeFrame" : [ {
+          "end_time" : null,
+          "service_id" : "04100312-8fe1-46a5-a9f2-556f39478f57",
+          "start_time" : null,
+          "timeframe_group_id" : "timeframe_regular"
+        }, {
+          "end_time" : "86400",
+          "service_id" : "04100312-8fe1-46a5-a9f2-556f39478f57",
+          "start_time" : "9000",
+          "timeframe_group_id" : "timeframe_regular"
+        } ],
+        "from_area_id" : "area_bl_airport",
+        "from_timeframe_group_id" : "timeframe_regular",
+        "id" : 2,
+        "leg_group_id" : "leg_airport_rapid_transit_quick_subway",
+        "network_id" : "rapid_transit",
+        "networks" : [ ],
+        "routes" : [ {
+          "route_id" : "1",
+          "route_long_name" : "RL"
+        } ],
+        "rule_priority" : null,
+        "toArea" : [ ],
+        "toTimeFrame" : [ ],
+        "to_area_id" : null,
+        "to_timeframe_group_id" : null
+      }, {
+        "fareProducts" : [ {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "cash",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        }, {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "credit_debit",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        }, {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "mticket",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        } ],
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "fromArea" : [ {
+          "area_id" : "area_cf_zone_buzzards",
+          "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
+        } ],
+        "fromTimeFrame" : [ ],
+        "from_area_id" : "area_cf_zone_buzzards",
+        "from_timeframe_group_id" : null,
+        "id" : 3,
+        "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
+        "network_id" : "cape_flyer",
+        "networks" : [ ],
+        "routes" : [ ],
+        "rule_priority" : null,
+        "toArea" : [ {
+          "area_id" : "area_cf_zone_hyannis",
+          "area_name" : "CapeFLYER - Hyannis"
+        } ],
+        "toTimeFrame" : [ ],
+        "to_area_id" : "area_cf_zone_hyannis",
+        "to_timeframe_group_id" : null
+      }, {
+        "fareProducts" : [ {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "cash",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        }, {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "credit_debit",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        }, {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "mticket",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        } ],
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "fromArea" : [ {
+          "area_id" : "area_cf_zone_hyannis",
+          "area_name" : "CapeFLYER - Hyannis"
+        } ],
+        "fromTimeFrame" : [ ],
+        "from_area_id" : "area_cf_zone_hyannis",
+        "from_timeframe_group_id" : null,
+        "id" : 4,
+        "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
+        "network_id" : "cape_flyer",
+        "networks" : [ ],
+        "routes" : [ ],
+        "rule_priority" : null,
+        "toArea" : [ {
+          "area_id" : "area_cf_zone_buzzards",
+          "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
+        } ],
+        "toTimeFrame" : [ ],
+        "to_area_id" : "area_cf_zone_buzzards",
+        "to_timeframe_group_id" : null
+      }, {
+        "fareProducts" : [ {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "cash",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        }, {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "credit_debit",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        }, {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "mticket",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        } ],
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "fromArea" : [ {
+          "area_id" : "area_cf_zone_hyannis",
+          "area_name" : "CapeFLYER - Hyannis"
+        } ],
+        "fromTimeFrame" : [ ],
+        "from_area_id" : "area_cf_zone_hyannis",
+        "from_timeframe_group_id" : null,
+        "id" : 5,
+        "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
+        "network_id" : "cape_flyer",
+        "networks" : [ ],
+        "routes" : [ ],
+        "rule_priority" : null,
+        "toArea" : [ {
+          "area_id" : "area_commuter_rail_zone_8",
+          "area_name" : "Commuter Rail Zone 8"
+        } ],
+        "toTimeFrame" : [ ],
+        "to_area_id" : "area_commuter_rail_zone_8",
+        "to_timeframe_group_id" : null
+      }, {
+        "fareProducts" : [ {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "cash",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        }, {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "credit_debit",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        }, {
+          "amount" : "5.0",
+          "currency" : "USD",
+          "fare_media_id" : "mticket",
+          "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+          "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
+        } ],
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "fromArea" : [ {
+          "area_id" : "area_commuter_rail_zone_8",
+          "area_name" : "Commuter Rail Zone 8"
+        } ],
+        "fromTimeFrame" : [ ],
+        "from_area_id" : "area_commuter_rail_zone_8",
+        "from_timeframe_group_id" : null,
+        "id" : 6,
+        "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
+        "network_id" : "cape_flyer",
+        "networks" : [ ],
+        "routes" : [ ],
+        "rule_priority" : null,
+        "toArea" : [ {
+          "area_id" : "area_cf_zone_hyannis",
+          "area_name" : "CapeFLYER - Hyannis"
+        } ],
+        "toTimeFrame" : [ ],
+        "to_area_id" : "area_cf_zone_hyannis",
+        "to_timeframe_group_id" : null
+      }, {
+        "fareProducts" : [ {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "cash",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        }, {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "credit_debit",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        }, {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "mticket",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        } ],
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "fromArea" : [ {
+          "area_id" : "area_cf_zone_buzzards",
+          "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
+        } ],
+        "fromTimeFrame" : [ ],
+        "from_area_id" : "area_cf_zone_buzzards",
+        "from_timeframe_group_id" : null,
+        "id" : 7,
+        "leg_group_id" : "leg_cape_sbb_buzzards_cash",
+        "network_id" : "cape_flyer",
+        "networks" : [ ],
+        "routes" : [ ],
+        "rule_priority" : null,
+        "toArea" : [ {
+          "area_id" : "area_commuter_rail_zone_1a",
+          "area_name" : "Commuter Rail Zone 1A"
+        } ],
+        "toTimeFrame" : [ ],
+        "to_area_id" : "area_commuter_rail_zone_1a",
+        "to_timeframe_group_id" : null
+      }, {
+        "fareProducts" : [ {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "cash",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        }, {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "credit_debit",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        }, {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "mticket",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        } ],
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "fromArea" : [ {
+          "area_id" : "area_cf_zone_buzzards",
+          "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
+        } ],
+        "fromTimeFrame" : [ ],
+        "from_area_id" : "area_cf_zone_buzzards",
+        "from_timeframe_group_id" : null,
+        "id" : 8,
+        "leg_group_id" : "leg_cape_sbb_buzzards_cash",
+        "network_id" : "cape_flyer",
+        "networks" : [ ],
+        "routes" : [ ],
+        "rule_priority" : null,
+        "toArea" : [ {
+          "area_id" : "area_commuter_rail_zone_2",
+          "area_name" : "Commuter Rail Zone 2"
+        } ],
+        "toTimeFrame" : [ ],
+        "to_area_id" : "area_commuter_rail_zone_2",
+        "to_timeframe_group_id" : null
+      }, {
+        "fareProducts" : [ {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "cash",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        }, {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "credit_debit",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        }, {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "mticket",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        } ],
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "fromArea" : [ {
+          "area_id" : "area_cf_zone_buzzards",
+          "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
+        } ],
+        "fromTimeFrame" : [ ],
+        "from_area_id" : "area_cf_zone_buzzards",
+        "from_timeframe_group_id" : null,
+        "id" : 9,
+        "leg_group_id" : "leg_cape_sbb_buzzards_cash",
+        "network_id" : "cape_flyer",
+        "networks" : [ ],
+        "routes" : [ ],
+        "rule_priority" : null,
+        "toArea" : [ {
+          "area_id" : "area_commuter_rail_zone_4",
+          "area_name" : "Commuter Rail Zone 4"
+        } ],
+        "toTimeFrame" : [ ],
+        "to_area_id" : "area_commuter_rail_zone_4",
+        "to_timeframe_group_id" : null
+      }, {
+        "fareProducts" : [ {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "cash",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        }, {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "credit_debit",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        }, {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "mticket",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        } ],
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "fromArea" : [ {
+          "area_id" : "area_commuter_rail_zone_1a",
+          "area_name" : "Commuter Rail Zone 1A"
+        } ],
+        "fromTimeFrame" : [ ],
+        "from_area_id" : "area_commuter_rail_zone_1a",
+        "from_timeframe_group_id" : null,
+        "id" : 10,
+        "leg_group_id" : "leg_cape_sbb_buzzards_cash",
+        "network_id" : "cape_flyer",
+        "networks" : [ ],
+        "routes" : [ ],
+        "rule_priority" : null,
+        "toArea" : [ {
+          "area_id" : "area_cf_zone_buzzards",
+          "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
+        } ],
+        "toTimeFrame" : [ ],
+        "to_area_id" : "area_cf_zone_buzzards",
+        "to_timeframe_group_id" : null
+      }, {
+        "fareProducts" : [ {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "cash",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        }, {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "credit_debit",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        }, {
+          "amount" : "20.0",
+          "currency" : "USD",
+          "fare_media_id" : "mticket",
+          "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+          "fare_product_name" : "CapeFLYER Bourne one-way fare"
+        } ],
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "fromArea" : [ {
+          "area_id" : "area_commuter_rail_zone_2",
+          "area_name" : "Commuter Rail Zone 2"
+        } ],
+        "fromTimeFrame" : [ ],
+        "from_area_id" : "area_commuter_rail_zone_2",
+        "from_timeframe_group_id" : null,
+        "id" : 11,
+        "leg_group_id" : "leg_cape_sbb_buzzards_cash",
+        "network_id" : "cape_flyer",
+        "networks" : [ ],
+        "routes" : [ ],
+        "rule_priority" : null,
+        "toArea" : [ {
+          "area_id" : "area_cf_zone_buzzards",
+          "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
+        } ],
+        "toTimeFrame" : [ ],
+        "to_area_id" : "area_cf_zone_buzzards",
+        "to_timeframe_group_id" : null
+      } ],
+      "feed_version" : "1.0"
+    }
+  }
+}

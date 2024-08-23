@@ -1,0 +1,9 @@
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_version
+    network {
+      network_id
+      network_name
+    }
+  }
+}

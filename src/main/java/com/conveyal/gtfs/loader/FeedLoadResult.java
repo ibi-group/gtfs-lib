@@ -38,6 +38,17 @@ public class FeedLoadResult implements Serializable {
     public TableLoadResult translations;
     public TableLoadResult attributions;
 
+    // Fares v2.
+    public TableLoadResult areas;
+    public TableLoadResult stopAreas;
+    public TableLoadResult fareMedias;
+    public TableLoadResult fareProducts;
+    public TableLoadResult timeFrames;
+    public TableLoadResult fareLegRules;
+    public TableLoadResult fareTransferRules;
+    public TableLoadResult networks;
+    public TableLoadResult routeNetworks;
+
     public long loadTimeMillis;
     public long completionTime;
 
@@ -64,5 +75,16 @@ public class FeedLoadResult implements Serializable {
         trips = new TableLoadResult();
         translations = new TableLoadResult();
         attributions = new TableLoadResult();
+
+        // Fares v2.
+        areas = new TableLoadResult();
+        stopAreas = new TableLoadResult();
+        fareMedias = new TableLoadResult();
+        fareProducts = new TableLoadResult();
+        timeFrames = new TableLoadResult();
+        fareLegRules = new TableLoadResult();
+        fareTransferRules = new TableLoadResult();
+        networks = new TableLoadResult();
+        routeNetworks = new TableLoadResult();
     }
 }

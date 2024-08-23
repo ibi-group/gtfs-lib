@@ -1,0 +1,14 @@
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_version
+    stopArea {
+      area_id
+      stop_id
+      id
+      stops {
+        stop_id
+        stop_name
+      }
+    }
+  }
+}

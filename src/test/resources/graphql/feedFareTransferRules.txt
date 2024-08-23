@@ -1,0 +1,48 @@
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_version
+    fareTransferRule (limit: 2) {
+      from_leg_group_id
+      to_leg_group_id
+      transfer_count
+      duration_limit
+      duration_limit_type
+      fare_product_id
+      fareProducts {
+        fare_product_id
+        fare_product_name
+        fare_media_id
+        amount
+        currency
+        fareMedia {
+          fare_media_id
+          fare_media_name
+          fare_media_type
+          id
+        }
+      }
+      fromFareLegRule {
+        leg_group_id
+        network_id
+        from_area_id
+        to_area_id
+        from_timeframe_group_id
+        to_timeframe_group_id
+        fare_product_id
+        rule_priority
+        id
+      }
+      toFareLegRule {
+        leg_group_id
+        network_id
+        from_area_id
+        to_area_id
+        from_timeframe_group_id
+        to_timeframe_group_id
+        fare_product_id
+        rule_priority
+        id
+      }
+    }
+  }
+}

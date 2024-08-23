@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,10 +28,8 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -346,6 +343,16 @@ public class JdbcGtfsExporter {
             } else {
                 result.trips = export(Table.TRIPS, connection);
             }
+
+            result.areas = export(Table.AREAS, connection);
+            result.stopAreas = export(Table.STOP_AREAS, connection);
+            result.fareMedias = export(Table.FARE_MEDIAS, connection);
+            result.fareProducts = export(Table.FARE_PRODUCTS, connection);
+            result.timeFrames = export(Table.TIME_FRAMES, connection);
+            result.fareLegRules = export(Table.FARE_LEG_RULES, connection);
+            result.fareTransferRules = export(Table.FARE_TRANSFER_RULES, connection);
+            result.networks = export(Table.NETWORKS, connection);
+            result.routeNetworks = export(Table.ROUTE_NETWORKS, connection);
 
             exportProprietaryFiles(result);
 

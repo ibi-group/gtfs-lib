@@ -6,6 +6,7 @@ import com.conveyal.gtfs.loader.FeedLoadResult;
 import com.conveyal.gtfs.loader.JdbcGtfsExporter;
 import com.conveyal.gtfs.loader.SnapshotResult;
 import com.conveyal.gtfs.loader.Table;
+import com.conveyal.gtfs.loader.TableLoadResult;
 import com.conveyal.gtfs.storage.ErrorExpectation;
 import com.conveyal.gtfs.storage.ExpectedFieldType;
 import com.conveyal.gtfs.storage.PersistenceExpectation;
@@ -41,15 +42,20 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.conveyal.gtfs.TestUtils.getResourceFileName;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
@@ -299,6 +305,128 @@ public class GTFSTest {
             equalTo(true)
         );
     }
+
+
+    /**
+     * Tests whether "fake-agency-with-fares-v2" GTFS can be placed in a zipped subdirectory and loaded/exported
+     * successfully.
+     */
+    @Test
+    void canLoadAndExportFaresV2Feed() throws IOException {
+        String resourceFolder = TestUtils.getResourceFileName("fake-agency-with-fares-v2");
+        String zipFileName = TestUtils.zipFolderFiles(resourceFolder, false);
+        ErrorExpectation[] errorExpectations = ErrorExpectation.list(
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.FEED_TRAVEL_TIMES_ROUNDED),
+            new ErrorExpectation(NewGTFSErrorType.DATE_NO_SERVICE)
+        );
+        assertTrue(
+            runIntegrationTestOnZipFile(zipFileName, nullValue(), faresV2PersistenceExpectations, errorExpectations)
+        );
+    }
+
+    /**
+     * Persistence expectations for use with the GTFS contained within the "fake-agency-with-fares-v2" feed.
+     */
+    private final PersistenceExpectation[] faresV2PersistenceExpectations = new PersistenceExpectation[]{
+        new PersistenceExpectation(
+            "areas",
+            new RecordExpectation[]{
+                new RecordExpectation("area_id", "area_bl"),
+                new RecordExpectation("area_name", "Blue Line")
+            }
+        ),
+        new PersistenceExpectation(
+            "fare_leg_rules",
+            new RecordExpectation[]{
+                new RecordExpectation("leg_group_id", "leg_airport_rapid_transit_quick_subway"),
+                new RecordExpectation("network_id", "rapid_transit"),
+                new RecordExpectation("from_area_id", "area_bl_airport"),
+                new RecordExpectation("to_area_id", null),
+                new RecordExpectation("fare_product_id", "prod_rapid_transit_quick_subway"),
+                new RecordExpectation("from_timeframe_group_id", "timeframe_regular"),
+                new RecordExpectation("to_timeframe_group_id", null),
+                new RecordExpectation("transfer_only", null)
+            }
+        ),
+        new PersistenceExpectation(
+            "fare_media",
+            new RecordExpectation[]{
+                new RecordExpectation("fare_media_id", "credit_debit"),
+                new RecordExpectation("fare_media_name", "Credit/debit card"),
+                new RecordExpectation("fare_media_type", "0"),
+            }
+        ),
+        new PersistenceExpectation(
+            "fare_products",
+            new RecordExpectation[]{
+                new RecordExpectation("fare_product_id", "prod_cr_inter_4"),
+                new RecordExpectation("fare_product_name", "Commuter Rail Interzone 4 one-way fare"),
+                new RecordExpectation("fare_media_id", "credit_debit"),
+                new RecordExpectation("amount", "4.25"),
+                new RecordExpectation("currency", "USD"),
+            }
+        ),
+        new PersistenceExpectation(
+            "fare_transfer_rules",
+            new RecordExpectation[]{
+                new RecordExpectation("from_leg_group_id", "leg_mattapan_rapid_transit_quick_subway"),
+                new RecordExpectation("to_leg_group_id", "leg_local_bus_quick_subway"),
+                new RecordExpectation("transfer_count", null),
+                new RecordExpectation("duration_limit", "7200"),
+                new RecordExpectation("duration_limit_type", "1"),
+                new RecordExpectation("fare_transfer_type", "0"),
+                new RecordExpectation("fare_product_id", "prod_rapid_transit_quick_subway")
+            }
+        ),
+        new PersistenceExpectation(
+            "networks",
+            new RecordExpectation[]{
+                new RecordExpectation("network_id", "1"),
+                new RecordExpectation("network_name", "Forbidden because network id is defined in routes")
+            }
+        ),
+        new PersistenceExpectation(
+            "route_networks",
+            new RecordExpectation[]{
+                new RecordExpectation("network_id", "1"),
+                new RecordExpectation("route_id", "1")
+            }
+        ),
+        new PersistenceExpectation(
+            "stop_areas",
+            new RecordExpectation[]{
+                new RecordExpectation("stop_id", "4u6g"),
+                new RecordExpectation("area_id", "area_route_426_downtown")
+            }
+        ),
+        new PersistenceExpectation(
+            "timeframes",
+            new RecordExpectation[]{
+                new RecordExpectation("timeframe_group_id", "timeframe_regular"),
+                new RecordExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57")
+            }
+        )
+    };
+
 
     /**
      * Tests whether the simple gtfs can be loaded and exported if it has only calendar_dates.txt
@@ -834,20 +962,29 @@ public class GTFSTest {
     }
 
     private void assertThatLoadIsErrorFree(FeedLoadResult loadResult) {
-        assertThat(loadResult.fatalException, is(nullValue()));
-        assertThat(loadResult.agency.fatalException, is(nullValue()));
-        assertThat(loadResult.calendar.fatalException, is(nullValue()));
-        assertThat(loadResult.calendarDates.fatalException, is(nullValue()));
-        assertThat(loadResult.fareAttributes.fatalException, is(nullValue()));
-        assertThat(loadResult.fareRules.fatalException, is(nullValue()));
-        assertThat(loadResult.feedInfo.fatalException, is(nullValue()));
-        assertThat(loadResult.frequencies.fatalException, is(nullValue()));
-        assertThat(loadResult.routes.fatalException, is(nullValue()));
-        assertThat(loadResult.shapes.fatalException, is(nullValue()));
-        assertThat(loadResult.stops.fatalException, is(nullValue()));
-        assertThat(loadResult.stopTimes.fatalException, is(nullValue()));
-        assertThat(loadResult.transfers.fatalException, is(nullValue()));
-        assertThat(loadResult.trips.fatalException, is(nullValue()));
+        assertNull(loadResult.fatalException);
+        assertNull(loadResult.agency.fatalException);
+        assertNull(loadResult.calendar.fatalException);
+        assertNull(loadResult.calendarDates.fatalException);
+        assertNull(loadResult.fareAttributes.fatalException);
+        assertNull(loadResult.fareRules.fatalException);
+        assertNull(loadResult.feedInfo.fatalException);
+        assertNull(loadResult.frequencies.fatalException);
+        assertNull(loadResult.routes.fatalException);
+        assertNull(loadResult.shapes.fatalException);
+        assertNull(loadResult.stops.fatalException);
+        assertNull(loadResult.stopTimes.fatalException);
+        assertNull(loadResult.transfers.fatalException);
+        assertNull(loadResult.trips.fatalException);
+        assertNull(loadResult.areas.fatalException);
+        assertNull(loadResult.fareLegRules.fatalException);
+        assertNull(loadResult.fareMedias.fatalException);
+        assertNull(loadResult.fareProducts.fatalException);
+        assertNull(loadResult.fareTransferRules.fatalException);
+        assertNull(loadResult.networks.fatalException);
+        assertNull(loadResult.routeNetworks.fatalException);
+        assertNull(loadResult.stopAreas.fatalException);
+        assertNull(loadResult.timeFrames.fatalException);
     }
 
     private void assertThatSnapshotIsErrorFree(SnapshotResult snapshotResult) {
@@ -858,11 +995,6 @@ public class GTFSTest {
     /**
      * Helper function to export a GTFS from the database to a temporary zip file.
      */
-//    private File exportGtfs(String namespace, DataSource dataSource, boolean fromEditor) throws IOException {
-//        File tempFile = File.createTempFile("snapshot", ".zip");
-//        GTFS.export(namespace, tempFile.getAbsolutePath(), dataSource, fromEditor, false);
-//        return tempFile;
-//    }
     private File exportGtfs(String namespace, DataSource dataSource, boolean fromEditor, boolean publishProprietaryFiles) throws IOException {
         File tempFile = File.createTempFile("snapshot", ".zip");
         GTFS.export(namespace, tempFile.getAbsolutePath(), dataSource, fromEditor, publishProprietaryFiles);

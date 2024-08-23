@@ -1,0 +1,11 @@
+{
+  "data" : {
+    "feed" : {
+      "feed_version" : "1.0",
+      "routeNetwork" : [ {
+        "network_id" : "1",
+        "route_id" : "1"
+      } ]
+    }
+  }
+}

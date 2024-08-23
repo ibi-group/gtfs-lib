@@ -122,6 +122,18 @@ public class JdbcGTFSFeedConverter {
             copyEntityToSql(gtfsFeed.trips.values(), Table.TRIPS); // refs routes
             copyEntityToSql(frequencies, Table.FREQUENCIES); // refs trips
             copyEntityToSql(gtfsFeed.stop_times.values(), Table.STOP_TIMES);
+
+            // Fares v2.
+            copyEntityToSql(gtfsFeed.areas.values(), Table.AREAS);
+            copyEntityToSql(gtfsFeed.stop_areas.values(), Table.STOP_AREAS);
+            copyEntityToSql(gtfsFeed.fare_medias.values(), Table.FARE_MEDIAS);
+            copyEntityToSql(gtfsFeed.fare_products.values(), Table.FARE_PRODUCTS);
+            copyEntityToSql(gtfsFeed.time_frames.values(), Table.TIME_FRAMES);
+            copyEntityToSql(gtfsFeed.fare_leg_rules.values(), Table.FARE_LEG_RULES);
+            copyEntityToSql(gtfsFeed.fare_transfer_rules.values(), Table.FARE_TRANSFER_RULES);
+            copyEntityToSql(gtfsFeed.networks.values(), Table.NETWORKS);
+            copyEntityToSql(gtfsFeed.route_networks.values(), Table.ROUTE_NETWORKS);
+
 //            result.errorCount = errorStorage.getErrorCount();
             // This will commit and close the single connection that has been shared between all preceding load steps.
             errorStorage.commitAndClose();

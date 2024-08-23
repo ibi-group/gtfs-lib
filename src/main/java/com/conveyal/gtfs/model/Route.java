@@ -36,6 +36,9 @@ public class Route extends Entity { // implements Entity.Factory<Route>
     public String feed_id;
     public int continuous_pickup = INT_MISSING;
     public int continuous_drop_off = INT_MISSING;
+    public String network_id;
+
+    public static final String TABLE_NAME = "routes";
 
     @Override
     public String getId () {
@@ -68,12 +71,13 @@ public class Route extends Entity { // implements Entity.Factory<Route>
         setIntParameter(statement, oneBasedIndex++, 0);
         setIntParameter(statement, oneBasedIndex++, continuous_pickup);
         setIntParameter(statement, oneBasedIndex++, continuous_drop_off);
+        statement.setString(oneBasedIndex, network_id);
     }
 
     public static class Loader extends Entity.Loader<Route> {
 
         public Loader(GTFSFeed feed) {
-            super(feed, "routes");
+            super(feed, TABLE_NAME);
         }
 
         @Override
@@ -110,6 +114,7 @@ public class Route extends Entity { // implements Entity.Factory<Route>
             r.route_branding_url = getUrlField("route_branding_url", false);
             r.continuous_pickup = getIntField("continuous_pickup", false, 0, 3, INT_MISSING);
             r.continuous_drop_off = getIntField("continuous_drop_off", false, 0, 3, INT_MISSING);
+            r.network_id = getStringField("network_id", false);
             r.feed = feed;
             r.feed_id = feed.feedId;
             // Attempting to put a null key or value will cause an NPE in BTreeMap
@@ -120,7 +125,7 @@ public class Route extends Entity { // implements Entity.Factory<Route>
 
     public static class Writer extends Entity.Writer<Route> {    	
         public Writer (GTFSFeed feed) {
-            super(feed, "routes");
+            super(feed, TABLE_NAME);
         }
 
         @Override
@@ -138,6 +143,7 @@ public class Route extends Entity { // implements Entity.Factory<Route>
             writeStringField("route_sort_order");
             writeStringField("continuous_pickup");
             writeStringField("continuous_drop_off");
+            writeStringField("network_id");
             endRecord();
         }
 
@@ -156,6 +162,7 @@ public class Route extends Entity { // implements Entity.Factory<Route>
             writeIntField(r.route_sort_order);
             writeIntField(r.continuous_pickup);
             writeIntField(r.continuous_drop_off);
+            writeStringField(r.network_id);
             endRecord();
         }
 
