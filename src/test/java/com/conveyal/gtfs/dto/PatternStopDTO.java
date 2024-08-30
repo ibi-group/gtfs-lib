@@ -24,10 +24,12 @@ public class PatternStopDTO {
     /** Empty constructor for deserialization */
     public PatternStopDTO() {}
 
-    public PatternStopDTO(String patternId, String stopId, int defaultTravelTime, int stopSequence) {
-        pattern_id = patternId;
-        stop_id = stopId;
-        stop_sequence = stopSequence;
-        default_travel_time = defaultTravelTime;
+    public static PatternStopDTO create() {
+        PatternStopDTO patternStopDTO = new PatternStopDTO();
+        patternStopDTO.pattern_id = "pattern-id-1";
+        patternStopDTO.stop_id = "stop-id-1";
+        patternStopDTO.stop_sequence = 0;
+        patternStopDTO.default_travel_time = 0;
+        return patternStopDTO;
     }
 }

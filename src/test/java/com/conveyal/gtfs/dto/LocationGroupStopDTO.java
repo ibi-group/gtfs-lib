@@ -12,5 +12,12 @@ public class LocationGroupStopDTO {
     public int id;
     public String location_group_id;
     public String stop_id;
+
+    public static LocationGroupStopDTO create() {
+        LocationGroupStopDTO locationGroupStop = new LocationGroupStopDTO();
+        locationGroupStop.location_group_id = "location-group-id-1";
+        locationGroupStop.stop_id = "1";
+        return locationGroupStop;
+    }
 }
 

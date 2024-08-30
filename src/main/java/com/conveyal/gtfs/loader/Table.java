@@ -326,30 +326,30 @@ public class Table {
 
     // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#locationsgeojson
     public static final Table LOCATIONS = new Table(Location.TABLE_NAME, Location.class, OPTIONAL,
-        new StringField(Location.LOCATION_ID_COLUMN_NAME, REQUIRED),
-        new StringField(Location.STOP_NAME_COLUMN_NAME, OPTIONAL),
-        new StringField(Location.STOP_DESC_COLUMN_NAME, OPTIONAL),
-        new StringField(Location.ZONE_ID_COLUMN_NAME, OPTIONAL),
-        new URLField(Location.STOP_URL_COLUMN_NAME, OPTIONAL),
-        new StringField(Location.GEOMETRY_TYPE_COLUMN_NAME, REQUIRED)
+        new StringField(Location.LOCATION_ID_NAME, REQUIRED),
+        new StringField(Location.STOP_NAME_NAME, OPTIONAL),
+        new StringField(Location.STOP_DESC_NAME, OPTIONAL),
+        new StringField(Location.ZONE_ID_NAME, OPTIONAL),
+        new URLField(Location.STOP_URL_NAME, OPTIONAL),
+        new StringField(Location.GEOMETRY_TYPE_NAME, REQUIRED)
     )
     .addPrimaryKey()
-    .addPrimaryKeyNames(Location.LOCATION_ID_COLUMN_NAME);
+    .addPrimaryKeyNames(Location.LOCATION_ID_NAME);
 
     // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#location_groupstxt
     public static final Table LOCATION_GROUP = new Table(LocationGroup.TABLE_NAME, LocationGroup.class, OPTIONAL,
-        new StringField(LocationGroup.LOCATION_GROUP_ID_COLUMN_NAME, REQUIRED),
-        new StringField(LocationGroup.LOCATION_GROUP_NAME_COLUMN_NAME, OPTIONAL)
+        new StringField(LocationGroup.LOCATION_GROUP_ID_NAME, REQUIRED),
+        new StringField(LocationGroup.LOCATION_GROUP_NAME_NAME, OPTIONAL)
     )
-    .addPrimaryKeyNames(LocationGroup.LOCATION_GROUP_ID_COLUMN_NAME);
+    .addPrimaryKeyNames(LocationGroup.LOCATION_GROUP_ID_NAME);
 
     // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#location_group_stopstxt
     public static final Table LOCATION_GROUP_STOPS = new Table(LocationGroupStop.TABLE_NAME, LocationGroupStop.class, OPTIONAL,
-        new StringField(LocationGroupStop.LOCATION_GROUP_ID_COLUMN_NAME, REQUIRED).isReferenceTo(LOCATION_GROUP),
-        new StringField(LocationGroupStop.STOP_ID_COLUMN_NAME, REQUIRED).isReferenceTo(STOPS)
+        new StringField(LocationGroupStop.LOCATION_GROUP_ID_NAME, REQUIRED).isReferenceTo(LOCATION_GROUP),
+        new StringField(LocationGroupStop.STOP_ID_NAME, REQUIRED).isReferenceTo(STOPS)
     )
     .keyFieldIsNotUnique()
-    .addPrimaryKeyNames(LocationGroupStop.LOCATION_GROUP_ID_COLUMN_NAME, LocationGroupStop.STOP_ID_COLUMN_NAME);
+    .addPrimaryKeyNames(LocationGroupStop.LOCATION_GROUP_ID_NAME, LocationGroupStop.STOP_ID_NAME);
 
     public static final Table PATTERN_STOP = new Table("pattern_stops", PatternStop.class, OPTIONAL,
             new StringField("pattern_id", REQUIRED).isReferenceTo(PATTERNS),
@@ -412,30 +412,30 @@ public class Table {
     .addPrimaryKeyNames("from_stop_id", "to_stop_id", "from_trip_id", "to_trip_id", "from_route_id", "to_route_id");
 
     // Must come after TRIPS and STOPS table to which it has references
-    public static final Table STOP_TIMES = new Table("stop_times", StopTime.class, REQUIRED,
-            new StringField("trip_id", REQUIRED).isReferenceTo(TRIPS),
-            new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
+    public static final Table STOP_TIMES = new Table(StopTime.TABLE_NAME, StopTime.class, REQUIRED,
+            new StringField(StopTime.TRIP_ID_NAME, REQUIRED).isReferenceTo(TRIPS),
+            new IntegerField(StopTime.STOP_SEQUENCE_NAME, REQUIRED, 0, Integer.MAX_VALUE),
             // FIXME: Do we need an index on stop_id
-            new StringField("stop_id", OPTIONAL).isReferenceTo(STOPS),
-            new StringField("location_group_id", FLEX_OPTIONAL).isReferenceTo(LOCATION_GROUP),
-            new StringField("location_id", FLEX_OPTIONAL).isReferenceTo(LOCATIONS),
+            new StringField(StopTime.STOP_ID_NAME, OPTIONAL).isReferenceTo(STOPS),
+            new StringField(StopTime.LOCATION_GROUP_ID_NAME, FLEX_OPTIONAL).isReferenceTo(LOCATION_GROUP),
+            new StringField(StopTime.LOCATION_ID_NAME, FLEX_OPTIONAL).isReferenceTo(LOCATIONS),
             // TODO verify that we have a special check for arrival and departure times first and last stop_time in a trip, which are required
-            new TimeField("arrival_time", OPTIONAL),
-            new TimeField("departure_time", OPTIONAL),
-            new StringField("stop_headsign", OPTIONAL),
-            new ShortField("pickup_type", OPTIONAL, 3),
-            new ShortField("drop_off_type", OPTIONAL, 3),
-            new ShortField("continuous_pickup", OPTIONAL, 3),
-            new ShortField("continuous_drop_off", OPTIONAL, 3),
-            new DoubleField("shape_dist_traveled", OPTIONAL, 0, Double.POSITIVE_INFINITY, -1),
-            new ShortField("timepoint", OPTIONAL, 1),
+            new TimeField(StopTime.ARRIVAL_TIME_NAME, OPTIONAL),
+            new TimeField(StopTime.DEPARTURE_TIME_NAME, OPTIONAL),
+            new StringField(StopTime.STOP_HEADSIGN_NAME, OPTIONAL),
+            new ShortField(StopTime.PICKUP_TYPE_NAME, OPTIONAL, 3),
+            new ShortField(StopTime.DROP_OFF_TYPE_NAME, OPTIONAL, 3),
+            new ShortField(StopTime.CONTINUOUS_PICK_UP_NAME, OPTIONAL, 3),
+            new ShortField(StopTime.CONTINUOUS_DROP_OFF_NAME, OPTIONAL, 3),
+            new DoubleField(StopTime.SHAPE_DIST_TRAVELED_NAME, OPTIONAL, 0, Double.POSITIVE_INFINITY, -1),
+            new ShortField(StopTime.TIMEPOINT_NAME, OPTIONAL, 1),
             new IntegerField("fare_units_traveled", EXTENSION), // OpenOV NL extension
-            new StringField("pickup_booking_rule_id", FLEX_OPTIONAL),
-            new StringField("drop_off_booking_rule_id", FLEX_OPTIONAL),
-            new TimeField("start_pickup_drop_off_window", FLEX_OPTIONAL),
-            new TimeField("end_pickup_drop_off_window", FLEX_OPTIONAL)
+            new StringField(StopTime.PICKUP_BOOKING_RULE_ID_NAME, FLEX_OPTIONAL),
+            new StringField(StopTime.DROP_OFF_BOOKING_RULE_ID_NAME, FLEX_OPTIONAL),
+            new TimeField(StopTime.START_PICKUP_DROP_OFF_WINDOW_NAME, FLEX_OPTIONAL),
+            new TimeField(StopTime.END_PICKUP_DROP_OFF_WINDOW_NAME, FLEX_OPTIONAL)
     ).withParentTable(TRIPS)
-    .addPrimaryKeyNames("trip_id", "stop_sequence");
+    .addPrimaryKeyNames(StopTime.TRIP_ID_NAME, StopTime.STOP_SEQUENCE_NAME);
 
     // Must come after TRIPS table to which it has a reference
     public static final Table FREQUENCIES = new Table("frequencies", Frequency.class, OPTIONAL,
@@ -488,38 +488,38 @@ public class Table {
 
     // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#booking_rulestxt
     public static final Table BOOKING_RULES = new Table(BookingRule.TABLE_NAME, BookingRule.class, OPTIONAL,
-            new StringField(BookingRule.BOOKING_RULE_ID_COLUMN_NAME, REQUIRED),
-            new ShortField(BookingRule.BOOKING_TYPE_COLUMN_NAME, OPTIONAL, 2),
-            new IntegerField(BookingRule.PRIOR_NOTICE_DURATION_MIN_COLUMN_NAME, OPTIONAL),
-            new IntegerField(BookingRule.PRIOR_NOTICE_DURATION_MAX_COLUMN_NAME, OPTIONAL),
-            new IntegerField(BookingRule.PRIOR_NOTICE_LAST_DAY_COLUMN_NAME, OPTIONAL),
-            new StringField(BookingRule.PRIOR_NOTICE_LAST_TIME_COLUMN_NAME, OPTIONAL),
-            new IntegerField(BookingRule.PRIOR_NOTICE_START_DAY_COLUMN_NAME, OPTIONAL),
-            new StringField(BookingRule.PRIOR_NOTICE_START_TIME_COLUMN_NAME, OPTIONAL),
-            new StringField(BookingRule.PRIOR_NOTICE_SERVICE_ID_COLUMN_NAME, OPTIONAL).isReferenceTo(CALENDAR),
-            new StringField(BookingRule.MESSAGE_COLUMN_NAME, OPTIONAL),
-            new StringField(BookingRule.PICKUP_MESSAGE_COLUMN_NAME, OPTIONAL),
-            new StringField(BookingRule.DROP_OFF_MESSAGE_COLUMN_NAME, OPTIONAL),
-            new StringField(BookingRule.PHONE_NUMBER_COLUMN_NAME, OPTIONAL),
-            new URLField(BookingRule.INFO_URL_COLUMN_NAME, OPTIONAL),
-            new URLField(BookingRule.BOOKING_URL_COLUMN_NAME, OPTIONAL)
+            new StringField(BookingRule.BOOKING_RULE_ID_NAME, REQUIRED),
+            new ShortField(BookingRule.BOOKING_TYPE_NAME, OPTIONAL, 2),
+            new IntegerField(BookingRule.PRIOR_NOTICE_DURATION_MIN_NAME, OPTIONAL),
+            new IntegerField(BookingRule.PRIOR_NOTICE_DURATION_MAX_NAME, OPTIONAL),
+            new IntegerField(BookingRule.PRIOR_NOTICE_LAST_DAY_NAME, OPTIONAL),
+            new StringField(BookingRule.PRIOR_NOTICE_LAST_TIME_NAME, OPTIONAL),
+            new IntegerField(BookingRule.PRIOR_NOTICE_START_DAY_NAME, OPTIONAL),
+            new StringField(BookingRule.PRIOR_NOTICE_START_TIME_NAME, OPTIONAL),
+            new StringField(BookingRule.PRIOR_NOTICE_SERVICE_ID_NAME, OPTIONAL).isReferenceTo(CALENDAR),
+            new StringField(BookingRule.MESSAGE_NAME, OPTIONAL),
+            new StringField(BookingRule.PICKUP_MESSAGE_NAME, OPTIONAL),
+            new StringField(BookingRule.DROP_OFF_MESSAGE_NAME, OPTIONAL),
+            new StringField(BookingRule.PHONE_NUMBER_NAME, OPTIONAL),
+            new URLField(BookingRule.INFO_URL_NAME, OPTIONAL),
+            new URLField(BookingRule.BOOKING_URL_NAME, OPTIONAL)
     )
-    .addPrimaryKeyNames(BookingRule.BOOKING_RULE_ID_COLUMN_NAME);
+    .addPrimaryKeyNames(BookingRule.BOOKING_RULE_ID_NAME);
 
     // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#locationsgeojson
     public static final Table LOCATION_SHAPES = new Table(LocationShape.TABLE_NAME, LocationShape.class, OPTIONAL,
-        new StringField(LocationShape.LOCATION_ID_COLUMN_NAME, REQUIRED).isReferenceTo(LOCATIONS),
-        new StringField(LocationShape.GEOMETRY_ID_COLUMN_NAME, REQUIRED),
-        new DoubleField(LocationShape.GEOMETRY_PT_LAT_COLUMN_NAME, REQUIRED, -80, 80, 6),
-        new DoubleField(LocationShape.GEOMETRY_PT_LON_COLUMN_NAME, REQUIRED, -180, 180, 6)
+        new StringField(LocationShape.LOCATION_ID_NAME, REQUIRED).isReferenceTo(LOCATIONS),
+        new StringField(LocationShape.GEOMETRY_ID_NAME, REQUIRED),
+        new DoubleField(LocationShape.GEOMETRY_PT_LAT_NAME, REQUIRED, -80, 80, 6),
+        new DoubleField(LocationShape.GEOMETRY_PT_LON_NAME, REQUIRED, -180, 180, 6)
     )
     .keyFieldIsNotUnique()
     .withParentTable(LOCATIONS)
     .addPrimaryKeyNames(
-        LocationShape.LOCATION_ID_COLUMN_NAME,
-        LocationShape.GEOMETRY_ID_COLUMN_NAME,
-        LocationShape.GEOMETRY_PT_LAT_COLUMN_NAME,
-        LocationShape.GEOMETRY_PT_LON_COLUMN_NAME
+        LocationShape.LOCATION_ID_NAME,
+        LocationShape.GEOMETRY_ID_NAME,
+        LocationShape.GEOMETRY_PT_LAT_NAME,
+        LocationShape.GEOMETRY_PT_LON_NAME
     );
 
     /** List of tables in order needed for checking referential integrity during load stage. */

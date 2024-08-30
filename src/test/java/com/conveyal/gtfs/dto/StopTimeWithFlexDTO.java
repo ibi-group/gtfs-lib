@@ -28,19 +28,30 @@ public class StopTimeWithFlexDTO extends StopTimeDTO {
     /**
      * Used to create a stop time which references a location group or location.
      */
-    public static StopTimeWithFlexDTO createFlexStopTime(
+    public static StopTimeWithFlexDTO create(
         String locationGroupId,
         String locationId,
-        Integer start_pickup_drop_off_window,
-        Integer end_pickup_drop_off_window,
+        Integer startPickupDropOffWindow,
+        Integer endPickupDropOffWindow,
         Integer stopSequence
     ) {
         StopTimeWithFlexDTO stopTimeWithFlexDTO = new StopTimeWithFlexDTO();
         stopTimeWithFlexDTO.location_group_id = locationGroupId;
         stopTimeWithFlexDTO.location_id = locationId;
-        stopTimeWithFlexDTO.start_pickup_drop_off_window = start_pickup_drop_off_window;
-        stopTimeWithFlexDTO.end_pickup_drop_off_window = end_pickup_drop_off_window;
+        stopTimeWithFlexDTO.start_pickup_drop_off_window = startPickupDropOffWindow;
+        stopTimeWithFlexDTO.end_pickup_drop_off_window = endPickupDropOffWindow;
         stopTimeWithFlexDTO.stop_sequence = stopSequence;
         return stopTimeWithFlexDTO;
+    }
+
+    public static StopTimeWithFlexDTO create() {
+        StopTimeWithFlexDTO stopTime = new StopTimeWithFlexDTO();
+        stopTime.stop_id = "stop-id-1";
+        stopTime.stop_sequence = 1;
+        stopTime.pickup_booking_rule_id = "1";
+        stopTime.drop_off_booking_rule_id = "2";
+        stopTime.start_pickup_drop_off_window = 0;
+        stopTime.end_pickup_drop_off_window = 0;
+        return stopTime;
     }
 }

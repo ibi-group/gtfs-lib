@@ -1,11 +1,7 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.graphql.fetchers.JDBCFetcher;
-import com.conveyal.gtfs.graphql.fetchers.MapFetcher;
 import com.csvreader.CsvReader;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLObjectType;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,12 +19,6 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.conveyal.gtfs.graphql.GraphQLUtil.intArg;
-import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.LIMIT_ARG;
-import static graphql.Scalars.GraphQLInt;
-import static graphql.schema.GraphQLFieldDefinition.newFieldDefinition;
-import static graphql.schema.GraphQLObjectType.newObject;
-
 public class LocationGroupStop extends Entity {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocationGroupStop.class);
@@ -45,8 +35,8 @@ public class LocationGroupStop extends Entity {
     public String stop_id;
 
     public static final String TABLE_NAME = "location_group_stops";
-    public static final String LOCATION_GROUP_ID_COLUMN_NAME = "location_group_id";
-    public static final String STOP_ID_COLUMN_NAME = "stop_id";
+    public static final String LOCATION_GROUP_ID_NAME = "location_group_id";
+    public static final String STOP_ID_NAME = "stop_id";
 
 
     public LocationGroupStop() {
@@ -89,8 +79,8 @@ public class LocationGroupStop extends Entity {
         public void loadOneRow() throws IOException {
             LocationGroupStop locationGroupStop = new LocationGroupStop();
             locationGroupStop.id = row + 1; // offset line number by 1 to account for 0-based row index
-            locationGroupStop.location_group_id = getStringField(LOCATION_GROUP_ID_COLUMN_NAME, true);
-            locationGroupStop.stop_id = getStringField(STOP_ID_COLUMN_NAME, true);
+            locationGroupStop.location_group_id = getStringField(LOCATION_GROUP_ID_NAME, true);
+            locationGroupStop.stop_id = getStringField(STOP_ID_NAME, true);
             // Attempting to put a null key or value will cause an NPE in BTreeMap
             if (locationGroupStop.location_group_id != null && locationGroupStop.stop_id != null) {
                 feed.locationGroupStops.put(locationGroupStop.getId(), locationGroupStop);
@@ -105,7 +95,7 @@ public class LocationGroupStop extends Entity {
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {LOCATION_GROUP_ID_COLUMN_NAME, STOP_ID_COLUMN_NAME});
+            writer.writeRecord(new String[] {LOCATION_GROUP_ID_NAME, STOP_ID_NAME});
         }
 
         @Override
@@ -246,20 +236,6 @@ public class LocationGroupStop extends Entity {
         });
         return csvContent.toString();
     }
-
-    public static final GraphQLObjectType locationGroupStopType = newObject().name(TABLE_NAME)
-        .description("A GTFS location_group_stops object")
-        .field(MapFetcher.field("id", GraphQLInt))
-        .field(MapFetcher.field(LOCATION_GROUP_ID_COLUMN_NAME))
-        .field(MapFetcher.field(STOP_ID_COLUMN_NAME))
-        .field(newFieldDefinition()
-            .name("locationGroup")
-            .type(new GraphQLList(LocationGroup.locationGroupType))
-            .argument(intArg(LIMIT_ARG))
-            .dataFetcher(new JDBCFetcher(LocationGroup.TABLE_NAME, LOCATION_GROUP_ID_COLUMN_NAME))
-            .build()
-        )
-        .build();
 
     @Override
     public boolean equals(Object o) {

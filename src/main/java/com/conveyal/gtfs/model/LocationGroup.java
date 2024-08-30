@@ -19,8 +19,8 @@ public class LocationGroup extends Entity {
     public String location_group_name;
 
     public static final String TABLE_NAME = "location_groups";
-    public static final String LOCATION_GROUP_ID_COLUMN_NAME = "location_group_id";
-    public static final String LOCATION_GROUP_NAME_COLUMN_NAME = "location_group_name";
+    public static final String LOCATION_GROUP_ID_NAME = "location_group_id";
+    public static final String LOCATION_GROUP_NAME_NAME = "location_group_name";
 
     @Override
     public String getId () {
@@ -54,8 +54,8 @@ public class LocationGroup extends Entity {
         public void loadOneRow() throws IOException {
             LocationGroup locationGroup = new LocationGroup();
             locationGroup.id = row + 1; // offset line number by 1 to account for 0-based row index
-            locationGroup.location_group_id = getStringField(LOCATION_GROUP_ID_COLUMN_NAME, false);
-            locationGroup.location_group_name = getStringField(LOCATION_GROUP_NAME_COLUMN_NAME, false);
+            locationGroup.location_group_id = getStringField(LOCATION_GROUP_ID_NAME, false);
+            locationGroup.location_group_name = getStringField(LOCATION_GROUP_NAME_NAME, false);
             // Attempting to put a null key or value will cause an NPE in BTreeMap
             if (locationGroup.location_group_id != null) {
                 feed.locationGroup.put(locationGroup.location_group_id, locationGroup);
@@ -70,7 +70,7 @@ public class LocationGroup extends Entity {
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {LOCATION_GROUP_ID_COLUMN_NAME, LOCATION_GROUP_NAME_COLUMN_NAME});
+            writer.writeRecord(new String[] {LOCATION_GROUP_ID_NAME, LOCATION_GROUP_NAME_NAME});
         }
 
         @Override
@@ -89,7 +89,7 @@ public class LocationGroup extends Entity {
     public static final GraphQLObjectType locationGroupType = newObject().name(TABLE_NAME)
         .description("A GTFS location group object.")
         .field(MapFetcher.field("id", GraphQLInt))
-        .field(MapFetcher.field(LOCATION_GROUP_ID_COLUMN_NAME))
-        .field(MapFetcher.field(LOCATION_GROUP_NAME_COLUMN_NAME))
+        .field(MapFetcher.field(LOCATION_GROUP_ID_NAME))
+        .field(MapFetcher.field(LOCATION_GROUP_NAME_NAME))
         .build();
 }

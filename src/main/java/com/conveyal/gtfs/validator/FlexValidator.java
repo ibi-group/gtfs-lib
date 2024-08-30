@@ -81,10 +81,10 @@ public class FlexValidator extends FeedValidator {
         List<Location> locations
     ) {
         return
-            (bookingRules != null && !bookingRules.isEmpty()) ||
-            (locationGroups != null && !locationGroups.isEmpty()) ||
-            (locationGroupStops != null && !locationGroupStops.isEmpty()) ||
-            (locations != null && !locations.isEmpty());
+            isNotEmpty(bookingRules) ||
+            isNotEmpty(locationGroups) ||
+            isNotEmpty(locationGroupStops) ||
+            isNotEmpty(locations);
     }
 
     /**

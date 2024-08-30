@@ -23,13 +23,12 @@ public class StopTimeDTO {
     public StopTimeDTO() {
     }
 
-    /**
-     * Used to create a stop time which references a stop.
-     */
-    public StopTimeDTO(String stopId, Integer arrivalTime, Integer departureTime, Integer stopSequence) {
-        stop_id = stopId;
-        arrival_time = arrivalTime;
-        departure_time = departureTime;
-        stop_sequence = stopSequence;
+    public static StopTimeDTO create() {
+        StopTimeDTO stopTimeDTO = new StopTimeDTO();
+        stopTimeDTO.stop_id = "stop-id-1";
+        stopTimeDTO.arrival_time = 0;
+        stopTimeDTO.departure_time = 0;
+        stopTimeDTO.stop_sequence = 0;
+        return stopTimeDTO;
     }
 }

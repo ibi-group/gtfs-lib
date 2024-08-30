@@ -1,12 +1,10 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.graphql.fetchers.MapFetcher;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import graphql.schema.GraphQLObjectType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,10 +16,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import static graphql.Scalars.GraphQLFloat;
-import static graphql.Scalars.GraphQLInt;
-import static graphql.schema.GraphQLObjectType.newObject;
 
 public class LocationShape extends Entity {
 
@@ -37,10 +31,10 @@ public class LocationShape extends Entity {
     public double geometry_pt_lon;
 
     public static final String TABLE_NAME = "location_shapes";
-    public static final String LOCATION_ID_COLUMN_NAME = "location_id";
-    public static final String GEOMETRY_ID_COLUMN_NAME = "geometry_id";
-    public static final String GEOMETRY_PT_LAT_COLUMN_NAME = "geometry_pt_lat";
-    public static final String GEOMETRY_PT_LON_COLUMN_NAME = "geometry_pt_lon";
+    public static final String LOCATION_ID_NAME = "location_id";
+    public static final String GEOMETRY_ID_NAME = "geometry_id";
+    public static final String GEOMETRY_PT_LAT_NAME = "geometry_pt_lat";
+    public static final String GEOMETRY_PT_LON_NAME = "geometry_pt_lon";
 
 
     public LocationShape() {
@@ -87,10 +81,10 @@ public class LocationShape extends Entity {
         public void loadOneRow() throws IOException {
             LocationShape locationShape = new LocationShape();
             locationShape.id = row + 1; // offset line number by 1 to account for 0-based row index
-            locationShape.location_id = getStringField(LOCATION_ID_COLUMN_NAME, true);
-            locationShape.geometry_id = getStringField(GEOMETRY_ID_COLUMN_NAME, true);
-            locationShape.geometry_pt_lat = getDoubleField(GEOMETRY_PT_LAT_COLUMN_NAME, true, -90D, 90D); // reuse lat/lon min and max from Stop class
-            locationShape.geometry_pt_lon = getDoubleField(GEOMETRY_PT_LON_COLUMN_NAME, true, -180D, 180D);
+            locationShape.location_id = getStringField(LOCATION_ID_NAME, true);
+            locationShape.geometry_id = getStringField(GEOMETRY_ID_NAME, true);
+            locationShape.geometry_pt_lat = getDoubleField(GEOMETRY_PT_LAT_NAME, true, -90D, 90D); // reuse lat/lon min and max from Stop class
+            locationShape.geometry_pt_lon = getDoubleField(GEOMETRY_PT_LON_NAME, true, -180D, 180D);
 
             // Location id can not be used here because it is not unique.
             feed.locationShapes.put(Integer.toString(row), locationShape);
@@ -104,10 +98,10 @@ public class LocationShape extends Entity {
     public static String header() {
         return String.format(
             "%s,%s,%s,%s%n",
-            LOCATION_ID_COLUMN_NAME,
-            GEOMETRY_ID_COLUMN_NAME,
-            GEOMETRY_PT_LAT_COLUMN_NAME,
-            GEOMETRY_PT_LON_COLUMN_NAME
+            LOCATION_ID_NAME,
+            GEOMETRY_ID_NAME,
+            GEOMETRY_PT_LAT_NAME,
+            GEOMETRY_PT_LON_NAME
         );
     }
 
@@ -187,8 +181,8 @@ public class LocationShape extends Entity {
     private static boolean areCornersMatching(ObjectNode firstCorner, ObjectNode lastCorner) {
         return
             firstCorner != null && lastCorner != null &&
-            firstCorner.get(GEOMETRY_PT_LAT_COLUMN_NAME).asText().equals(lastCorner.get(GEOMETRY_PT_LAT_COLUMN_NAME).asText()) &&
-            firstCorner.get(GEOMETRY_PT_LON_COLUMN_NAME).asText().equals(lastCorner.get(GEOMETRY_PT_LON_COLUMN_NAME).asText());
+            firstCorner.get(GEOMETRY_PT_LAT_NAME).asText().equals(lastCorner.get(GEOMETRY_PT_LAT_NAME).asText()) &&
+            firstCorner.get(GEOMETRY_PT_LON_NAME).asText().equals(lastCorner.get(GEOMETRY_PT_LON_NAME).asText());
     }
 
     /**
@@ -198,22 +192,12 @@ public class LocationShape extends Entity {
     private static ObjectNode getCorner(JsonNode shape) {
         ObjectNode corner = JsonNodeFactory.instance.objectNode();
         corner.put("id", shape.get("id").asText());
-        corner.put(LOCATION_ID_COLUMN_NAME, shape.get(LOCATION_ID_COLUMN_NAME).asText());
-        corner.put(GEOMETRY_ID_COLUMN_NAME, shape.get(GEOMETRY_ID_COLUMN_NAME).asText());
-        corner.put(GEOMETRY_PT_LAT_COLUMN_NAME, shape.get(GEOMETRY_PT_LAT_COLUMN_NAME).asText());
-        corner.put(GEOMETRY_PT_LON_COLUMN_NAME, shape.get(GEOMETRY_PT_LON_COLUMN_NAME).asText());
+        corner.put(LOCATION_ID_NAME, shape.get(LOCATION_ID_NAME).asText());
+        corner.put(GEOMETRY_ID_NAME, shape.get(GEOMETRY_ID_NAME).asText());
+        corner.put(GEOMETRY_PT_LAT_NAME, shape.get(GEOMETRY_PT_LAT_NAME).asText());
+        corner.put(GEOMETRY_PT_LON_NAME, shape.get(GEOMETRY_PT_LON_NAME).asText());
         return corner;
     }
-
-    // Represents the shapes held within locations.geojson
-    public static final GraphQLObjectType locationShapeType = newObject().name(TABLE_NAME)
-        .description("A GTFS location_shape object")
-        .field(MapFetcher.field("id", GraphQLInt))
-        .field(MapFetcher.field(LOCATION_ID_COLUMN_NAME))
-        .field(MapFetcher.field(GEOMETRY_ID_COLUMN_NAME))
-        .field(MapFetcher.field(GEOMETRY_PT_LAT_COLUMN_NAME, GraphQLFloat))
-        .field(MapFetcher.field(GEOMETRY_PT_LON_COLUMN_NAME, GraphQLFloat))
-        .build();
 
     @Override
     public boolean equals(Object o) {
