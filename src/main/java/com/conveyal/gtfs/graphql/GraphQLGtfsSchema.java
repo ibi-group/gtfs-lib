@@ -1080,35 +1080,12 @@ public class GraphQLGtfsSchema {
         .build();
 
     /**
-     * A top-level query that returns all of the patterns that serve a given stop ID. This demonstrates the use of
-     * NestedJDBCFetcher.
-     */
-//    private static GraphQLObjectType patternsForStopQuery = newObject()
-//            .name("patternsForStopQuery")
-//            .field(newFieldDefinition()
-//                    .name("patternsForStop")
-//                    // Field type should be equivalent to the final JDBCFetcher table type.
-//                    .type(new GraphQLList(patternType))
-//                    // We scope to a single feed namespace, otherwise GTFS entity IDs are ambiguous.
-//                    .argument(stringArg("namespace"))
-//                    // We allow querying only for a single stop, otherwise result processing can take a long time (lots
-//                    // of join queries).
-//                    .argument(stringArg("stop_id"))
-//                    .dataFetcher(new NestedJDBCFetcher(
-//                            new JDBCFetcher("pattern_stops", "stop_id"),
-//                            new JDBCFetcher("patterns", "pattern_id")))
-//                    .build())
-//            .build();
-
-
-    /**
      * This is the new schema as of July 2017, where all sub-entities are wrapped in a feed.
      * Because all of these fields are static (ugh) this must be declared after the feedQuery it references.
      */
     public static final GraphQLSchema feedBasedSchema = GraphQLSchema
         .newSchema()
         .query(feedQuery)
-//            .query(patternsForStopQuery)
         .build();
 
 
@@ -1118,7 +1095,6 @@ public class GraphQLGtfsSchema {
             String[] strings = new String[] {};
             try {
                 strings = (String[]) ((Array) input).getArray();
-//                if (strings == null) strings = new String[]{};
             } catch (SQLException e) {
                 e.printStackTrace();
             }
