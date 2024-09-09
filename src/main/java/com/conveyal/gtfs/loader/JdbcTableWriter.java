@@ -195,8 +195,8 @@ public class JdbcTableWriter implements TableWriter {
                 }
             }
 
-            // Pattern stops and pattern locations are processed in series (as part of updateChildTable). The pattern
-            // reconciliation requires both in order to correctly update stop times.
+            // Pattern stops are processed in series (as part of updateChildTable). The pattern reconciliation requires
+            // both in order to correctly update stop times.
             if (referencedPatternUsesFrequencies && reconciliation.reconcile()) {
                 StopTimeNormalization stopTimeNormalization = new StopTimeNormalization(dataSource, connection, tablePrefix);
                 stopTimeNormalization.updatePatternFrequencies(reconciliation);

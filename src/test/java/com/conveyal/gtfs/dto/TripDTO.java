@@ -26,6 +26,16 @@ public class TripDTO {
         return tripDTO;
     }
 
+    public static TripDTO create(String patternId, String routeId) {
+        TripDTO tripDTO = new TripDTO();
+        tripDTO.pattern_id = patternId;
+        tripDTO.route_id = routeId;
+        tripDTO.service_id = "1";
+        tripDTO.stop_times = new StopTimeWithFlexDTO[] {};
+        tripDTO.frequencies = new FrequencyDTO[] {};
+        return tripDTO;
+    }
+
     public static TripDTO create(String patternId, String routeId, int startTime) {
         TripDTO tripInput = new TripDTO();
         tripInput.pattern_id = patternId;
