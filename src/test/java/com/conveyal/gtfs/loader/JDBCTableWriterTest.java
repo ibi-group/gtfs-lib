@@ -306,12 +306,12 @@ public class JDBCTableWriterTest {
             saveRecord(Table.STOPS, StopDTO.create(stopId, stopId, FIRST_STOP_LAT, FIRST_STOP_LON), StopDTO.class);
         }
         saveRecord(Table.LOCATIONS, LocationDTO.create("radius_1207_s_2322275_s_759180"), LocationDTO.class);
-        saveRecord(Table.TRIPS, TripDTO.create("111111", "1116"), TripDTO.class);
+        saveRecord(Table.TRIPS, TripDTO.create("pattern-id-123", "1116"), TripDTO.class);
 
         String patternOne = "{\n" +
             "   \"id\":1,\n" +
             "   \"shape_id\":\"raxl\",\n" +
-            "   \"pattern_id\":\"111111\",\n" +
+            "   \"pattern_id\":\"pattern-id-123\",\n" +
             "   \"route_id\":\"1116\",\n" +
             "   \"direction_id\":0,\n" +
             "   \"use_frequency\":1,\n" +
@@ -319,6 +319,7 @@ public class JDBCTableWriterTest {
             "   \"pattern_stops\":[\n" +
             "      {\n" +
             "         \"id\":\"23209670\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"2320967\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -337,6 +338,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591951\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759195\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -355,6 +357,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"135282\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"13528\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -373,6 +376,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"296733\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"29673\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -391,6 +395,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591804\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759180\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -409,6 +414,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591815\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759181\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -427,6 +433,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591826\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759182\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -445,6 +452,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591887\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759188\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -463,6 +471,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591838\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759183\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -481,6 +490,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591899\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759189\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -499,6 +509,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"232096911\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"2320969\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -517,6 +528,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"75919012\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759190\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -535,6 +547,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"232607913\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"2326079\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -553,6 +566,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"75919314\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759193\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -576,7 +590,7 @@ public class JDBCTableWriterTest {
         String patternTwo = "{\n" +
             "   \"id\":1,\n" +
             "   \"shape_id\":\"raxl\",\n" +
-            "   \"pattern_id\":\"111111\",\n" +
+            "   \"pattern_id\":\"pattern-id-123\",\n" +
             "   \"route_id\":\"1116\",\n" +
             "   \"direction_id\":0,\n" +
             "   \"use_frequency\":1,\n" +
@@ -584,6 +598,7 @@ public class JDBCTableWriterTest {
             "   \"pattern_stops\":[\n" +
             "      {\n" +
             "         \"id\":\"23209670\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"2320967\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -602,6 +617,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591951\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759195\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -620,6 +636,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"135282\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"13528\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -638,6 +655,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"296733\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"29673\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -656,6 +674,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591804\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759180\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -674,6 +693,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591815\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759181\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -692,6 +712,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591826\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759182\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -710,6 +731,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591887\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759188\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -728,6 +750,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591838\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759183\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -746,6 +769,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"7591899\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759189\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -763,6 +787,7 @@ public class JDBCTableWriterTest {
             "         \"stop_headsign\":null\n" +
             "      },\n" +
             "      {\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"continuous_drop_off\":1,\n" +
             "         \"continuous_pickup\":1,\n" +
             "         \"default_dwell_time\":0,\n" +
@@ -782,6 +807,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"232096911\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"2320969\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -800,6 +826,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"75919012\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759190\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -818,6 +845,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"232607913\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"2326079\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
@@ -836,6 +864,7 @@ public class JDBCTableWriterTest {
             "      },\n" +
             "      {\n" +
             "         \"id\":\"75919314\",\n" +
+            "         \"pattern_id\":\"pattern-id-123\",\n" +
             "         \"stop_id\":\"759193\",\n" +
             "         \"location_id\":null,\n" +
             "         \"location_group_id\":null,\n" +
