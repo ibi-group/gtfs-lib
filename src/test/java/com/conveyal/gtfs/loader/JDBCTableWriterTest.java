@@ -314,7 +314,7 @@ public class JDBCTableWriterTest {
             "   \"pattern_id\":\"pattern-id-123\",\n" +
             "   \"route_id\":\"1116\",\n" +
             "   \"direction_id\":0,\n" +
-            "   \"use_frequency\":1,\n" +
+            "   \"use_frequency\":0,\n" +
             "   \"name\":\"14 stops from Sandy Transit Operations Center to Timberline (7 trips)\",\n" +
             "   \"pattern_stops\":[\n" +
             "      {\n" +
@@ -515,7 +515,7 @@ public class JDBCTableWriterTest {
             "         \"location_group_id\":null,\n" +
             "         \"default_travel_time\":120,\n" +
             "         \"default_dwell_time\":0,\n" +
-            "         \"stop_sequence\":11,\n" +
+            "         \"stop_sequence\":10,\n" +
             "         \"shape_dist_traveled\":115462.71972918736,\n" +
             "         \"pickup_type\":0,\n" +
             "         \"drop_off_type\":0,\n" +
@@ -534,7 +534,7 @@ public class JDBCTableWriterTest {
             "         \"location_group_id\":null,\n" +
             "         \"default_travel_time\":360,\n" +
             "         \"default_dwell_time\":0,\n" +
-            "         \"stop_sequence\":12,\n" +
+            "         \"stop_sequence\":11,\n" +
             "         \"shape_dist_traveled\":116183.43127396851,\n" +
             "         \"pickup_type\":0,\n" +
             "         \"drop_off_type\":0,\n" +
@@ -553,7 +553,7 @@ public class JDBCTableWriterTest {
             "         \"location_group_id\":null,\n" +
             "         \"default_travel_time\":180,\n" +
             "         \"default_dwell_time\":0,\n" +
-            "         \"stop_sequence\":13,\n" +
+            "         \"stop_sequence\":12,\n" +
             "         \"shape_dist_traveled\":117032.2738073744,\n" +
             "         \"pickup_type\":0,\n" +
             "         \"drop_off_type\":0,\n" +
@@ -572,7 +572,7 @@ public class JDBCTableWriterTest {
             "         \"location_group_id\":null,\n" +
             "         \"default_travel_time\":1020,\n" +
             "         \"default_dwell_time\":0,\n" +
-            "         \"stop_sequence\":14,\n" +
+            "         \"stop_sequence\":13,\n" +
             "         \"shape_dist_traveled\":126223.95428254058,\n" +
             "         \"pickup_type\":0,\n" +
             "         \"drop_off_type\":0,\n" +
@@ -593,7 +593,7 @@ public class JDBCTableWriterTest {
             "   \"pattern_id\":\"pattern-id-123\",\n" +
             "   \"route_id\":\"1116\",\n" +
             "   \"direction_id\":0,\n" +
-            "   \"use_frequency\":1,\n" +
+            "   \"use_frequency\":0,\n" +
             "   \"name\":\"14 stops from Sandy Transit Operations Center to Timberline (7 trips)\",\n" +
             "   \"pattern_stops\":[\n" +
             "      {\n" +
@@ -887,9 +887,13 @@ public class JDBCTableWriterTest {
 
         PatternDTO createdPatternStop = saveRecord(patternStopTable, patternOne, patternDTOClass);
         // 14 blank stop times inserted here.
+        JdbcTableWriter jdbcTableWriter = createTestTableWriter(Table.PATTERNS);
+        jdbcTableWriter.normalizeStopTimesForPattern(createdPatternStop.id, 0);
 
         createdPatternStop = updateRecord(createdPatternStop.id, Table.PATTERNS, patternTwo, patternDTOClass);
         // 1 blank stop time inserted here.
+        jdbcTableWriter = createTestTableWriter(Table.PATTERNS);
+        jdbcTableWriter.normalizeStopTimesForPattern(createdPatternStop.id, 0);
 
         deleteRecord(patternStopTable, createdPatternStop.id);
     }

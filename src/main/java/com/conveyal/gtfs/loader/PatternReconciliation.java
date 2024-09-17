@@ -89,7 +89,7 @@ public class PatternReconciliation {
     }
 
     /**
-     * Reconcile pattern stops and pattern locations.
+     * Reconcile pattern stops.
      */
     public boolean reconcile() throws SQLException {
         if (patternStops.isEmpty()) {
