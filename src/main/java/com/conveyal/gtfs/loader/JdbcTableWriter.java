@@ -163,7 +163,7 @@ public class JdbcTableWriter implements TableWriter {
             if (specTable.name.equals("patterns")) {
                 referencingTables.add(Table.SHAPES);
             }
-            PatternReconciliation reconciliation = new PatternReconciliation(connection, tablePrefix);
+            PatternReconciliation patternReconciliation = new PatternReconciliation(connection, tablePrefix);
             boolean referencedPatternUsesFrequencies = referencedPatternUsesFrequencies(jsonObject);
             // Iterate over referencing (child) tables and update those rows that reference the parent entity with the
             // JSON array for the key that matches the child table's name (e.g., trip.stop_times array will trigger
@@ -186,7 +186,7 @@ public class JdbcTableWriter implements TableWriter {
                         isCreating,
                         referencingTable,
                         connection,
-                        reconciliation
+                        patternReconciliation
                     );
                     // Ensure JSON return object is updated with referencing table's (potentially) new key value.
                     // Currently, the only case where an update occurs is when a referenced shape is referenced by other
@@ -195,14 +195,13 @@ public class JdbcTableWriter implements TableWriter {
                 }
             }
 
-            // Reconcile pattern stops and insert appropriate blank stop times.
-            reconciliation.reconcile();
+            // Reconcile pattern stops and insert appropriate blank stop times. This must be done after reconcile updates
+            // have been staged in updateChildTable.
+            boolean wasReconciled = patternReconciliation.reconcile();
 
-            // Pattern stops are processed in series (as part of updateChildTable). The pattern reconciliation requires
-            // both in order to correctly update stop times.
-            if (referencedPatternUsesFrequencies) {
+            if (wasReconciled && referencedPatternUsesFrequencies) {
                 StopTimeNormalization stopTimeNormalization = new StopTimeNormalization(dataSource, connection, tablePrefix);
-                stopTimeNormalization.updatePatternFrequencies(reconciliation);
+                stopTimeNormalization.updatePatternFrequencies(patternReconciliation);
             }
 
             // Iterate over table's fields and apply linked values to any tables. This is to account for "exemplar"
