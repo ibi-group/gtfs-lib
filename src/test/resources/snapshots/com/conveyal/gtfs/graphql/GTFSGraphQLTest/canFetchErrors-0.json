@@ -13,42 +13,42 @@
         "type" : "FEED_TRAVEL_TIMES_ROUNDED"
       }, {
         "count" : 2,
-        "message" : "continuous_drop_off is not allow when either start_pickup_drop_off_window or end_pickup_drop_off_window is defined.",
+        "message" : "continuous_drop_off is not allowed when either start_pickup_drop_off_window or end_pickup_drop_off_window is defined.",
         "priority" : "HIGH",
         "type" : "FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF"
       }, {
         "count" : 2,
-        "message" : "continuous_pickup is not allow when either start_pickup_drop_off_window or end_pickup_drop_off_window is defined.",
+        "message" : "continuous_pickup is not allowed when either start_pickup_drop_off_window or end_pickup_drop_off_window is defined.",
         "priority" : "HIGH",
         "type" : "FLEX_FORBIDDEN_CONTINUOUS_PICKUP"
       }, {
         "count" : 2,
-        "message" : "drop_off_type of 0 (Regularly scheduled pickup) is not allow when either start_pickup_drop_off_window or end_pickup_drop_off_window is defined.",
+        "message" : "drop_off_type of 0 (Regularly scheduled pickup) is not allowed when either start_pickup_drop_off_window or end_pickup_drop_off_window is defined.",
         "priority" : "HIGH",
         "type" : "FLEX_FORBIDDEN_DROP_OFF_TYPE"
       }, {
         "count" : 2,
-        "message" : "pickup_type of 0 (Regularly scheduled pickup) or 3 (Must coordinate with driver to arrange pickup) is not allow when either start_pickup_drop_off_window or end_pickup_drop_off_window is defined.",
+        "message" : "pickup_type of 0 (Regularly scheduled pickup) or 3 (Must coordinate with driver to arrange pickup) is not allowed when either start_pickup_drop_off_window or end_pickup_drop_off_window is defined.",
         "priority" : "HIGH",
         "type" : "FLEX_FORBIDDEN_PICKUP_TYPE"
       }, {
         "count" : 1,
-        "message" : "prior_notice_last_day is not allow for booking_type 2 (Up to prior day(s) booking).",
+        "message" : "prior_notice_last_day is not allowed for booking_type 2 (Up to prior day(s) booking).",
         "priority" : "HIGH",
         "type" : "FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY"
       }, {
         "count" : 1,
-        "message" : "prior_notice_service_id is not allow if prior_notice_start_day is not defined.",
+        "message" : "prior_notice_service_id is not allowed if prior_notice_start_day is not defined.",
         "priority" : "HIGH",
         "type" : "FLEX_FORBIDDEN_PRIOR_NOTICE_SERVICE_ID"
       }, {
         "count" : 1,
-        "message" : "prior_notice_start_day is not allow for booking_type 1 (Up to same-day booking with advance notice) if prior_notice_duration_max is defined.",
+        "message" : "prior_notice_start_day is not allowed for booking_type 1 (Up to same-day booking with advance notice) if prior_notice_duration_max is defined.",
         "priority" : "HIGH",
         "type" : "FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY"
       }, {
         "count" : 2,
-        "message" : "stop_id is not allow if a location_group_id or location_id is defined.",
+        "message" : "stop_id is not allowed if a location_group_id or location_id is defined.",
         "priority" : "HIGH",
         "type" : "FLEX_FORBIDDEN_STOP_ID"
       }, {
