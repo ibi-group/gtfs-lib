@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.util.GeoJsonUtil;
 
 import java.io.IOException;
 import java.net.URL;
@@ -57,8 +58,7 @@ public class Location extends Entity {
      * of the unpacking of GeoJSON data to CSV.
      */
     public static String header() {
-        return String.format(
-            "%s,%s,%s,%s,%s,%s%n",
+        return GeoJsonUtil.createCSVRow(
             LOCATION_ID_NAME,
             STOP_NAME_NAME,
             STOP_DESC_NAME,
@@ -82,15 +82,14 @@ public class Location extends Entity {
         }
         String stopUrl = stop_url == null ? "" : stop_url.toString();
         String zoneId = zone_id == null ? "" : zone_id;
-        return String.join(
-            ",",
+        return GeoJsonUtil.createCSVRow(
             location_id,
             stopName,
             stopDesc,
             zoneId,
             stopUrl,
             geometry_type
-        ) + System.lineSeparator();
+        );
     }
 
     public static class Loader extends Entity.Loader<Location> {

@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
@@ -112,20 +113,17 @@ public class LocationGroupStop extends Entity {
     }
 
     public String toCsvRow() {
-        return String.join(
-            ",",
+        return GeoJsonUtil.createCSVRow(
             location_group_id,
-            (stop_id != null)
-                ? stop_id.contains(",") ? "\"" + stop_id + "\"" : stop_id
-                : ""
-        ) + System.lineSeparator();
+            (stop_id != null) ? stop_id.contains(",") ? "\"" + stop_id + "\"" : stop_id : ""
+        );
     }
 
     /**
      * Extract the location group stops from file and group by location group id. Multiple rows of location groups with
      * the same location group id will be compressed into a single row with comma separated stop ids. This is to allow
      * for easier CRUD by the DT UI.
-     * <p>
+     * <pre>
      * E.g.
      * <p>
      * location_group_1,stop_id_1
@@ -251,6 +249,5 @@ public class LocationGroupStop extends Entity {
     public int hashCode() {
         return Objects.hash(location_group_id, stop_id);
     }
-
 }
 

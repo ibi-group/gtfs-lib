@@ -25,11 +25,9 @@ public class PatternStopWithFlexDTO extends PatternStopDTO {
         stop_id = stopId;
         stop_sequence = stopSequence;
     }
+
     public PatternStopWithFlexDTO(String patternId, String stopId, int stopSequence, int defaultTravelTime, int defaultDwellTime) {
-        pattern_id = patternId;
-        stop_id = stopId;
-        stop_sequence = stopSequence;
-        default_travel_time = defaultTravelTime;
+        this(patternId, stopId, defaultTravelTime, stopSequence);
         default_dwell_time = defaultDwellTime;
     }
 
@@ -72,12 +70,6 @@ public class PatternStopWithFlexDTO extends PatternStopDTO {
         int stopSequence,
         int flexDefaultTravelTime
     ) {
-        PatternStopWithFlexDTO patternStopWithFlexDTO = new PatternStopWithFlexDTO();
-        patternStopWithFlexDTO.pattern_id = patternId;
-        patternStopWithFlexDTO.location_group_id = locationGroupId;
-        patternStopWithFlexDTO.location_id = locationId;
-        patternStopWithFlexDTO.stop_sequence = stopSequence;
-        patternStopWithFlexDTO.default_travel_time = flexDefaultTravelTime;
-        return patternStopWithFlexDTO;
+        return createFlexPatternStop(patternId, locationGroupId, locationId, stopSequence, flexDefaultTravelTime, 0);
     }
 }

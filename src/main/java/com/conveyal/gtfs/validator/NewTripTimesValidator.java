@@ -130,7 +130,7 @@ public class NewTripTimesValidator extends FeedValidator {
             registerError(stopTime, MISSING_ARRIVAL_OR_DEPARTURE);
             fixMissingTimes(stopTime);
             if (missingEitherTime(stopTime)) {
-                //TODO: Is this even needed? Already covered by MISSING_ARRIVAL_OR_DEPARTURE.
+                // TODO: Is this even needed? Already covered by MISSING_ARRIVAL_OR_DEPARTURE.
                 registerError(stopTime, CONDITIONALLY_REQUIRED, "First and last stop times are required to have both an arrival and departure time.");
             }
         }
@@ -167,16 +167,12 @@ public class NewTripTimesValidator extends FeedValidator {
             if (hasNoHalt(stopTime)) {
                 // All bad references should have been recorded at import, we can just remove them from the trips.
                 it.remove();
-            } else {
-                if (stopTime.stop_id != null) {
-                    stops.add(stopById.get(stopTime.stop_id));
-                }
-                if (stopTime.location_group_id != null) {
-                    locationGroups.add(locationGroupById.get(stopTime.location_group_id));
-                }
-                if (stopTime.location_id != null) {
-                    locations.add(locationById.get(stopTime.location_id));
-                }
+            } else if (stopTime.stop_id != null) {
+                stops.add(stopById.get(stopTime.stop_id));
+            } else if (stopTime.location_group_id != null) {
+                locationGroups.add(locationGroupById.get(stopTime.location_group_id));
+            } else if (stopTime.location_id != null) {
+                locations.add(locationById.get(stopTime.location_id));
             }
         }
 

@@ -575,7 +575,7 @@ public class GraphQLGtfsSchema {
         .field(MapFetcher.field("timepoint", GraphQLInt))
         .field(MapFetcher.field("start_pickup_drop_off_window"))
         .field(MapFetcher.field("end_pickup_drop_off_window"))
-        // FIXME: This will only returns a list with one stop entity (unless there is a referential integrity issue)
+        // FIXME: This will only return a list with one stop entity (unless there is a referential integrity issue)
         // Should this be modified to be an object, rather than a list?
         .field(newFieldDefinition()
             .type(new GraphQLList(stopType))
@@ -1036,7 +1036,7 @@ public class GraphQLGtfsSchema {
             .name("services")
             .argument(multiStringArg("service_id"))
             .type(new GraphQLList(GraphQLGtfsSchema.serviceType))
-            .argument(intArg(LIMIT_ARG)) // Todo somehow autogenerate these JDBCFetcher builders to include standard params.
+            .argument(intArg(LIMIT_ARG)) // TODO somehow autogenerate these JDBCFetcher builders to include standard params.
             .argument(intArg(OFFSET_ARG))
             .dataFetcher(new JDBCFetcher("services"))
             .build()
