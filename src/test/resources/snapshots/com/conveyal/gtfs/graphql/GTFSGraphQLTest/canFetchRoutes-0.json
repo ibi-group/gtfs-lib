@@ -6,11 +6,19 @@
         "agency_id" : "1",
         "count" : 1,
         "id" : 2,
-        "pattern_count" : 2,
+        "location_groups" : [ {
+          "location_group_id" : "1"
+        } ],
+        "locations" : [ {
+          "location_id" : "area_251"
+        } ],
+        "pattern_count" : 3,
         "patterns" : [ {
           "pattern_id" : "1"
         }, {
           "pattern_id" : "2"
+        }, {
+          "pattern_id" : "3"
         } ],
         "publicly_visible" : null,
         "route_branding_url" : null,
@@ -28,19 +36,15 @@
         }, {
           "stop_id" : "johv"
         }, {
-          "stop_id" : "123"
-        }, {
           "stop_id" : "1234"
-        }, {
-          "stop_id" : "1234567"
         } ],
         "trip_count" : 3,
         "trips" : [ {
-          "trip_id" : "a30277f8-e50a-4a85-9141-b1e0da9d429d"
+          "trip_id" : "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"
         }, {
-          "trip_id" : "frequency-trip"
+          "trip_id" : "flex-frequency-trip"
         }, {
-          "trip_id" : "calendar-date-trip"
+          "trip_id" : "flex-calendar-date-trip"
         } ],
         "wheelchair_accessible" : null
       } ]

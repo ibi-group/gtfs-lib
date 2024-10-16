@@ -12,6 +12,7 @@ package com.conveyal.gtfs.loader;
 public enum Requirement {
     REQUIRED,    // Required by the GTFS spec
     OPTIONAL,    // Optional according to the GTFS spec
+    FLEX_OPTIONAL, // Optional according to the Flex GTFS spec
     EXTENSION,   // Extension proposed and documented on gtfs-changes
     PROPRIETARY, // Known proprietary extension that is not yet an official proposal
     UNKNOWN,     // Undocumented proprietary extension

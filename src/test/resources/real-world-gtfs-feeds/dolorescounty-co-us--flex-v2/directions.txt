@@ -1,2 +1,0 @@
-route_id,direction_id,direction
-16604,0,No direction

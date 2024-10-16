@@ -2,9 +2,7 @@ package com.conveyal.gtfs.loader;
 
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.PatternHalt;
-import com.conveyal.gtfs.model.PatternLocation;
 import com.conveyal.gtfs.model.PatternStop;
-import com.conveyal.gtfs.model.PatternStopArea;
 import com.google.common.collect.Iterators;
 import org.apache.commons.dbutils.DbUtils;
 import org.slf4j.Logger;
@@ -55,23 +53,9 @@ public class StopTimeNormalization {
             tablePrefix + ".",
             EntityPopulator.PATTERN_STOP
         );
-        JDBCTableReader<PatternLocation> patternLocations = new JDBCTableReader(
-            Table.PATTERN_LOCATION,
-            dataSource,
-            tablePrefix + ".",
-            EntityPopulator.PATTERN_LOCATION
-        );
-        JDBCTableReader<PatternStopArea> patternStopAreas = new JDBCTableReader(
-            Table.PATTERN_STOP_AREA,
-            dataSource,
-            tablePrefix + ".",
-            EntityPopulator.PATTERN_STOP_AREA
-        );
         List<PatternHalt> patternHaltsToNormalize = new ArrayList<>();
         Iterator<PatternHalt> patternHalts = Iterators.concat(
-            patternStops.getOrdered(patternId).iterator(),
-            patternLocations.getOrdered(patternId).iterator(),
-            patternStopAreas.getOrdered(patternId).iterator()
+            patternStops.getOrdered(patternId).iterator()
         );
         while (patternHalts.hasNext()) {
             PatternHalt patternHalt = patternHalts.next();
@@ -82,7 +66,7 @@ public class StopTimeNormalization {
         // Use PatternHalt superclass to extract shared fields to be able to compare stops and locations.
         patternHaltsToNormalize = patternHaltsToNormalize
             .stream()
-            .sorted(Comparator.comparingInt(o -> (o).stop_sequence))
+            .sorted(Comparator.comparingInt(patternHalt -> patternHalt.stop_sequence))
             .collect(Collectors.toList());
         PatternHalt firstPatternHalt = patternHaltsToNormalize.iterator().next();
         int firstStopSequence = firstPatternHalt.stop_sequence;
@@ -124,25 +108,18 @@ public class StopTimeNormalization {
     }
 
     /**
-     * This MUST be called _after_ pattern reconciliation has happened. The pattern stops and pattern locations must be
-     * processed based on stop sequence so the correct cumulative travel time is calculated.
+     * This MUST be called _after_ pattern reconciliation has happened. The pattern stops must be processed based on
+     * stop sequence so the correct cumulative travel time is calculated.
      */
     public void updatePatternFrequencies(PatternReconciliation reconciliation) throws SQLException {
         // Convert to generic stops to order pattern stops/locations by stop sequence.
         List<PatternReconciliation.GenericStop> genericStops = reconciliation.getGenericStops();
         int cumulativeTravelTime = 0;
         for (PatternReconciliation.GenericStop genericStop : genericStops) {
-            PatternHalt patternHalt;
-            // Update stop times linked to pattern stop/location and accumulate time.
+            // Update stop times linked to pattern stop and accumulate time.
             // Default travel and dwell time behave as "linked fields" for associated stop times. In other
             // words, frequency trips in the editor must match the pattern stop travel times.
-            if (genericStop.patternType == PatternReconciliation.PatternType.STOP) {
-                patternHalt = reconciliation.getPatternStop(genericStop.referenceId);
-            } else if (genericStop.patternType == PatternReconciliation.PatternType.LOCATION) {
-                patternHalt = reconciliation.getPatternLocation(genericStop.referenceId);
-            } else {
-                patternHalt = reconciliation.getPatternStopArea(genericStop.referenceId);
-            }
+            PatternHalt patternHalt = reconciliation.getPatternStop(genericStop.referenceId);
             cumulativeTravelTime += cumulateTravelTime(cumulativeTravelTime, patternHalt, null);
         }
         executeAllStatementTrackers();
@@ -175,9 +152,8 @@ public class StopTimeNormalization {
     }
 
     /**
-     * Update stop time values depending on caller. If updating stop times for pattern stops, this will update the
-     * arrival_time and departure_time. If updating stop times for pattern locations, this will update the
-     * start_pickup_drop_off_window and end_pickup_drop_off_window.
+     * Update stop time values depending on flex. If not flex, update the arrival_time and departure_time. If flex,
+     * update the start_pickup_drop_off_window and end_pickup_drop_off_window.
      */
     private void updateStopTimes(
         int previousTravelTime,

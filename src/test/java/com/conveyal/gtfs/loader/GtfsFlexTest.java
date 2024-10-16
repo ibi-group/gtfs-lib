@@ -22,8 +22,10 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.conveyal.gtfs.GTFS.load;
+import static com.conveyal.gtfs.GTFS.validate;
 import static com.conveyal.gtfs.TestUtils.assertThatSqlCountQueryYieldsExpectedCount;
-import static com.conveyal.gtfs.TestUtils.loadFeedAndValidate;
+import static com.conveyal.gtfs.TestUtils.getResourceFileName;
 import static com.conveyal.gtfs.TestUtils.lookThroughFiles;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,90 +37,64 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  * TODO: update feed to use more features, and test for these.
  */
 public class GtfsFlexTest {
-    private static String washingtonTestDBName;
-    private static DataSource washingtonTestDataSource;
-    private static String washingtonTestNamespace;
-    private static String doloresCountyTestDBName;
-    private static DataSource doloresCountyTestDataSource;
-    private static String doloresCountyTestNamespace;
-    private static String doloresCountyGtfsZipFileName;
+    private static String islandTransitTestDBName;
+    private static DataSource islandTransitTestDataSource;
+    private static String islandTransitTestNamespace;
+    private static String islandTransitGtfsZipFileName;
     private static String unexpectedGeoJsonZipFileName;
 
     @BeforeAll
     public static void setUpClass() throws IOException {
-        washingtonTestDBName = TestUtils.generateNewDB();
-        washingtonTestDataSource = TestUtils.createTestDataSource(String.format("jdbc:postgresql://localhost/%s", washingtonTestDBName));
-        washingtonTestNamespace = loadFeedAndValidate(washingtonTestDataSource, "real-world-gtfs-feeds/washington-park-shuttle-with-flex-additions");
-
-        doloresCountyTestDBName = TestUtils.generateNewDB();
-        doloresCountyTestDataSource = TestUtils.createTestDataSource(String.format("jdbc:postgresql://localhost/%s", doloresCountyTestDBName));
-        doloresCountyTestNamespace = loadFeedAndValidate(doloresCountyTestDataSource, "real-world-gtfs-feeds/dolorescounty-co-us--flex-v2");
-
-        doloresCountyGtfsZipFileName = TestUtils.zipFolderFiles("real-world-gtfs-feeds/dolorescounty-co-us--flex-v2", true);
+        islandTransitTestDBName = TestUtils.generateNewDB();
+        islandTransitTestDataSource = TestUtils.createTestDataSource(String.format("jdbc:postgresql://localhost/%s", islandTransitTestDBName));
+        islandTransitGtfsZipFileName = getResourceFileName("real-world-gtfs-feeds/islandtransit-wa-us--flex-v2.zip");
+        FeedLoadResult feedLoadResult = load(islandTransitGtfsZipFileName, islandTransitTestDataSource);
+        islandTransitTestNamespace = feedLoadResult.uniqueIdentifier;
+        validate(islandTransitTestNamespace, islandTransitTestDataSource);
         unexpectedGeoJsonZipFileName = TestUtils.zipFolderFiles("fake-agency-unexpected-geojson", true);
     }
 
     @AfterAll
     public static void tearDownClass() {
-        TestUtils.dropDB(washingtonTestDBName);
-        TestUtils.dropDB(doloresCountyTestDBName);
-    }
-
-    @ParameterizedTest
-    @MethodSource("createContinuousPickupAndDropOffChecks")
-    void continuousPickupAndDropOffTests(String namespace, String field, int value, int expectedCount) {
-        String query = String.format("select count(*) from %s.stop_times where %s = '%s'",
-                namespace,
-                field,
-                value);
-        assertThatSqlCountQueryYieldsExpectedCount(washingtonTestDataSource, query, expectedCount);
-    }
-
-    private static Stream<Arguments> createContinuousPickupAndDropOffChecks() {
-        return Stream.of(
-                Arguments.of(washingtonTestNamespace, "continuous_pickup", 0, 3),
-                Arguments.of(washingtonTestNamespace, "continuous_pickup", 1, 5),
-                Arguments.of(washingtonTestNamespace, "continuous_pickup", 2, 1),
-                Arguments.of(washingtonTestNamespace, "continuous_drop_off", 0, 2),
-                Arguments.of(washingtonTestNamespace, "continuous_drop_off", 1, 5),
-                Arguments.of(washingtonTestNamespace, "continuous_drop_off", 2, 2)
-        );
+        TestUtils.dropDB(islandTransitTestDBName);
     }
 
     @Test
     void hasLoadedExpectedNumberOfBookingRules() {
-        String query = buildQuery(doloresCountyTestNamespace, "booking_rules","booking_rule_id","booking_route_16604");
-        assertThatSqlCountQueryYieldsExpectedCount(doloresCountyTestDataSource, query, 1);
+        String query = buildQuery(islandTransitTestNamespace, "booking_rules","booking_rule_id","booking_route_32584");
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 1);
     }
 
     @Test
     void hasLoadedExpectedNumberOfStopTimes() {
-        String query = buildQuery(doloresCountyTestNamespace, "stop_times","pickup_booking_rule_id","booking_route_16604");
-        assertThatSqlCountQueryYieldsExpectedCount(doloresCountyTestDataSource, query, 2);
+        String query = buildQuery(islandTransitTestNamespace, "stop_times","pickup_booking_rule_id","booking_route_32584");
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 16);
     }
 
     @Test
-    void hasLoadedExpectedNumberOfAreas() {
-        String query = buildQuery(doloresCountyTestNamespace, "areas","area_id","1");
-        assertThatSqlCountQueryYieldsExpectedCount(doloresCountyTestDataSource, query, 1);
+    void hasLoadedExpectedNumberOfLocationGroups() {
+        String query = buildQuery(islandTransitTestNamespace, "location_groups","location_group_id","4209757");
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 1);
     }
 
     @Test
-    void hasLoadedExpectedNumberOfStopAreas() {
-        String query = buildQuery(doloresCountyTestNamespace, "stop_areas","area_id","1");
-        assertThatSqlCountQueryYieldsExpectedCount(doloresCountyTestDataSource, query, 1);
+    void hasLoadedExpectedNumberOfLocationGroupStops() {
+        // There are 16 rows for location_group_id 4209757 in the location_group_stops.txt file. These are compress into
+        // a single database entry, one location_group_id with many stop ids.
+        String query = buildQuery(islandTransitTestNamespace, "location_group_stops","location_group_id","4209757");
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 1);
     }
 
     @Test
     void hasLoadedExpectedNumberOfLocations() {
-        String query = buildQuery(doloresCountyTestNamespace, "locations","geometry_type","polygon");
-        assertThatSqlCountQueryYieldsExpectedCount(doloresCountyTestDataSource, query, 2);
+        String query = buildQuery(islandTransitTestNamespace, "locations","geometry_type","polygon");
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 3);
     }
 
     @Test
-    void hasLoadedExpectedNumberOfPatternLocations() {
-        String query = buildQuery(doloresCountyTestNamespace, "pattern_locations","pattern_id","1");
-        assertThatSqlCountQueryYieldsExpectedCount(doloresCountyTestDataSource, query, 2);
+    void hasLoadedExpectedNumberOfPatternStops() {
+        String query = buildQuery(islandTransitTestNamespace, "pattern_stops","pattern_id","1");
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 67);
     }
 
     @ParameterizedTest
@@ -128,13 +104,13 @@ public class GtfsFlexTest {
             namespace,
             field,
             value);
-        assertThatSqlCountQueryYieldsExpectedCount(doloresCountyTestDataSource, query, expectedCount);
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, expectedCount);
     }
 
     private static Stream<Arguments> createLocationShapeChecks() {
         return Stream.of(
-            Arguments.of(doloresCountyTestNamespace, "location_id", "area_275", 2037),
-            Arguments.of(doloresCountyTestNamespace, "location_id", "area_276", 33)
+            Arguments.of(islandTransitTestNamespace, "location_id", "area_1136", 365),
+            Arguments.of(islandTransitTestNamespace, "location_id", "area_1137", 348)
         );
     }
 
@@ -164,10 +140,10 @@ public class GtfsFlexTest {
      * data.
      */
     @Test
-    public void canLoadAndWriteToFlexContentZipFile() throws IOException {
+    void canLoadAndWriteToFlexContentZipFile() throws IOException {
         // create a temp file for this test
-        File outZip = File.createTempFile("dolorescounty-co-us--flex-v2", ".zip");
-        GTFSFeed feed = GTFSFeed.fromFile(doloresCountyGtfsZipFileName);
+        File outZip = File.createTempFile("islandtransit-wa-us--flex-v2", ".zip");
+        GTFSFeed feed = GTFSFeed.fromFile(islandTransitGtfsZipFileName);
         feed.toFile(outZip.getAbsolutePath());
         feed.close();
         assertThat(outZip.exists(), is(true));
@@ -177,47 +153,57 @@ public class GtfsFlexTest {
             ZipEntry entry = zip.getEntry("locations.geojson");
             FeatureCollection featureCollection = GeoJsonUtil.getFeatureCollection(zip, entry);
             List<Feature> features = featureCollection.getFeatures();
-            assertEquals(features.get(0).getId(),"area_275");
-            assertEquals(features.get(1).getId(),"area_276");
+            assertEquals("area_1136", features.get(0).getId());
+            assertEquals("area_1137", features.get(1).getId());
+            assertEquals("area_548", features.get(2).getId());
 
             FileTestCase[] fileTestCases = {
-                // booking_rules.txt
                 new FileTestCase(
                     "booking_rules.txt",
                     new DataExpectation[]{
-                        new DataExpectation("booking_rule_id", "booking_route_16604"),
+                        new DataExpectation("booking_rule_id", "booking_route_32584"),
                         new DataExpectation("booking_type", "2"),
                         new DataExpectation("prior_notice_start_time", "08:00:00"),
-                        new DataExpectation("prior_notice_last_time", "17:00:00")
+                        new DataExpectation("prior_notice_last_time", "16:00:00")
                     }
                 ),
                 new TestUtils.FileTestCase(
-                    "areas.txt",
+                    "location_group_stops.txt",
                     new DataExpectation[]{
-                        new DataExpectation("area_id", "1"),
-                        new DataExpectation("area_name", "This is the area name"),
+                        new DataExpectation("location_group_id", "4209757"),
+                        new DataExpectation("stop_id", "3449688"),
                     }
                 ),
                 new TestUtils.FileTestCase(
-                    "stop_areas.txt",
+                    "location_groups.txt",
                     new DataExpectation[]{
-                        new DataExpectation("area_id", "1"),
-                        new DataExpectation("stop_id", "123"),
+                        new DataExpectation("location_group_id", "4209758"),
+                        new DataExpectation("location_group_name", "Island Transit GO! - NASWI Residential"),
                     }
                 ),
                 new TestUtils.FileTestCase(
                     "stop_times.txt",
                     new DataExpectation[]{
-                        new DataExpectation("pickup_booking_rule_id", "booking_route_16604"),
-                        new DataExpectation("drop_off_booking_rule_id", "booking_route_16604"),
+                        new DataExpectation("trip_id", "t_5736064_b_81516_tn_0"),
+                        new DataExpectation("arrival_time", ""),
+                        new DataExpectation("departure_time", ""),
+                        new DataExpectation("stop_id", ""),
+                        new DataExpectation("location_group_id", "4209757"),
+                        new DataExpectation("location_id", ""),
+                        new DataExpectation("stop_sequence", "1"),
+                        new DataExpectation("stop_headsign", ""),
                         new DataExpectation("start_pickup_drop_off_window", "08:00:00"),
-                        new DataExpectation("end_pickup_drop_off_window", "17:00:00"),
-                        new DataExpectation("mean_duration_factor", "1.0000000"),
-                        new DataExpectation("mean_duration_offset", "15.0000000"),
-                        new DataExpectation("safe_duration_factor", "1.0000000"),
-                        new DataExpectation("safe_duration_offset", "20.0000000")
+                        new DataExpectation("end_pickup_drop_off_window", "18:00:00"),
+                        new DataExpectation("pickup_type", "2"),
+                        new DataExpectation("drop_off_type", "1"),
+                        new DataExpectation("continuous_pickup", "1"),
+                        new DataExpectation("continuous_drop_off", "1"),
+                        new DataExpectation("shape_dist_traveled", "0.0000000"),
+                        new DataExpectation("timepoint", "0"),
+                        new DataExpectation("pickup_booking_rule_id", "booking_route_76270"),
+                        new DataExpectation("drop_off_booking_rule_id", "booking_route_76270"),
                     }
-                ),
+                )
             };
             lookThroughFiles(fileTestCases, zip);
         }

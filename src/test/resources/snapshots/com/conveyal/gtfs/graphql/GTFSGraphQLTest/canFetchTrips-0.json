@@ -10,7 +10,7 @@
         "id" : 2,
         "pattern_id" : "1",
         "route_id" : "1",
-        "service_id" : "04100312-8fe1-46a5-a9f2-556f39478f57",
+        "service_id" : "flex-04100312-8fe1-46a5-a9f2-556f39478f57",
         "shape" : [ {
           "point_type" : null,
           "shape_dist_traveled" : 0.0,
@@ -63,16 +63,20 @@
         } ],
         "shape_id" : "5820f377-f947-4728-ac29-ac0102cbc34e",
         "stop_times" : [ {
+          "location_group_id" : null,
+          "location_id" : null,
           "stop_id" : "4u6g",
           "stop_sequence" : 1,
-          "trip_id" : "a30277f8-e50a-4a85-9141-b1e0da9d429d"
+          "trip_id" : "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"
         }, {
+          "location_group_id" : null,
+          "location_id" : null,
           "stop_id" : "johv",
           "stop_sequence" : 2,
-          "trip_id" : "a30277f8-e50a-4a85-9141-b1e0da9d429d"
+          "trip_id" : "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"
         } ],
         "trip_headsign" : null,
-        "trip_id" : "a30277f8-e50a-4a85-9141-b1e0da9d429d",
+        "trip_id" : "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d",
         "trip_short_name" : null,
         "wheelchair_accessible" : 0
       }, {
@@ -80,12 +84,12 @@
         "block_id" : null,
         "direction_id" : 0,
         "frequencies" : [ {
-          "trip_id" : "frequency-trip"
+          "trip_id" : "flex-frequency-trip"
         } ],
         "id" : 3,
-        "pattern_id" : "2",
+        "pattern_id" : "3",
         "route_id" : "1",
-        "service_id" : "04100312-8fe1-46a5-a9f2-556f39478f57",
+        "service_id" : "flex-04100312-8fe1-46a5-a9f2-556f39478f57",
         "shape" : [ {
           "point_type" : null,
           "shape_dist_traveled" : 0.0,
@@ -138,24 +142,20 @@
         } ],
         "shape_id" : "5820f377-f947-4728-ac29-ac0102cbc34e",
         "stop_times" : [ {
+          "location_group_id" : null,
+          "location_id" : null,
           "stop_id" : "4u6g",
           "stop_sequence" : 1,
-          "trip_id" : "frequency-trip"
+          "trip_id" : "flex-frequency-trip"
         }, {
+          "location_group_id" : null,
+          "location_id" : null,
           "stop_id" : "1234",
           "stop_sequence" : 2,
-          "trip_id" : "frequency-trip"
-        }, {
-          "stop_id" : "area_251",
-          "stop_sequence" : 3,
-          "trip_id" : "frequency-trip"
-        }, {
-          "stop_id" : "3",
-          "stop_sequence" : 4,
-          "trip_id" : "frequency-trip"
+          "trip_id" : "flex-frequency-trip"
         } ],
         "trip_headsign" : null,
-        "trip_id" : "frequency-trip",
+        "trip_id" : "flex-frequency-trip",
         "trip_short_name" : null,
         "wheelchair_accessible" : 0
       }, {
@@ -166,7 +166,7 @@
         "id" : 4,
         "pattern_id" : "2",
         "route_id" : "1",
-        "service_id" : "calendar-date-service",
+        "service_id" : "flex-calendar-date-service",
         "shape" : [ {
           "point_type" : null,
           "shape_dist_traveled" : 0.0,
@@ -219,16 +219,26 @@
         } ],
         "shape_id" : "5820f377-f947-4728-ac29-ac0102cbc34e",
         "stop_times" : [ {
-          "stop_id" : "4u6g",
+          "location_group_id" : null,
+          "location_id" : "area_251",
+          "stop_id" : null,
           "stop_sequence" : 1,
-          "trip_id" : "calendar-date-trip"
+          "trip_id" : "flex-calendar-date-trip"
         }, {
-          "stop_id" : "1234",
+          "location_group_id" : null,
+          "location_id" : null,
+          "stop_id" : "1",
           "stop_sequence" : 2,
-          "trip_id" : "calendar-date-trip"
+          "trip_id" : "flex-calendar-date-trip"
+        }, {
+          "location_group_id" : "1",
+          "location_id" : null,
+          "stop_id" : null,
+          "stop_sequence" : 3,
+          "trip_id" : "flex-calendar-date-trip"
         } ],
         "trip_headsign" : null,
-        "trip_id" : "calendar-date-trip",
+        "trip_id" : "flex-calendar-date-trip",
         "trip_short_name" : null,
         "wheelchair_accessible" : 0
       } ]

@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.util.GeoJsonUtil;
 
 import java.io.IOException;
 import java.net.URL;
@@ -22,6 +23,15 @@ public class Location extends Entity {
     public URL stop_url;
     public String geometry_type;
 
+    public static final String TABLE_NAME = "locations";
+    public static final String LOCATION_ID_NAME = "location_id";
+    public static final String STOP_NAME_NAME = "stop_name";
+    public static final String STOP_DESC_NAME = "stop_desc";
+    public static final String ZONE_ID_NAME = "zone_id";
+    public static final String STOP_URL_NAME = "stop_url";
+    public static final String GEOMETRY_TYPE_NAME = "geometry_type";
+
+
     @Override
     public String getId() {
         return location_id;
@@ -40,7 +50,7 @@ public class Location extends Entity {
         statement.setString(oneBasedIndex++, stop_desc);
         statement.setString(oneBasedIndex++, zone_id);
         statement.setString(oneBasedIndex++, stop_url != null ? stop_url.toString() : null);
-        statement.setString(oneBasedIndex++, geometry_type);
+        statement.setString(oneBasedIndex, geometry_type);
     }
 
     /**
@@ -48,7 +58,14 @@ public class Location extends Entity {
      * of the unpacking of GeoJSON data to CSV.
      */
     public static String header() {
-        return "location_id,stop_name,stop_desc,zone_id,stop_url,geometry_type\n";
+        return GeoJsonUtil.createCSVRow(
+            LOCATION_ID_NAME,
+            STOP_NAME_NAME,
+            STOP_DESC_NAME,
+            ZONE_ID_NAME,
+            STOP_URL_NAME,
+            GEOMETRY_TYPE_NAME
+        );
     }
 
     /**
@@ -65,21 +82,20 @@ public class Location extends Entity {
         }
         String stopUrl = stop_url == null ? "" : stop_url.toString();
         String zoneId = zone_id == null ? "" : zone_id;
-        return String.join(
-            ",",
+        return GeoJsonUtil.createCSVRow(
             location_id,
             stopName,
             stopDesc,
             zoneId,
             stopUrl,
             geometry_type
-        ) + System.lineSeparator();
+        );
     }
 
     public static class Loader extends Entity.Loader<Location> {
 
         public Loader(GTFSFeed feed) {
-            super(feed, "locations");
+            super(feed, TABLE_NAME);
         }
 
         @Override
@@ -92,13 +108,13 @@ public class Location extends Entity {
             Location location = new Location();
 
             location.id = row + 1;
-            location.location_id = getStringField("location_id", true);
-            location.stop_name = getStringField("stop_name", false);
-            location.stop_desc = getStringField("stop_desc", false);
-            location.zone_id = getStringField("zone_id", false);
-            location.stop_url = getUrlField("stop_url", false);
+            location.location_id = getStringField(LOCATION_ID_NAME, true);
+            location.stop_name = getStringField(STOP_NAME_NAME, false);
+            location.stop_desc = getStringField(STOP_DESC_NAME, false);
+            location.zone_id = getStringField(ZONE_ID_NAME, false);
+            location.stop_url = getUrlField(STOP_URL_NAME, false);
             // Must be a geometry associated w/ a location
-            location.geometry_type = getStringField("geometry_type", true);
+            location.geometry_type = getStringField(GEOMETRY_TYPE_NAME, true);
 
             // Attempting to put a null key or value will cause an NPE in BTreeMap
             if (location.location_id != null) {
@@ -115,20 +131,21 @@ public class Location extends Entity {
         return Objects.equals(stop_name, that.stop_name) &&
             Objects.equals(zone_id, that.zone_id) &&
             Objects.equals(stop_desc, that.stop_desc) &&
-                Objects.equals(stop_url, that.stop_url) &&
-                Objects.equals(location_id, that.location_id) &&
-            Objects.equals(geometry_type, that.geometry_type);
+            Objects.equals(stop_url, that.stop_url) &&
+            Objects.equals(location_id, that.location_id) &&
+            Objects.equals(geometry_type, that.geometry_type
+        );
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-                location_id,
-                stop_name,
-                stop_desc,
-                stop_url,
-                zone_id,
-                geometry_type
+            location_id,
+            stop_name,
+            stop_desc,
+            stop_url,
+            zone_id,
+            geometry_type
         );
     }
 }

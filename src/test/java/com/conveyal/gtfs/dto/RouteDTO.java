@@ -26,4 +26,22 @@ public class RouteDTO {
     public Integer status;
     public int continuous_pickup;
     public int continuous_drop_off;
+
+    public static RouteDTO create() {
+        return create("500");
+    }
+
+    public static RouteDTO create(String routeId) {
+        RouteDTO routeDTO = new RouteDTO();
+        routeDTO.route_id = routeId;
+        routeDTO.agency_id = "RTA";
+        // Empty value should be permitted for transfers and transfer_duration
+        routeDTO.route_short_name = "500";
+        routeDTO.route_long_name = "Hollingsworth";
+        routeDTO.route_type = 3;
+        // Set values to empty strings/null to later verify that they are set to null in the database.
+        routeDTO.route_color = "";
+        routeDTO.route_sort_order = "";
+        return routeDTO;
+    }
 }

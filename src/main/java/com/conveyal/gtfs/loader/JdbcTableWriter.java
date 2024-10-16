@@ -1,13 +1,11 @@
 package com.conveyal.gtfs.loader;
 
 import com.conveyal.gtfs.model.Entity;
-import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.LocationShape;
-import com.conveyal.gtfs.model.PatternStop;
-import com.conveyal.gtfs.model.Stop;
+import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.ScheduleException.ExemplarServiceDescriptor;
 import com.conveyal.gtfs.model.Shape;
-import com.conveyal.gtfs.model.StopTime;
+import com.conveyal.gtfs.model.Trip;
 import com.conveyal.gtfs.storage.StorageException;
 import com.conveyal.gtfs.util.InvalidNamespaceException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,6 +14,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
@@ -40,7 +39,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -165,7 +163,7 @@ public class JdbcTableWriter implements TableWriter {
             if (specTable.name.equals("patterns")) {
                 referencingTables.add(Table.SHAPES);
             }
-            PatternReconciliation reconciliation = new PatternReconciliation(connection, tablePrefix);
+            PatternReconciliation patternReconciliation = new PatternReconciliation(connection, tablePrefix);
             boolean referencedPatternUsesFrequencies = referencedPatternUsesFrequencies(jsonObject);
             // Iterate over referencing (child) tables and update those rows that reference the parent entity with the
             // JSON array for the key that matches the child table's name (e.g., trip.stop_times array will trigger
@@ -175,15 +173,6 @@ public class JdbcTableWriter implements TableWriter {
                 if (parentTable != null && parentTable.name.equals(specTable.name) || referencingTable.name.equals("shapes")) {
                     // If a referencing table has the current table as its parent, update child elements.
                     JsonNode childEntities = jsonObject.get(referencingTable.name);
-                    if ((referencingTable.name.equals(Table.PATTERN_LOCATION.name) ||
-                        referencingTable.name.equals(Table.PATTERN_STOP_AREA.name)) &&
-                        (hasNoChildEntities(childEntities))
-                    ) {
-                        // This is a backwards hack to prevent the addition of pattern location breaking existing
-                        // pattern functionality. If pattern location or pattern stop is not provided set to
-                        // an empty array to avoid the following exception.
-                        childEntities = mapper.createArrayNode();
-                    }
                     if (hasNoChildEntities(childEntities)) {
                         throw new SQLException(String.format("Child entities %s must be an array and not null", referencingTable.name));
                     }
@@ -197,7 +186,7 @@ public class JdbcTableWriter implements TableWriter {
                         isCreating,
                         referencingTable,
                         connection,
-                        reconciliation
+                        patternReconciliation
                     );
                     // Ensure JSON return object is updated with referencing table's (potentially) new key value.
                     // Currently, the only case where an update occurs is when a referenced shape is referenced by other
@@ -206,11 +195,13 @@ public class JdbcTableWriter implements TableWriter {
                 }
             }
 
-            // Pattern stops and pattern locations are processed in series (as part of updateChildTable). The pattern
-            // reconciliation requires both in order to correctly update stop times.
-            if (referencedPatternUsesFrequencies && reconciliation.reconcile()) {
+            // Reconcile pattern stops and insert appropriate blank stop times. This must be done after reconcile updates
+            // have been staged in updateChildTable.
+            boolean wasReconciled = patternReconciliation.reconcile();
+
+            if (wasReconciled && referencedPatternUsesFrequencies) {
                 StopTimeNormalization stopTimeNormalization = new StopTimeNormalization(dataSource, connection, tablePrefix);
-                stopTimeNormalization.updatePatternFrequencies(reconciliation);
+                stopTimeNormalization.updatePatternFrequencies(patternReconciliation);
             }
 
             // Iterate over table's fields and apply linked values to any tables. This is to account for "exemplar"
@@ -225,7 +216,7 @@ public class JdbcTableWriter implements TableWriter {
                         jsonObject,
                         "trips",
                         "route_id",
-                        "wheelchair_accessible"
+                        Sets.newHashSet("wheelchair_accessible")
                     );
                     break;
                 case "patterns":
@@ -234,7 +225,7 @@ public class JdbcTableWriter implements TableWriter {
                         jsonObject,
                         "trips",
                         "pattern_id",
-                        "direction_id", "shape_id"
+                        Sets.newHashSet("direction_id", "shape_id")
                     );
                     break;
                 default:
@@ -347,7 +338,7 @@ public class JdbcTableWriter implements TableWriter {
         ObjectNode exemplarEntity,
         String linkedTableName,
         String keyField,
-        String... linkedFieldsToUpdate
+        Set<String> linkedFieldsToUpdate
     ) throws SQLException {
         boolean updatingStopTimes = "stop_times".equals(linkedTableName);
         // Collect fields, the JSON values for these fields, and the strings to add to the prepared statement into Lists.
@@ -380,8 +371,11 @@ public class JdbcTableWriter implements TableWriter {
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
             String newValue = values.get(i).isNull() ? null : values.get(i).asText();
-            if (newValue == null) field.setNull(statement, oneBasedIndex++);
-            else field.setParameter(statement, oneBasedIndex++, newValue);
+            if (newValue == null) {
+                field.setNull(statement, oneBasedIndex++);
+            } else {
+                field.setParameter(statement, oneBasedIndex++, newValue);
+            }
         }
         // Set "where clause" with value for key field (e.g., set values where pattern_id = '3')
         statement.setString(oneBasedIndex++, exemplarEntity.get(keyField).asText());
@@ -412,9 +406,9 @@ public class JdbcTableWriter implements TableWriter {
     ) throws SQLException {
         String statementString;
         if (isCreating) {
-            statementString = table.generateInsertSql(tablePrefix, true);
+            statementString = table.generateInsertSql(jsonObject, tablePrefix, true);
         } else {
-            statementString = table.generateUpdateSql(tablePrefix, id);
+            statementString = table.generateUpdateSql(jsonObject, tablePrefix, id);
         }
         // Set the RETURN_GENERATED_KEYS flag on the PreparedStatement because it may be creating new rows, in which
         // case we need to know the auto-generated IDs of those new rows.
@@ -451,7 +445,7 @@ public class JdbcTableWriter implements TableWriter {
                 // have all of the required fields, yet this would prohibit such an update. Further, an update on such
                 // a table that DID have all of the spec table fields would fail because they might be missing from
                 // the actual database table.
-                missingFieldNames.add(field.name);
+                updateMissingFields(missingFieldNames, field);
                 continue;
             }
             JsonNode value = jsonObject.get(field.name);
@@ -463,7 +457,7 @@ public class JdbcTableWriter implements TableWriter {
                         // Only register the field as missing if the value is null, the field is required, and empty
                         // values are not permitted. For example, a null value for fare_attributes#transfers should not
                         // trigger a missing field exception.
-                        missingFieldNames.add(field.name);
+                        updateMissingFields(missingFieldNames, field);
                         continue;
                     }
                     // Set value to null if empty value is OK and update JSON.
@@ -529,14 +523,24 @@ public class JdbcTableWriter implements TableWriter {
             // Increment index for next field.
             index += 1;
         }
-        if (missingFieldNames.size() > 0) {
+        if (!missingFieldNames.isEmpty()) {
             throw new SQLException(
                 String.format(
                     "The following field(s) are missing from JSON %s object: %s",
                     table.name,
-                    missingFieldNames.toString()
+                    missingFieldNames
                 )
             );
+        }
+    }
+
+    /**
+     * If a field is an optional flex field don't add it to the list of missing field names. This also covers normal
+     * non-flex feeds where these fields are not defined.
+     */
+    private void updateMissingFields(List<String> missingFieldNames, Field field) {
+        if (field.requirement != Requirement.FLEX_OPTIONAL) {
+            missingFieldNames.add(field.name);
         }
     }
 
@@ -585,10 +589,7 @@ public class JdbcTableWriter implements TableWriter {
             // Do not permit the illegal state where frequency entries are being added/modified for a timetable pattern.
             throw new IllegalStateException("Cannot create or update frequency entries for a timetable-based pattern.");
         }
-        boolean isPatternTable =
-                Table.PATTERN_STOP.name.equals(subTable.name) ||
-                Table.PATTERN_LOCATION.name.equals(subTable.name) ||
-                Table.PATTERN_STOP_AREA.name.equals(subTable.name);
+        boolean isPatternTable = Table.PATTERN_STOP.name.equals(subTable.name);
         if (isPatternTable) {
             reconciliation.stage(mapper, subTable, subEntities, keyValue);
         }
@@ -641,7 +642,6 @@ public class JdbcTableWriter implements TableWriter {
         TIntSet orderValues = new TIntHashSet();
         Multimap<Table, Multimap<Table, String>> foreignReferencesPerTable = HashMultimap.create();
         Multimap<Table, String> referencesPerTable = HashMultimap.create();
-        int cumulativeTravelTime = 0;
         for (JsonNode entityNode : subEntities) {
             // Cast entity node to ObjectNode to allow mutations (JsonNode is immutable).
             ObjectNode subEntity = (ObjectNode) entityNode;
@@ -659,40 +659,13 @@ public class JdbcTableWriter implements TableWriter {
             if (isPatternTable) {
                 // Update linked stop times fields for each updated pattern stop (e.g., timepoint, pickup/drop off type).
                 // These fields should be updated for all patterns (e.g., timepoint, pickup/drop off type).
-                if (Table.PATTERN_STOP.name.equals(subTable.name)) {
-                    updateLinkedFields(
-                        subTable,
-                        subEntity,
-                        "stop_times",
-                        "pattern_id",
-                        "timepoint",
-                        "drop_off_type",
-                        "stop_headsign",
-                        "pickup_type",
-                        "continuous_pickup",
-                        "continuous_drop_off",
-                        "shape_dist_traveled",
-                        "pickup_booking_rule_id",
-                        "drop_off_booking_rule_id"
-                    );
-                }
-                if (Table.PATTERN_LOCATION.name.equals(subTable.name) ||
-                    Table.PATTERN_STOP_AREA.name.equals(subTable.name)
-                ) {
-                    updateLinkedFields(
-                        subTable,
-                        subEntity,
-                        "stop_times",
-                        "pattern_id",
-                        "timepoint",
-                        "drop_off_type",
-                        "pickup_type",
-                        "continuous_pickup",
-                        "continuous_drop_off",
-                        "pickup_booking_rule_id",
-                        "drop_off_booking_rule_id"
-                    );
-                }
+                updateLinkedFields(
+                    subTable,
+                    subEntity,
+                    "stop_times",
+                    "pattern_id",
+                    getLinkedFields(subEntity)
+                );
             }
             setStatementParameters(subEntity, subTable, insertStatement, connection);
             if (hasOrderField) {
@@ -748,16 +721,34 @@ public class JdbcTableWriter implements TableWriter {
     }
 
     /**
-<<<<<<< HEAD
-     * Check any references the sub entity might have. For example, this checks that stop_id values on
-     * pattern_stops refer to entities that actually exist in the stops table. NOTE: This skips the "specTable",
-     * i.e., for pattern stops it will not check pattern_id references. This is enforced above with the put key
-     * field statement above.
-=======
+     * Define the linked fields to be updated. This will depend on the fields that are provided. Optional, editor and
+     * extension fields can be undefined and therefore not provided. To prevent a mismatch between provided and expected
+     * a linked field is only defined if the entity provides a value for it.
+     */
+    private Set<String> getLinkedFields(ObjectNode entity) {
+        Set<String> linkedFieldsToCheck = Sets.newHashSet(
+            "timepoint",
+            "drop_off_type",
+            "stop_headsign",
+            "pickup_type",
+            "continuous_pickup",
+            "continuous_drop_off",
+            "shape_dist_traveled",
+            "pickup_booking_rule_id",
+            "drop_off_booking_rule_id",
+            "start_pickup_drop_off_window",
+            "end_pickup_drop_off_window"
+        );
+        return linkedFieldsToCheck
+            .stream()
+            .filter(field -> entity.get(field) != null)
+            .collect(Collectors.toSet());
+    }
+
+    /**
      * Check any references the sub entity might have. For example, this checks that a service_id defined in a trip
      * refers to a calendar or calendar date. NOTE: This skips the "specTable", i.e., for pattern stops it will not
      * check pattern_id references. This is enforced above with the put key field statement above.
->>>>>>> dev
      */
     private void checkTableReferences(
         Multimap<Table, Multimap<Table, String>> foreignReferencesPerTable,
@@ -773,7 +764,7 @@ public class JdbcTableWriter implements TableWriter {
                 if (!referenceTable.name.equals(specTable.name)) {
                     JsonNode refValueNode = subEntity.get(field.name);
                     // Skip over references that are null but not required (e.g., route_id in fare_rules).
-                    if (refValueNode.isNull() && !field.isRequired()) continue;
+                    if ((refValueNode == null || refValueNode.isNull()) && !field.isRequired()) continue;
                     String refValue = refValueNode.asText();
                     if (field.referenceTables.size() == 1) {
                         referencesPerTable.put(referenceTable, refValue);
@@ -805,7 +796,7 @@ public class JdbcTableWriter implements TableWriter {
 
     /**
      * Checks that a set of string references to a set of reference tables are all valid. For each set of references
-     * mapped to a reference table, the method queries for all of the references. If there are any references that were
+     * mapped to a reference table, the method queries for all the references. If there are any references that were
      * not returned in the query, one of the original references was invalid and an exception is thrown.
      *
      * @param referringTableName name of the table which contains references for logging/exception message only
@@ -818,15 +809,19 @@ public class JdbcTableWriter implements TableWriter {
             Collection<String> referenceStrings = referencesPerTable.get(referencedTable);
             String referenceFieldName = referencedTable.getKeyFieldName();
             Set<String> foundReferences = checkTableForReferences(referenceStrings, referencedTable);
-            // Determine if any references were not found.
-            referenceStrings.removeAll(foundReferences);
-            if (referenceStrings.size() > 0) {
+            if (referenceStrings.size() != foundReferences.size()) {
+                Set<String> invalidReferences = referenceStrings
+                    .stream()
+                    .filter(reference -> !foundReferences.contains(reference))
+                    .collect(Collectors.toSet());
                 throw new SQLException(
                     String.format(
                         "%s entities must contain valid %s references. (Invalid references: %s)",
                         referringTableName,
                         referenceFieldName,
-                        String.join(", ", referenceStrings)));
+                        String.join(", ", invalidReferences)
+                    )
+                );
             } else {
                 LOG.info("All {} {} {} references are valid.", foundReferences.size(), referencedTable.name, referenceFieldName);
             }
@@ -839,10 +834,10 @@ public class JdbcTableWriter implements TableWriter {
      * reference list is not empty after all reference tables have been checked, flag an error highlighting the missing
      * values and the foreign tables where they are expected.
      *
-     * E.g. The {@link StopTime#stop_id} can be either a {@link Stop#stop_id} or a {@link Location#location_id}. If the
-     * stop_id is found in the location table (but not the stop table) the required number of matches has been met. If
-     * the stop_id isn't in either table there will be no match. It is not possible to know which table the
-     * stop_id should be in so all foreign tables are listed with expected values.
+     * E.g. The {@link Trip#service_id} can be either a {@link com.conveyal.gtfs.model.Calendar#service_id} or a
+     * {@link ScheduleException#name}. If the service_id is found in either table the required number of matches has
+     * been met. If the service_id isn't in either table there will be no match. It is not possible to know which table
+     * the service_id should be in so all foreign tables are listed with expected values.
      *
      * @param foreignReferencesPerTable A list of parent tables with a related list of foreign tables with reference
      *                                  values.
@@ -885,13 +880,14 @@ public class JdbcTableWriter implements TableWriter {
                 }
             }
             foreignReferencesNotFound.removeAll(foreignReferencesFound);
-            if (foreignReferencesNotFound.size() > 0) {
+            if (!foreignReferencesNotFound.isEmpty()) {
                 throw new SQLException(
                     String.format(
                         "%s entities must contain valid %s references. (Invalid references: %s)",
                         parentTable.name,
                         String.join("/", foreignReferencesFieldNames),
-                        String.join(", ", foreignReferencesNotFound)));
+                        String.join(", ", foreignReferencesNotFound))
+                    );
             } else {
                 LOG.info("All {} foreign references ({}) are valid.",
                     String.join("/", foreignReferencesFieldNames),
@@ -1488,10 +1484,8 @@ public class JdbcTableWriter implements TableWriter {
         Shape.deleteShapesRelatedToRouteOrPattern(connection, tablePrefix, routeOrPatternId, keyColumn, parentTableName);
 
         if (parentTableName.equals(Table.ROUTES.name)) {
-            // Delete pattern stops, locations and stop areas before joining patterns are deleted.
+            // Delete pattern stops before joining patterns are deleted.
             deletePatternStops(routeOrPatternId);
-            deletePatternLocations(routeOrPatternId);
-            deletePatternStopAreas(routeOrPatternId);
         }
     }
 
@@ -1512,44 +1506,6 @@ public class JdbcTableWriter implements TableWriter {
             )
         );
         LOG.info("Deleted {} pattern stops for pattern {}", deletedStopTimes, routeId);
-    }
-
-    /**
-     * If deleting a route, cascade delete pattern locations for patterns first. This must happen before patterns are
-     * deleted. Otherwise, the queries to select pattern_locations to delete would fail because there would be no pattern
-     * records to join with.
-     */
-    private void deletePatternLocations(String routeId) throws SQLException {
-        // Delete pattern locations for route.
-        int deletedPatternLocations = executeStatement(
-            String.format(
-                "delete from %s pl using %s p, %s r where pl.pattern_id = p.pattern_id and p.route_id = r.route_id and r.route_id = '%s'",
-                String.format("%s.pattern_locations", tablePrefix),
-                String.format("%s.patterns", tablePrefix),
-                String.format("%s.routes", tablePrefix),
-                routeId
-            )
-        );
-        LOG.info("Deleted {} pattern locations for pattern {}", deletedPatternLocations, routeId);
-    }
-
-    /**
-     * If deleting a route, cascade delete pattern stop areas for patterns first. This must happen before patterns are
-     * deleted. Otherwise, the queries to select pattern_stop_areas to delete would fail because there would be no pattern
-     * records to join with.
-     */
-    private void deletePatternStopAreas(String routeId) throws SQLException {
-        // Delete pattern stop areas for route.
-        int deletedPatternStopAreas = executeStatement(
-            String.format(
-                "delete from %s plg using %s p, %s r where plg.pattern_id = p.pattern_id and p.route_id = r.route_id and r.route_id = '%s'",
-                String.format("%s.pattern_stop_areas", tablePrefix),
-                String.format("%s.patterns", tablePrefix),
-                String.format("%s.routes", tablePrefix),
-                routeId
-            )
-        );
-        LOG.info("Deleted {} pattern stop areas for pattern {}", deletedPatternStopAreas, routeId);
     }
 
     /**
@@ -1588,34 +1544,6 @@ public class JdbcTableWriter implements TableWriter {
             )
         );
         LOG.info("Deleted {} frequencies for {} {}", deletedFrequencies, referencingTable , routeOrPatternId);
-    }
-
-    /**
-     * If deleting a route or pattern, cascade delete shapes. This must happen before patterns are deleted. Otherwise,
-     * the queries to select shapes to delete would fail because there would be no pattern records to join with.
-     */
-    private void deleteShapes(String routeOrPatternId, String routeOrPatternIdColumn, String referencingTable)
-        throws SQLException {
-
-        String patternsTable = String.format("%s.patterns", tablePrefix);
-        String shapesTable = String.format("%s.shapes", tablePrefix);
-
-        // Delete shapes for route/pattern.
-        String sql = (routeOrPatternIdColumn.equals("pattern_id"))
-            ? String.format(
-                "delete from %s s using %s p where s.shape_id = p.shape_id and p.pattern_id = '%s'",
-                shapesTable,
-                patternsTable,
-                routeOrPatternId)
-            : String.format(
-                "delete from %s s using %s p, %s r where s.shape_id = p.shape_id and p.route_id = r.route_id and r.route_id = '%s'",
-                shapesTable,
-                patternsTable,
-                String.format("%s.routes", tablePrefix),
-                routeOrPatternId);
-
-        int deletedShapes = executeStatement(sql);
-        LOG.info("Deleted {} shapes for {} {}", deletedShapes, referencingTable , routeOrPatternId);
     }
 
     /**

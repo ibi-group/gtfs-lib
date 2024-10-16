@@ -4,9 +4,9 @@ import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.loader.Feed;
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.Location;
+import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopArea;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import org.slf4j.Logger;
@@ -21,6 +21,7 @@ import java.util.Map;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.CONDITIONALLY_REQUIRED;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.MISSING_ARRIVAL_OR_DEPARTURE;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.TRIP_TOO_FEW_STOP_TIMES;
+import static com.conveyal.gtfs.validator.FlexValidator.hasNoHalt;
 
 /**
  * Check that the travel times between adjacent stops in trips are reasonable.
@@ -41,7 +42,7 @@ public class NewTripTimesValidator extends FeedValidator {
     // TODO build this same kind of caching into the table reader class.
     Map<String, Stop> stopById = new HashMap<>();
     Map<String, Location> locationById = new HashMap<>();
-    Map<String, StopArea> stopAreaById = new HashMap<>();
+    Map<String, LocationGroup> locationGroupById = new HashMap<>();
     Map<String, Trip> tripById = new HashMap<>();
     Map<String, Route> routeById = new HashMap<>();
 
@@ -53,7 +54,7 @@ public class NewTripTimesValidator extends FeedValidator {
         super(feed, errorStorage);
         standardTripValidators = new TripValidator[] {
             new SpeedTripValidator(feed, errorStorage),
-            new ReferencesTripValidator(feed, errorStorage),
+            new ReferencedTripValidator(feed, errorStorage),
             new ReversedTripValidator(feed, errorStorage),
         };
         additionalTripValidators = new TripValidator[] {
@@ -65,15 +66,15 @@ public class NewTripTimesValidator extends FeedValidator {
     @Override
     public void validate () {
         // TODO cache automatically in feed or TableReader object
-        LOG.info("Cacheing stops, trips, and routes...");
+        LOG.info("Caching stops, locations, location groups, trips, and routes...");
         for (Stop stop : feed.stops) {
             stopById.put(stop.stop_id, stop);
         }
         for (Location location : feed.locations) {
             locationById.put(location.location_id, location);
         }
-        for (StopArea stopArea : feed.stopAreas) {
-            stopAreaById.put(stopArea.area_id, stopArea);
+        for (LocationGroup locationGroup : feed.locationGroups) {
+            locationGroupById.put(locationGroup.location_group_id, locationGroup);
         }
         // FIXME: determine a good way to validate shapes without caching them all in memory...
         for (Trip trip: feed.trips) {
@@ -129,7 +130,7 @@ public class NewTripTimesValidator extends FeedValidator {
             registerError(stopTime, MISSING_ARRIVAL_OR_DEPARTURE);
             fixMissingTimes(stopTime);
             if (missingEitherTime(stopTime)) {
-                //TODO: Is this even needed? Already covered by MISSING_ARRIVAL_OR_DEPARTURE.
+                // TODO: Is this even needed? Already covered by MISSING_ARRIVAL_OR_DEPARTURE.
                 registerError(stopTime, CONDITIONALLY_REQUIRED, "First and last stop times are required to have both an arrival and departure time.");
             }
         }
@@ -157,53 +158,48 @@ public class NewTripTimesValidator extends FeedValidator {
         // We could ask the SQL server to do the join between stop_times and stops, but we want to check references.
         List<Stop> stops = new ArrayList<>();
         List<Location> locations = new ArrayList<>();
-        List<StopArea> stopAreas = new ArrayList<>();
+        List<LocationGroup> locationGroups = new ArrayList<>();
         for (Iterator<StopTime> it = stopTimes.iterator(); it.hasNext(); ) {
             StopTime stopTime = it.next();
             if (hasContinuousBehavior(stopTime.continuous_drop_off, stopTime.continuous_pickup)) {
                 hasContinuousBehavior = true;
             }
-            Stop stop = stopById.get(stopTime.stop_id);
-            Location location = locationById.get(stopTime.stop_id);
-            StopArea stopArea = stopAreaById.get(stopTime.stop_id);
-            if (stop == null && location == null && stopArea == null) {
+            if (hasNoHalt(stopTime)) {
                 // All bad references should have been recorded at import, we can just remove them from the trips.
                 it.remove();
-            } else {
-                if (stop == null && location == null) {
-                    stopAreas.add(stopArea);
-                } else if (stop == null && stopArea == null) {
-                    locations.add(location);
-                } else {
-                    stops.add(stop);
-                }
+            } else if (stopTime.stop_id != null) {
+                stops.add(stopById.get(stopTime.stop_id));
+            } else if (stopTime.location_group_id != null) {
+                locationGroups.add(locationGroupById.get(stopTime.location_group_id));
+            } else if (stopTime.location_id != null) {
+                locations.add(locationById.get(stopTime.location_id));
             }
         }
 
         // If either of these conditions are true none of the trip validators' validateTrip methods are executed.
-        if (hasSingleFlexStop(stopTimes, locations, stopAreas)) {
+        if (hasSingleFlexStop(stopTimes, locations, locationGroups)) {
             LOG.warn("Trip has a single flex stop.");
             skipStandardTripValidation = true;
             return;
-        } else if (hasSingleStop(stopTimes, locations, stopAreas)) {
+        } else if (hasSingleStop(stopTimes, locations, locationGroups)) {
             LOG.warn("Too few stop times that have references to stops to validate trip.");
             registerError(trip, TRIP_TOO_FEW_STOP_TIMES);
             return;
         }
 
-        // Check that first and last stop times are not missing values and repair them if they are not locations or
-        // stop areas. Note that this repair will be seen by the validators but not saved in the database.
+        // Check that first and last stop times are not missing values and repair them if they are not location groups or
+        // locations. Note that this repair will be seen by the validators but not saved in the database.
         StopTime firstStop = stopTimes.get(0);
         StopTime lastStop = stopTimes.get(stopTimes.size() - 1);
-        if (!FlexValidator.stopIdIsStopAreaOrLocation(firstStop.stop_id, stopAreas, locations)) {
+        if (!FlexValidator.isLocationOrLocationGroupDefined(firstStop)) {
             fixInitialFinal(firstStop);
         }
-        if (!FlexValidator.stopIdIsStopAreaOrLocation(lastStop.stop_id, stopAreas, locations)) {
+        if (!FlexValidator.isLocationOrLocationGroupDefined(lastStop)) {
             fixInitialFinal(lastStop);
         }
 
         for (StopTime stopTime : stopTimes) {
-            if (!FlexValidator.stopIdIsStopAreaOrLocation(stopTime.stop_id, stopAreas, locations)) {
+            if (!FlexValidator.isLocationOrLocationGroupDefined(stopTime)) {
                 // Repair the case where an arrival or departure time is provided, but not both.
                 fixMissingTimes(stopTime);
             }
@@ -227,10 +223,10 @@ public class NewTripTimesValidator extends FeedValidator {
 
         // Pass these same cleaned lists of stop_times and stops into each trip validator in turn.
         for (TripValidator tripValidator : standardTripValidators) {
-            tripValidator.validateTrip(trip, route, stopTimes, stops, locations, stopAreas);
+            tripValidator.validateTrip(trip, route, stopTimes, stops, locations, locationGroups);
         }
         for (TripValidator tripValidator : additionalTripValidators) {
-            tripValidator.validateTrip(trip, route, stopTimes, stops, locations, stopAreas);
+            tripValidator.validateTrip(trip, route, stopTimes, stops, locations, locationGroups);
         }
     }
 
@@ -271,14 +267,14 @@ public class NewTripTimesValidator extends FeedValidator {
     }
 
     /**
-     * A single stop is permitted if it is a location or stop area.
+     * A single stop is permitted if it is a location group or location.
      */
     private boolean hasSingleFlexStop(
         List<StopTime> stopTimes,
         List<Location> locations,
-        List<StopArea> stopAreas
+        List<LocationGroup> locationGroups
     ) {
-        return stopTimes.size() < 2 && (!locations.isEmpty() || !stopAreas.isEmpty());
+        return stopTimes.size() < 2 && (!locations.isEmpty() || !locationGroups.isEmpty());
     }
 
     /**
@@ -287,9 +283,9 @@ public class NewTripTimesValidator extends FeedValidator {
     private boolean hasSingleStop(
          List<StopTime> stopTimes,
          List<Location> locations,
-         List<StopArea> stopAreas
+         List<LocationGroup> locationGroups
     ) {
-        return stopTimes.size() < 2 && locations.isEmpty() && stopAreas.isEmpty();
+        return stopTimes.size() < 2 && locations.isEmpty() && locationGroups.isEmpty();
     }
 
 }

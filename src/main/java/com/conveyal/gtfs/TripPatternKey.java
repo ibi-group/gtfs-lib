@@ -37,21 +37,29 @@ public class TripPatternKey {
     public TDoubleList shapeDistances = new TDoubleArrayList();
 
     // Flex additions
+    public List<Boolean> isFlexStop = new ArrayList<>();
+    public List<String> locationGroupIds = new ArrayList<>();
+    public List<String> locationIds = new ArrayList<>();
     public List<String> pickup_booking_rule_id = new ArrayList<>();
     public List<String> drop_off_booking_rule_id = new ArrayList<>();
-    public TDoubleList mean_duration_factor = new TDoubleArrayList();
-    public TDoubleList mean_duration_offset = new TDoubleArrayList();
-    public TDoubleList safe_duration_factor = new TDoubleArrayList();
-    public TDoubleList safe_duration_offset = new TDoubleArrayList();
+
+    /** An ordered list of stop, location group and location ids */
+    public List<String> orderedHalts = new ArrayList<>();
 
     public TripPatternKey (String routeId) {
         this.routeId = routeId;
     }
 
     public void addStopTime (StopTime st) {
+        isFlexStop.add((st.stop_id == null));
         stops.add(st.stop_id);
+        locationGroupIds.add(st.location_group_id);
+        locationIds.add(st.location_id);
+        orderedHalts.add(getStopOrLocationId(st));
         pickupTypes.add(resolvePickupOrDropOffType(st.pickup_type));
         dropoffTypes.add(resolvePickupOrDropOffType(st.drop_off_type));
+        start_pickup_drop_off_window.add(st.start_pickup_drop_off_window);
+        end_pickup_drop_off_window.add(st.end_pickup_drop_off_window);
         // Note, the items listed below are not used in the equality check.
         arrivalTimes.add(st.arrival_time);
         departureTimes.add(st.departure_time);
@@ -62,13 +70,20 @@ public class TripPatternKey {
         continuous_drop_off.add(st.continuous_drop_off);
         pickup_booking_rule_id.add(st.pickup_booking_rule_id);
         drop_off_booking_rule_id.add(st.drop_off_booking_rule_id);
+    }
 
-        start_pickup_drop_off_window.add(st.start_pickup_drop_off_window);
-        end_pickup_drop_off_window.add(st.end_pickup_drop_off_window);
-        mean_duration_factor.add(st.mean_duration_factor);
-        mean_duration_offset.add(st.mean_duration_offset);
-        safe_duration_factor.add(st.safe_duration_factor);
-        safe_duration_offset.add(st.safe_duration_offset);
+    /**
+     * In order to maintain a continuous and ordered list of ids across stops, location groups, and locations determine
+     * which is populated/defined for this stop time and return.
+     */
+    private String getStopOrLocationId(StopTime st) {
+        if (st.stop_id != null) {
+            return st.stop_id;
+        } else if (st.location_group_id != null) {
+            return st.location_group_id;
+        } else {
+            return st.location_id;
+        }
     }
 
     /**
@@ -92,6 +107,8 @@ public class TripPatternKey {
         if (!Objects.equals(pickupTypes, that.pickupTypes)) return false;
         if (!Objects.equals(routeId, that.routeId)) return false;
         if (!Objects.equals(stops, that.stops)) return false;
+        if (!Objects.equals(locationGroupIds, that.locationGroupIds)) return false;
+        if (!Objects.equals(locationIds, that.locationIds)) return false;
         if (!Objects.equals(start_pickup_drop_off_window, that.start_pickup_drop_off_window)) return false;
         if (!Objects.equals(end_pickup_drop_off_window, that.end_pickup_drop_off_window)) return false;
 
@@ -100,6 +117,8 @@ public class TripPatternKey {
 
     @Override
     public int hashCode() {
-        return Objects.hash(routeId, stops, pickupTypes, dropoffTypes, start_pickup_drop_off_window, end_pickup_drop_off_window);
+        return Objects.hash(
+            routeId, stops, locationGroupIds, locationIds, pickupTypes, dropoffTypes, start_pickup_drop_off_window, end_pickup_drop_off_window
+        );
     }
 }

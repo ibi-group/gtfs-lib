@@ -1,3 +1,0 @@
-stop_id,stop_city
-2615683,Trimble
-2615682,Dove Creek

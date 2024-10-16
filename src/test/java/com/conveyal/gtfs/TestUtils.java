@@ -51,7 +51,7 @@ public class TestUtils {
             "AND pid <> pg_backend_pid()", dbName
         ));
         // drop the db
-        if(executeAndClose(String.format("DROP DATABASE %s", dbName))) {
+        if (executeAndClose(String.format("DROP DATABASE %s", dbName))) {
             LOG.debug(String.format("Successfully dropped database: %s", dbName));
         } else {
             LOG.error(String.format("Failed to drop database: %s", dbName));
@@ -95,7 +95,7 @@ public class TestUtils {
         }
     }
 
-    public static DataSource createTestDataSource (String dbUrl) {
+    public static DataSource createTestDataSource(String dbUrl) {
         return GTFS.createDataSource(dbUrl, PG_TEST_USER, PG_TEST_PASSWORD);
     }
 
@@ -146,6 +146,7 @@ public class TestUtils {
 
     /**
      * Convenience method for zipping a directory.
+     *
      * @param nestDirectory whether nested folders should be preserved as subdirectories
      */
     private static void compressDirectoryToZipfile(String rootDir, String sourceDir, ZipOutputStream out, boolean nestDirectory) throws IOException {
@@ -174,7 +175,7 @@ public class TestUtils {
     /**
      * Asserts that the result of a SQL count statement is equal to an expected value
      *
-     * @param sql A SQL statement in the form of `SELECT count(*) FROM ...`
+     * @param sql           A SQL statement in the form of `SELECT count(*) FROM ...`
      * @param expectedCount The expected count that is returned from the result of the SQL statement.
      */
     public static void assertThatSqlCountQueryYieldsExpectedCount(DataSource dataSource, String sql, int expectedCount) {
@@ -225,7 +226,11 @@ public class TestUtils {
      * Load feed from zip file into a database and validate.
      */
     public static String loadFeedAndValidate(DataSource dataSource, String zipFolderName) throws IOException {
-        String zipFileName = TestUtils.zipFolderFiles(zipFolderName,  true);
+        String zipFileName = TestUtils.zipFolderFiles(zipFolderName, true);
+        return loadFeedFromZipFileAndValidate(dataSource, zipFileName);
+    }
+
+    public static String loadFeedFromZipFileAndValidate(DataSource dataSource, String zipFileName) {
         FeedLoadResult feedLoadResult = load(zipFileName, dataSource);
         String namespace = feedLoadResult.uniqueIdentifier;
         validate(namespace, dataSource);
@@ -258,7 +263,7 @@ public class TestUtils {
      */
     public static void lookThroughFiles(FileTestCase[] fileTestCases, ZipFile zip) throws IOException {
         // look through all written files in the zipfile
-        for (FileTestCase fileTestCase: fileTestCases) {
+        for (FileTestCase fileTestCase : fileTestCases) {
             ZipEntry entry = zip.getEntry(fileTestCase.filename);
 
             // make sure the file exists within the zipfile
@@ -278,7 +283,7 @@ public class TestUtils {
             while (reader.readRecord() && !recordFound) {
                 boolean allExpectationsMetForThisRecord = true;
                 for (DataExpectation dataExpectation : fileTestCase.expectedColumnData) {
-                    if(!reader.get(dataExpectation.columnName).equals(dataExpectation.expectedValue)) {
+                    if (!reader.get(dataExpectation.columnName).equals(dataExpectation.expectedValue)) {
                         allExpectationsMetForThisRecord = false;
                         break;
                     }

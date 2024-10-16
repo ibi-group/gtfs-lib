@@ -25,7 +25,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -292,22 +291,6 @@ public class GeoJsonUtil {
     }
 
     /**
-     * Extract the locations from GeoJSON.
-     */
-    public static List<Location> getLocationsFromGeoJson(ZipFile zipFile, ZipEntry entry, List<String> errors) {
-        FeatureCollection features = getFeaturesFromGeoJson(zipFile, entry, errors);
-        return (features == null) ? Collections.emptyList() : GeoJsonUtil.unpackLocations(features, errors);
-    }
-
-    /**
-     * Extract the location shapes from GeoJSON.
-     */
-    public static List<LocationShape> getLocationShapesFromGeoJson(ZipFile zipFile, ZipEntry entry, List<String> errors) {
-        FeatureCollection features = getFeaturesFromGeoJson(zipFile, entry, errors);
-        return (features == null) ? Collections.emptyList() : GeoJsonUtil.unpackLocationShapes(features, errors);
-    }
-
-    /**
      * Extract the GeoJSON features from file.
      */
     private static FeatureCollection getFeaturesFromGeoJson(ZipFile zipFile, ZipEntry entry, List<String> errors) {
@@ -411,15 +394,14 @@ public class GeoJsonUtil {
     /**
      * From the provided list of {@link LocationShape}s extract all line string entries and group by line string id.
      */
-    private static List<LocationShape> getLineStings(
-        String locationId,
-        List<LocationShape> locationShapes
-    ) {
+    private static List<LocationShape> getLineStings(String locationId, List<LocationShape> locationShapes) {
         return locationShapes
             .stream()
-            .filter(
-                item -> item.location_id.equals(locationId)
-            )
+            .filter(item -> item.location_id.equals(locationId))
             .collect(toList());
+    }
+
+    public static String createCSVRow(String... columnData) {
+        return String.join(",", columnData) + System.lineSeparator();
     }
 }

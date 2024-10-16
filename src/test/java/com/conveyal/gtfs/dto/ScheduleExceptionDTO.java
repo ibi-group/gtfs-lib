@@ -11,4 +11,13 @@ public class ScheduleExceptionDTO {
 
     /** Empty constructor for deserialization */
     public ScheduleExceptionDTO() {}
+
+    public static ScheduleExceptionDTO create() {
+        ScheduleExceptionDTO scheduleExceptionDTO = new ScheduleExceptionDTO();
+        scheduleExceptionDTO.name = "Halloween";
+        scheduleExceptionDTO.exemplar = 9; // Add, swap, or remove type
+        scheduleExceptionDTO.removed_service = new String[] {"1"};
+        scheduleExceptionDTO.dates = new String[] {"20191031"};
+        return scheduleExceptionDTO;
+    }
 }

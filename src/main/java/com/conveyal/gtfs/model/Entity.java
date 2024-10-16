@@ -36,12 +36,14 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -513,4 +515,15 @@ public abstract class Entity implements Serializable {
         return value == null ? DOUBLE_MISSING : Double.parseDouble(value);
     }
 
+
+    /**
+     * Creates a primary key from the provided fields. It is acceptable for a field that makes up the primary key to be
+     * optional! In this case the null value is represented with "empty".
+     */
+    protected static String createPrimaryKey(Object... fields) {
+        return Arrays
+            .stream(fields)
+            .map(id -> id == null ? "empty" : id.toString())
+            .collect(Collectors.joining("_"));
+    }
 }
