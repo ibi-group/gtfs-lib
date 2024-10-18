@@ -328,6 +328,7 @@ public class GraphQLGtfsSchema {
             .build()
         )
         .field(RowCountFetcher.field("count", "routes"))
+        .field(MapFetcher.field("network_id"))
         .build();
 
     // Represents rows from stops.txt
