@@ -1,7 +1,11 @@
 package com.conveyal.gtfs;
 
 import com.conveyal.gtfs.error.NewGTFSErrorType;
+import com.conveyal.gtfs.loader.Table;
+import com.csvreader.CsvReader;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BOMInputStream;
+import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,16 +14,21 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static com.conveyal.gtfs.util.Util.randomIdString;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestUtils {
 
@@ -27,6 +36,8 @@ public class TestUtils {
     private static final String PG_URL = "jdbc:postgresql://localhost/postgres";
     public static final String PG_TEST_USER = "postgres";
     public static final String PG_TEST_PASSWORD = "postgres";
+
+    private static final String JDBC_URL = "jdbc:postgresql://localhost";
 
     /**
      * Forcefully drops a database even if other users are connected to it.
@@ -42,7 +53,7 @@ public class TestUtils {
         ));
         // drop the db
         if(executeAndClose(String.format("DROP DATABASE %s", dbName))) {
-            LOG.error(String.format("Successfully dropped database: %s", dbName));
+            LOG.info(String.format("Successfully dropped database: %s", dbName));
         } else {
             LOG.error(String.format("Failed to drop database: %s", dbName));
         }
@@ -211,5 +222,107 @@ public class TestUtils {
         assertThatSqlCountQueryYieldsExpectedCount(testDataSource, sql, expectedNumberOfErrors);
     }
 
+    public static class FileTestCase {
+        public String filename;
+        public TestUtils.DataExpectation[] expectedColumnData;
 
+        public FileTestCase(String filename, TestUtils.DataExpectation[] expectedColumnData) {
+            this.filename = filename;
+            this.expectedColumnData = expectedColumnData;
+        }
+    }
+
+    public static class DataExpectation {
+        public String columnName;
+        public String expectedValue;
+
+        public DataExpectation(String columnName, String expectedValue) {
+            this.columnName = columnName;
+            this.expectedValue = expectedValue;
+        }
+    }
+
+    /**
+     * Look through all written files and confirm that the record matching the expected row exists in appropriate file.
+     */
+    public static void checkFileTestCases(ZipFile zip, FileTestCase[] fileTestCases) throws IOException {
+        // Look through all written files in the zip file.
+        for (TestUtils.FileTestCase fileTestCase : fileTestCases) {
+            ZipEntry entry = zip.getEntry(fileTestCase.filename);
+
+            // make sure the file exists within the zip file.
+            assertThat(entry, notNullValue());
+
+            // create csv reader for file
+            InputStream zis = zip.getInputStream(entry);
+            InputStream bis = new BOMInputStream(zis);
+            CsvReader reader = new CsvReader(bis, ',', StandardCharsets.UTF_8);
+
+            // make sure the file has headers
+            boolean hasHeaders = reader.readHeaders();
+            assertTrue(hasHeaders);
+
+            // make sure that the record matching the expected row exists in this table.
+            boolean recordFound = false;
+            while (reader.readRecord() && !recordFound) {
+                boolean allExpectationsMetForThisRecord = true;
+                for (TestUtils.DataExpectation dataExpectation : fileTestCase.expectedColumnData) {
+                    if (!reader.get(dataExpectation.columnName).equals(dataExpectation.expectedValue)) {
+                        allExpectationsMetForThisRecord = false;
+                        break;
+                    }
+                }
+                if (allExpectationsMetForThisRecord) {
+                    recordFound = true;
+                }
+            }
+            assertTrue(
+                recordFound,
+                String.format("Data Expectation record not found in %s", fileTestCase.filename)
+            );
+        }
+    }
+
+
+    /**
+     * Asserts that a given value for the specified field in result set matches provided matcher.
+     */
+    public static void assertResultValue(ResultSet resultSet, String field, Matcher matcher) throws SQLException {
+        assertThat(resultSet.getObject(field), matcher);
+    }
+
+    /**
+     * Executes SQL query for the specified ID and columns and returns the resulting result set.
+     */
+    public static ResultSet getResultSetForId(DataSource dataSource, String namespace, int id, Table table, String... columns) throws SQLException {
+        String sql = getColumnsForId(namespace, id, table, columns);
+        return dataSource.getConnection().prepareStatement(sql).executeQuery();
+    }
+
+    /**
+     * Constructs SQL query for the specified ID and columns and returns the resulting result set.
+     */
+    public static String getColumnsForId(String namespace, int id, Table table, String... columns) {
+        String sql = String.format(
+            "select %s from %s.%s where id=%d",
+            columns.length > 0 ? String.join(", ", columns) : "*",
+            namespace,
+            table.name,
+            id
+        );
+        LOG.info(sql);
+        return sql;
+    }
+
+    public static void assertThatSqlQueryYieldsRowCount(DataSource dataSource, String sql, int expectedRowCount) throws SQLException {
+        LOG.info(sql);
+        int recordCount = 0;
+        ResultSet rs = dataSource.getConnection().prepareStatement(sql).executeQuery();
+        while (rs.next()) recordCount++;
+        assertThat("Records matching query should equal expected count.", recordCount, equalTo(expectedRowCount));
+    }
+
+    public static void assertThatSqlQueryYieldsZeroRows(DataSource dataSource, String sql) throws SQLException {
+        assertThatSqlQueryYieldsRowCount(dataSource, sql, 0);
+    }
 }

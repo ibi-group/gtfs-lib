@@ -1,0 +1,210 @@
+{
+  "data" : {
+    "feed" : {
+      "area" : [ {
+        "area_id" : "area_bl",
+        "area_name" : "Blue Line",
+        "id" : 2,
+        "stopAreas" : [ {
+          "area_id" : "area_bl",
+          "id" : 229,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 230,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 231,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 232,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 233,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 234,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 235,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 236,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 237,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 240,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 241,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 242,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 243,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 244,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 245,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 246,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 247,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 248,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 249,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 250,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 251,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl",
+          "id" : 330,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        } ]
+      }, {
+        "area_id" : "area_bl_airport",
+        "area_name" : "Blue Line - Airport Station",
+        "id" : 3,
+        "stopAreas" : [ {
+          "area_id" : "area_bl_airport",
+          "id" : 238,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        }, {
+          "area_id" : "area_bl_airport",
+          "id" : 239,
+          "stop_id" : "4u6g",
+          "stops" : [ {
+            "stop_id" : "4u6g",
+            "stop_name" : "Butler Ln"
+          } ]
+        } ]
+      } ],
+      "feed_version" : "1.0"
+    }
+  }
+}

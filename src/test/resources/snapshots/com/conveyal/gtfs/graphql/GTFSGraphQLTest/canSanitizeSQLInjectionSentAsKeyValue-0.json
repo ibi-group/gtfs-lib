@@ -6,6 +6,7 @@
         "agency_id" : "1",
         "count" : 1,
         "id" : 2,
+        "network_id" : null,
         "pattern_count" : 2,
         "patterns" : [ {
           "pattern_id" : "1"

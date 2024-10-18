@@ -1,0 +1,662 @@
+{
+  "data" : {
+    "feed" : {
+      "fareTransferRule" : [ {
+        "duration_limit" : "7200",
+        "duration_limit_type" : "1",
+        "fareProducts" : [ {
+          "amount" : "2.4",
+          "currency" : "USD",
+          "fareMedia" : [ {
+            "fare_media_id" : "charlieticket",
+            "fare_media_name" : "CharlieTicket",
+            "fare_media_type" : "1",
+            "id" : 4
+          } ],
+          "fare_media_id" : "charlieticket",
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "fare_product_name" : "Subway Quick Ticket"
+        } ],
+        "fare_product_id" : "prod_rapid_transit_quick_subway",
+        "fromFareLegRule" : [ {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_bl_airport",
+          "from_timeframe_group_id" : "timeframe_regular",
+          "id" : 2,
+          "leg_group_id" : "leg_airport_rapid_transit_quick_subway",
+          "network_id" : "rapid_transit",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        } ],
+        "from_leg_group_id" : "leg_airport_rapid_transit_quick_subway",
+        "toFareLegRule" : [ {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 311,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "express_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 312,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "express_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 313,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "express_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 314,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "express_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 315,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "express_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 316,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "express_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 317,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 318,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 319,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 320,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 321,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 322,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 323,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 324,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 325,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 326,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 327,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 328,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 329,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_354_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 330,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 331,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 332,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 333,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 334,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 335,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 336,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 337,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 338,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 339,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 340,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 341,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 342,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 343,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_426_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 344,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 345,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 346,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 347,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 348,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 349,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 350,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 351,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 352,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 353,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 354,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 355,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 356,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 357,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_route_450_outside_downtown",
+          "from_timeframe_group_id" : null,
+          "id" : 358,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : null,
+          "from_timeframe_group_id" : null,
+          "id" : 359,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : null,
+          "from_timeframe_group_id" : null,
+          "id" : 360,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_354_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : null,
+          "from_timeframe_group_id" : null,
+          "id" : 361,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : null,
+          "from_timeframe_group_id" : null,
+          "id" : 362,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_426_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : null,
+          "from_timeframe_group_id" : null,
+          "id" : 363,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : null,
+          "from_timeframe_group_id" : null,
+          "id" : 364,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : "area_route_450_outside_downtown",
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : null,
+          "from_timeframe_group_id" : null,
+          "id" : 365,
+          "leg_group_id" : "leg_local_bus_quick_subway",
+          "network_id" : "local_bus",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        } ],
+        "to_leg_group_id" : "leg_local_bus_quick_subway",
+        "transfer_count" : null
+      }, {
+        "duration_limit" : null,
+        "duration_limit_type" : null,
+        "fareProducts" : [ {
+          "amount" : "2.4",
+          "currency" : "USD",
+          "fareMedia" : [ {
+            "fare_media_id" : "charlieticket",
+            "fare_media_name" : "CharlieTicket",
+            "fare_media_type" : "1",
+            "id" : 4
+          } ],
+          "fare_media_id" : "charlieticket",
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "fare_product_name" : "Subway Quick Ticket"
+        } ],
+        "fare_product_id" : "prod_rapid_transit_quick_subway",
+        "fromFareLegRule" : [ {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_bl_airport",
+          "from_timeframe_group_id" : "timeframe_regular",
+          "id" : 2,
+          "leg_group_id" : "leg_airport_rapid_transit_quick_subway",
+          "network_id" : "rapid_transit",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        } ],
+        "from_leg_group_id" : "leg_airport_rapid_transit_quick_subway",
+        "toFareLegRule" : [ {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_bl",
+          "from_timeframe_group_id" : "timeframe_regular",
+          "id" : 476,
+          "leg_group_id" : "leg_rapid_transit_quick_subway",
+          "network_id" : "rapid_transit",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_gl_govt_ctr",
+          "from_timeframe_group_id" : "timeframe_regular",
+          "id" : 477,
+          "leg_group_id" : "leg_rapid_transit_quick_subway",
+          "network_id" : "rapid_transit",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : "area_ol_state",
+          "from_timeframe_group_id" : "timeframe_regular",
+          "id" : 478,
+          "leg_group_id" : "leg_rapid_transit_quick_subway",
+          "network_id" : "rapid_transit",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        }, {
+          "fare_product_id" : "prod_rapid_transit_quick_subway",
+          "from_area_id" : null,
+          "from_timeframe_group_id" : "timeframe_regular",
+          "id" : 479,
+          "leg_group_id" : "leg_rapid_transit_quick_subway",
+          "network_id" : "rapid_transit",
+          "rule_priority" : null,
+          "to_area_id" : null,
+          "to_timeframe_group_id" : null
+        } ],
+        "to_leg_group_id" : "leg_rapid_transit_quick_subway",
+        "transfer_count" : null
+      } ],
+      "feed_version" : "1.0"
+    }
+  }
+}

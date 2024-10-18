@@ -1,0 +1,28 @@
+{
+  "data" : {
+    "feed" : {
+      "fareMedia" : [ {
+        "fare_media_id" : "cash",
+        "fare_media_name" : "Cash",
+        "fare_media_type" : "0",
+        "id" : 2
+      }, {
+        "fare_media_id" : "credit_debit",
+        "fare_media_name" : "Credit/debit card",
+        "fare_media_type" : "0",
+        "id" : 3
+      }, {
+        "fare_media_id" : "charlieticket",
+        "fare_media_name" : "CharlieTicket",
+        "fare_media_type" : "1",
+        "id" : 4
+      }, {
+        "fare_media_id" : "mticket",
+        "fare_media_name" : "mTicket app",
+        "fare_media_type" : "4",
+        "id" : 5
+      } ],
+      "feed_version" : "1.0"
+    }
+  }
+}
