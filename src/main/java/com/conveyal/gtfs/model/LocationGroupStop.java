@@ -123,16 +123,19 @@ public class LocationGroupStop extends Entity {
      * Extract the location group stops from file and group by location group id. Multiple rows of location groups with
      * the same location group id will be compressed into a single row with comma separated stop ids. This is to allow
      * for easier CRUD by the DT UI.
-     * <pre>
+     * <p>
      * E.g.
-     * <pre>
-     * location_group_1,stop_id_1
+     * </p>
+     * <p>
+     * location_group_1,stop_id_1<br>
      * location_group_1,stop_id_2
-     * <pre>
+     * </p>
+     * <p>
      * will become:
-     * <pre>
+     * </p>
+     * <p>
      * location_group_1,"stop_id_1,stop_id_2"
-     * <pre>
+     * </p>
      * If any issues are encountered or there are no location group stops, return the default CSV reader. This is to
      * prevent downstream processing from failing where a CSV reader is expected.
      */
@@ -203,15 +206,19 @@ public class LocationGroupStop extends Entity {
     /**
      * Expand all location group stops which have multiple stop ids into a single row for each stop id. This is to
      * conform with the GTFS Flex standard.
-     * <pre>
+     * <p>
      * E.g.
-     * <pre>
+     * </p>
+     * <p>
      * location_group_1,"stop_id_2,stop_id_3"
-     * <pre>
+     * </p>
+     * <p>
      * will become:
-     * <pre>
+     * </p>
+     * <p>
      * location_group_1,stop_id_2
      * location_group_1,stop_id_3
+     * </p>
      */
     public static String packLocationGroupStops(List<LocationGroupStop> locationGroupStops) {
         StringBuilder csvContent = new StringBuilder();
