@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -30,6 +31,13 @@ public class LocationShape extends Entity {
     public double geometry_pt_lat;
     public double geometry_pt_lon;
 
+    public static final String TABLE_NAME = "location_shapes";
+    public static final String LOCATION_ID_NAME = "location_id";
+    public static final String GEOMETRY_ID_NAME = "geometry_id";
+    public static final String GEOMETRY_PT_LAT_NAME = "geometry_pt_lat";
+    public static final String GEOMETRY_PT_LON_NAME = "geometry_pt_lon";
+
+
     public LocationShape() {
     }
 
@@ -44,7 +52,7 @@ public class LocationShape extends Entity {
 
     /**
      * Sets the parameters for a prepared statement following the parameter order defined in
-     * {@link com.conveyal.gtfs.loader.Table#PATTERN_STOP}. JDBC prepared statement parameters use a one-based index.
+     * {@link com.conveyal.gtfs.loader.Table#LOCATION_SHAPES}. JDBC prepared statement parameters use a one-based index.
      */
     @Override
     public void setStatementParameters(PreparedStatement statement, boolean setDefaultId) throws SQLException {
@@ -53,7 +61,7 @@ public class LocationShape extends Entity {
         statement.setString(oneBasedIndex++, location_id);
         statement.setString(oneBasedIndex++, geometry_id);
         statement.setDouble(oneBasedIndex++, geometry_pt_lat);
-        statement.setDouble(oneBasedIndex++, geometry_pt_lon);
+        statement.setDouble(oneBasedIndex, geometry_pt_lon);
     }
 
     /**
@@ -62,7 +70,7 @@ public class LocationShape extends Entity {
     public static class Loader extends Entity.Loader<LocationShape> {
 
         public Loader(GTFSFeed feed) {
-            super(feed, "location_shapes");
+            super(feed, TABLE_NAME);
         }
 
         @Override
@@ -74,10 +82,10 @@ public class LocationShape extends Entity {
         public void loadOneRow() throws IOException {
             LocationShape locationShape = new LocationShape();
             locationShape.id = row + 1; // offset line number by 1 to account for 0-based row index
-            locationShape.location_id = getStringField("location_id", true);
-            locationShape.geometry_id = getStringField("geometry_id", true);
-            locationShape.geometry_pt_lat = getDoubleField("geometry_pt_lat", true, -90D, 90D); // reuse lat/lon min and max from Stop class
-            locationShape.geometry_pt_lon = getDoubleField("geometry_pt_lon", true, -180D, 180D);
+            locationShape.location_id = getStringField(LOCATION_ID_NAME, true);
+            locationShape.geometry_id = getStringField(GEOMETRY_ID_NAME, true);
+            locationShape.geometry_pt_lat = getDoubleField(GEOMETRY_PT_LAT_NAME, true, -90D, 90D); // reuse lat/lon min and max from Stop class
+            locationShape.geometry_pt_lon = getDoubleField(GEOMETRY_PT_LON_NAME, true, -180D, 180D);
 
             // Location id can not be used here because it is not unique.
             feed.locationShapes.put(Integer.toString(row), locationShape);
@@ -89,7 +97,12 @@ public class LocationShape extends Entity {
      * as part of the unpacking of GeoJSON data to CSV.
      */
     public static String header() {
-        return "location_id,geometry_id,geometry_pt_lat,geometry_pt_lon\n";
+        return GeoJsonUtil.createCSVRow(
+            LOCATION_ID_NAME,
+            GEOMETRY_ID_NAME,
+            GEOMETRY_PT_LAT_NAME,
+            GEOMETRY_PT_LON_NAME
+        );
     }
 
     /**
@@ -97,13 +110,12 @@ public class LocationShape extends Entity {
      * as part of the unpacking of GeoJSON data to CSV.
      */
     public String toCsvRow() {
-        return String.join(
-            ",",
+        return GeoJsonUtil.createCSVRow(
             location_id,
             geometry_id,
             Double.toString(geometry_pt_lat),
             Double.toString(geometry_pt_lon)
-        ) + System.lineSeparator();
+        );
     }
 
     /**
@@ -129,7 +141,7 @@ public class LocationShape extends Entity {
      * shape is returned unaltered.
      */
     private static JsonNode validatePolygon(JsonNode jsonNode) throws IOException {
-        ArrayNode locationShapes = (ArrayNode) jsonNode.get("location_shapes");
+        ArrayNode locationShapes = (ArrayNode) jsonNode.get(TABLE_NAME);
         Iterator<JsonNode> corners = locationShapes.elements();
         ObjectNode firstCorner = null;
         ObjectNode lastCorner = null;
@@ -156,7 +168,7 @@ public class LocationShape extends Entity {
             int lastCornerId = lastCorner.get("id").asInt();
             firstCorner.put("id", ++lastCornerId);
             locationShapes.add(firstCorner);
-            ((ObjectNode) jsonNode).set("location_shapes", locationShapes);
+            ((ObjectNode) jsonNode).set(TABLE_NAME, locationShapes);
             LOG.warn("An additional corner was added to close a polygon: ({}).", firstCorner);
         }
         return jsonNode;
@@ -168,8 +180,8 @@ public class LocationShape extends Entity {
     private static boolean areCornersMatching(ObjectNode firstCorner, ObjectNode lastCorner) {
         return
             firstCorner != null && lastCorner != null &&
-            firstCorner.get("geometry_pt_lat").asText().equals(lastCorner.get("geometry_pt_lat").asText()) &&
-            firstCorner.get("geometry_pt_lon").asText().equals(lastCorner.get("geometry_pt_lon").asText());
+            firstCorner.get(GEOMETRY_PT_LAT_NAME).asText().equals(lastCorner.get(GEOMETRY_PT_LAT_NAME).asText()) &&
+            firstCorner.get(GEOMETRY_PT_LON_NAME).asText().equals(lastCorner.get(GEOMETRY_PT_LON_NAME).asText());
     }
 
     /**
@@ -179,10 +191,10 @@ public class LocationShape extends Entity {
     private static ObjectNode getCorner(JsonNode shape) {
         ObjectNode corner = JsonNodeFactory.instance.objectNode();
         corner.put("id", shape.get("id").asText());
-        corner.put("location_id", shape.get("location_id").asText());
-        corner.put("geometry_id", shape.get("geometry_id").asText());
-        corner.put("geometry_pt_lat", shape.get("geometry_pt_lat").asText());
-        corner.put("geometry_pt_lon", shape.get("geometry_pt_lon").asText());
+        corner.put(LOCATION_ID_NAME, shape.get(LOCATION_ID_NAME).asText());
+        corner.put(GEOMETRY_ID_NAME, shape.get(GEOMETRY_ID_NAME).asText());
+        corner.put(GEOMETRY_PT_LAT_NAME, shape.get(GEOMETRY_PT_LAT_NAME).asText());
+        corner.put(GEOMETRY_PT_LON_NAME, shape.get(GEOMETRY_PT_LON_NAME).asText());
         return corner;
     }
 
@@ -202,5 +214,3 @@ public class LocationShape extends Entity {
         return Objects.hash(location_id, geometry_id, geometry_pt_lat, geometry_pt_lon);
     }
 }
-
-

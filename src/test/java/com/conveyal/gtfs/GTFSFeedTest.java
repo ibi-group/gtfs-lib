@@ -7,8 +7,6 @@ import com.conveyal.gtfs.TestUtils.DataExpectation;
 import com.conveyal.gtfs.TestUtils.FileTestCase;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,15 +22,11 @@ import static org.hamcrest.number.IsCloseTo.closeTo;
  */
 public class GTFSFeedTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GTFSFeedTest.class);
     private static String simpleGtfsZipFileName;
     private static String simpleFlexGtfsZipFileName;
 
     @BeforeAll
     public static void setUpClass() {
-        //executed only once, before the first test
-        simpleGtfsZipFileName = null;
-        simpleFlexGtfsZipFileName = null;
         try {
             simpleGtfsZipFileName = TestUtils.zipFolderFiles("fake-agency", true);
             simpleFlexGtfsZipFileName = TestUtils.zipFolderFiles("fake-agency-with-flex", true);
@@ -45,7 +39,7 @@ public class GTFSFeedTest {
      * Make sure a round-trip of loading a GTFS zip file and then writing another zip file can be performed.
      */
     @Test
-    public void canDoRoundTripLoadAndWriteToZipFile() throws IOException {
+    void canDoRoundTripLoadAndWriteToZipFile() throws IOException {
         // create a temp file for this test
         File outZip = File.createTempFile("fake-agency-output", ".zip");
 
@@ -57,9 +51,7 @@ public class GTFSFeedTest {
         feed.close();
         assertThat(outZip.exists(), is(true));
 
-        // assert that rows of data were written to files within the zipfile
-        ZipFile zip = new ZipFile(outZip);
-
+        // assert that rows of data were written to files within the zip file.
         FileTestCase[] fileTestCases = {
             // agency.txt
             new FileTestCase(
@@ -146,13 +138,6 @@ public class GTFSFeedTest {
                 }
             ),
             new FileTestCase(
-                "areas.txt",
-                new TestUtils.DataExpectation[]{
-                    new TestUtils.DataExpectation("area_id", "1"),
-                    new TestUtils.DataExpectation("area_name", "Area referencing a stop")
-                }
-            ),
-            new FileTestCase(
                 "booking_rules.txt",
                 new TestUtils.DataExpectation[]{
                     new TestUtils.DataExpectation("booking_rule_id", "1"),
@@ -163,7 +148,7 @@ public class GTFSFeedTest {
             new FileTestCase(
                 "calendar.txt",
                 new DataExpectation[]{
-                    new DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57"),
+                    new DataExpectation("service_id", "flex-04100312-8fe1-46a5-a9f2-556f39478f57"),
                     new DataExpectation("start_date", "20170915"),
                     new DataExpectation("end_date", "20170917")
                 }
@@ -185,26 +170,33 @@ public class GTFSFeedTest {
                 }
             ),
             new FileTestCase(
-                "stop_times.txt",
-                new DataExpectation[]{
-                    new DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
-                    new DataExpectation("departure_time", "07:00:00"),
-                    new DataExpectation("stop_id", "4u6g")
+                "location_groups.txt",
+                new TestUtils.DataExpectation[]{
+                    new TestUtils.DataExpectation("location_group_id", "1"),
+                    new TestUtils.DataExpectation("location_group_name", "Location group name")
                 }
             ),
             new FileTestCase(
-                "stop_areas.txt",
+                "location_group_stops.txt",
                 new DataExpectation[]{
-                    new DataExpectation("area_id", "2"),
-                    new DataExpectation("stop_id", "area-999")
+                    new DataExpectation("location_group_id", "1"),
+                    new DataExpectation("stop_id", "123")
+                }
+            ),
+            new FileTestCase(
+                "stop_times.txt",
+                new DataExpectation[]{
+                    new DataExpectation("trip_id", "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"),
+                    new DataExpectation("departure_time", "07:00:00"),
+                    new DataExpectation("stop_id", "4u6g")
                 }
             ),
             new FileTestCase(
                 "trips.txt",
                 new DataExpectation[]{
                     new DataExpectation("route_id", "1"),
-                    new DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
-                    new DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57")
+                    new DataExpectation("trip_id", "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"),
+                    new DataExpectation("service_id", "flex-04100312-8fe1-46a5-a9f2-556f39478f57")
                 }
             )
         };
@@ -241,7 +233,7 @@ public class GTFSFeedTest {
      * @throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes
      */
     @Test
-    public void canGetInterpolatedTimes() throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes, IOException {
+    void canGetInterpolatedTimes() throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes, IOException {
         String tripId = "a30277f8-e50a-4a85-9141-b1e0da9d429d";
 
         String gtfsZipFileName = TestUtils.zipFolderFiles("fake-agency-interpolated-stop-times", true);
@@ -290,7 +282,7 @@ public class GTFSFeedTest {
      * Make sure a spatial index of stops can be calculated
      */
     @Test
-    public void canGetSpatialIndex() {
+    void canGetSpatialIndex() {
         GTFSFeed feed = GTFSFeed.fromFile(simpleGtfsZipFileName);
         assertThat(
             feed.getSpatialIndex().size(),
@@ -303,7 +295,7 @@ public class GTFSFeedTest {
      * Make sure trip speed can be calculated using trip's shape.
      */
     @Test
-    public void canGetTripSpeedUsingShape() {
+    void canGetTripSpeedUsingShape() {
         GTFSFeed feed = GTFSFeed.fromFile(simpleGtfsZipFileName);
         assertThat(
             feed.getTripSpeed("a30277f8-e50a-4a85-9141-b1e0da9d429d"),
@@ -315,7 +307,7 @@ public class GTFSFeedTest {
      * Make sure trip speed can be calculated using trip's shape.
      */
     @Test
-    public void canGetTripSpeedUsingStraightLine() {
+    void canGetTripSpeedUsingStraightLine() {
         GTFSFeed feed = GTFSFeed.fromFile(simpleGtfsZipFileName);
         assertThat(
             feed.getTripSpeed("a30277f8-e50a-4a85-9141-b1e0da9d429d", true),

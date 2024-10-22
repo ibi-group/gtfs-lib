@@ -11,7 +11,7 @@ import com.conveyal.gtfs.loader.conditions.FieldNotEmptyAndMatchesValueCheck;
 import com.conveyal.gtfs.loader.conditions.ForeignRefExistsCheck;
 import com.conveyal.gtfs.loader.conditions.ReferenceFieldShouldBeProvidedCheck;
 import com.conveyal.gtfs.model.Agency;
-import com.conveyal.gtfs.model.Area;
+import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.Attribution;
 import com.conveyal.gtfs.model.BookingRule;
 import com.conveyal.gtfs.model.Calendar;
@@ -24,14 +24,12 @@ import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.LocationShape;
 import com.conveyal.gtfs.model.Pattern;
-import com.conveyal.gtfs.model.PatternLocation;
 import com.conveyal.gtfs.model.PatternStop;
-import com.conveyal.gtfs.model.PatternStopArea;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.ShapePoint;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopArea;
+import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Transfer;
 import com.conveyal.gtfs.model.Translation;
@@ -39,6 +37,7 @@ import com.conveyal.gtfs.model.Trip;
 import com.conveyal.gtfs.storage.StorageException;
 import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +72,7 @@ import static com.conveyal.gtfs.error.NewGTFSErrorType.TABLE_IN_SUBDIRECTORY;
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.sanitize;
 import static com.conveyal.gtfs.loader.Requirement.EDITOR;
 import static com.conveyal.gtfs.loader.Requirement.EXTENSION;
+import static com.conveyal.gtfs.loader.Requirement.FLEX_OPTIONAL;
 import static com.conveyal.gtfs.loader.Requirement.OPTIONAL;
 import static com.conveyal.gtfs.loader.Requirement.REQUIRED;
 import static com.conveyal.gtfs.loader.Requirement.UNKNOWN;
@@ -84,13 +84,15 @@ import static com.conveyal.gtfs.loader.Requirement.UNKNOWN;
  * or descriptive (providing the schema of an RDBMS table).
  *
  * TODO associate Table with EntityPopulator (combine read and write sides)
+ *
+ * Flex spec: https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md
  */
 public class Table {
 
     private static final Logger LOG = LoggerFactory.getLogger(Table.class);
 
     public static final String LOCATION_GEO_JSON_FILE_NAME = "locations.geojson";
-    public static final String STOP_AREAS_FILE_NAME = "stop_areas.txt";
+    public static final String LOCATION_GROUP_STOPS_FILE_NAME = "location_group_stops.txt";
 
     public final String name;
 
@@ -322,11 +324,40 @@ public class Table {
     .addPrimaryKey().keyFieldIsNotUnique()
     .addPrimaryKeyNames("fare_id", "route_id", "origin_id", "destination_id", "contains_id");
 
+    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#locationsgeojson
+    public static final Table LOCATIONS = new Table(Location.TABLE_NAME, Location.class, OPTIONAL,
+        new StringField(Location.LOCATION_ID_NAME, REQUIRED),
+        new StringField(Location.STOP_NAME_NAME, OPTIONAL),
+        new StringField(Location.STOP_DESC_NAME, OPTIONAL),
+        new StringField(Location.ZONE_ID_NAME, OPTIONAL),
+        new URLField(Location.STOP_URL_NAME, OPTIONAL),
+        new StringField(Location.GEOMETRY_TYPE_NAME, REQUIRED)
+    )
+    .addPrimaryKey()
+    .addPrimaryKeyNames(Location.LOCATION_ID_NAME);
+
+    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#location_groupstxt
+    public static final Table LOCATION_GROUP = new Table(LocationGroup.TABLE_NAME, LocationGroup.class, OPTIONAL,
+        new StringField(LocationGroup.LOCATION_GROUP_ID_NAME, REQUIRED),
+        new StringField(LocationGroup.LOCATION_GROUP_NAME_NAME, OPTIONAL)
+    )
+    .addPrimaryKeyNames(LocationGroup.LOCATION_GROUP_ID_NAME);
+
+    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#location_group_stopstxt
+    public static final Table LOCATION_GROUP_STOPS = new Table(LocationGroupStop.TABLE_NAME, LocationGroupStop.class, OPTIONAL,
+        new StringField(LocationGroupStop.LOCATION_GROUP_ID_NAME, REQUIRED).isReferenceTo(LOCATION_GROUP),
+        new StringField(LocationGroupStop.STOP_ID_NAME, REQUIRED).isReferenceTo(STOPS)
+    )
+    .keyFieldIsNotUnique()
+    .addPrimaryKeyNames(LocationGroupStop.LOCATION_GROUP_ID_NAME, LocationGroupStop.STOP_ID_NAME);
+
     public static final Table PATTERN_STOP = new Table("pattern_stops", PatternStop.class, OPTIONAL,
             new StringField("pattern_id", REQUIRED).isReferenceTo(PATTERNS),
             new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
             // FIXME: Do we need an index on stop_id?
-            new StringField("stop_id", REQUIRED).isReferenceTo(STOPS),
+            new StringField("stop_id", OPTIONAL).isReferenceTo(STOPS),
+            new StringField("location_group_id", FLEX_OPTIONAL).isReferenceTo(LOCATION_GROUP),
+            new StringField("location_id", FLEX_OPTIONAL).isReferenceTo(LOCATIONS),
             // Editor-specific fields
             new StringField("stop_headsign", EDITOR),
             new IntegerField("default_travel_time", EDITOR,0, Integer.MAX_VALUE),
@@ -337,8 +368,10 @@ public class Table {
             new ShortField("timepoint", EDITOR, 1),
             new ShortField("continuous_pickup", OPTIONAL,3),
             new ShortField("continuous_drop_off", OPTIONAL,3),
-            new StringField("pickup_booking_rule_id", OPTIONAL),
-            new StringField("drop_off_booking_rule_id", OPTIONAL)
+            new StringField("pickup_booking_rule_id", FLEX_OPTIONAL),
+            new StringField("drop_off_booking_rule_id", FLEX_OPTIONAL),
+            new TimeField("start_pickup_drop_off_window", FLEX_OPTIONAL),
+            new TimeField("end_pickup_drop_off_window", FLEX_OPTIONAL)
     ).withParentTable(PATTERNS)
     .addPrimaryKeyNames("pattern_id", "stop_sequence");
 
@@ -358,34 +391,6 @@ public class Table {
         new StringField("pattern_id", EDITOR).isReferenceTo(PATTERNS)
     ).addPrimaryKey()
     .addPrimaryKeyNames("trip_id");
-
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#
-    public static final Table LOCATIONS = new Table("locations", Location.class, OPTIONAL,
-        new StringField("location_id", REQUIRED),
-        new StringField("stop_name", OPTIONAL),
-        new StringField("stop_desc", OPTIONAL),
-        new StringField("zone_id", OPTIONAL),
-        new URLField("stop_url", OPTIONAL),
-        new StringField("geometry_type", REQUIRED)
-    )
-    .addPrimaryKey()
-    .addPrimaryKeyNames("location_id");
-
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#areastxt-no-change
-    public static final Table AREA = new Table("areas", Area.class, OPTIONAL,
-        new StringField("area_id", REQUIRED),
-        new StringField("area_name", OPTIONAL)
-    )
-    .addPrimaryKeyNames("area_id");
-
-
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_areastxt-file-modified
-    public static final Table STOP_AREAS = new Table("stop_areas", StopArea.class, OPTIONAL,
-        new StringField("area_id", REQUIRED).isReferenceTo(AREA),
-        new StringField("stop_id", REQUIRED).isReferenceTo(STOPS).isReferenceTo(LOCATIONS)
-    )
-    .keyFieldIsNotUnique()
-    .addPrimaryKeyNames("area_id", "stop_id");
 
     // Must come after TRIPS table to which it has references.
     public static final Table TRANSFERS = new Table("transfers", Transfer.class, OPTIONAL,
@@ -407,42 +412,30 @@ public class Table {
     .addPrimaryKeyNames("from_stop_id", "to_stop_id", "from_trip_id", "to_trip_id", "from_route_id", "to_route_id");
 
     // Must come after TRIPS and STOPS table to which it has references
-    public static final Table STOP_TIMES = new Table("stop_times", StopTime.class, REQUIRED,
-            new StringField("trip_id", REQUIRED).isReferenceTo(TRIPS),
-            new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
+    public static final Table STOP_TIMES = new Table(StopTime.TABLE_NAME, StopTime.class, REQUIRED,
+            new StringField(StopTime.TRIP_ID_NAME, REQUIRED).isReferenceTo(TRIPS),
+            new IntegerField(StopTime.STOP_SEQUENCE_NAME, REQUIRED, 0, Integer.MAX_VALUE),
             // FIXME: Do we need an index on stop_id
-            new StringField("stop_id", REQUIRED)
-                .isReferenceTo(STOPS)
-                .isReferenceTo(LOCATIONS)
-                .isReferenceTo(STOP_AREAS),
-//                    .indexThisColumn(),
+            new StringField(StopTime.STOP_ID_NAME, OPTIONAL).isReferenceTo(STOPS),
+            new StringField(StopTime.LOCATION_GROUP_ID_NAME, FLEX_OPTIONAL).isReferenceTo(LOCATION_GROUP),
+            new StringField(StopTime.LOCATION_ID_NAME, FLEX_OPTIONAL).isReferenceTo(LOCATIONS),
             // TODO verify that we have a special check for arrival and departure times first and last stop_time in a trip, which are required
-            new TimeField("arrival_time", OPTIONAL),
-            new TimeField("departure_time", OPTIONAL),
-            new StringField("stop_headsign", OPTIONAL),
-            new ShortField("pickup_type", OPTIONAL, 3),
-            new ShortField("drop_off_type", OPTIONAL, 3),
-            new ShortField("continuous_pickup", OPTIONAL, 3),
-            new ShortField("continuous_drop_off", OPTIONAL, 3),
-            new DoubleField("shape_dist_traveled", OPTIONAL, 0, Double.POSITIVE_INFINITY, -1),
-            new ShortField("timepoint", OPTIONAL, 1),
+            new TimeField(StopTime.ARRIVAL_TIME_NAME, OPTIONAL),
+            new TimeField(StopTime.DEPARTURE_TIME_NAME, OPTIONAL),
+            new StringField(StopTime.STOP_HEADSIGN_NAME, OPTIONAL),
+            new ShortField(StopTime.PICKUP_TYPE_NAME, OPTIONAL, 3),
+            new ShortField(StopTime.DROP_OFF_TYPE_NAME, OPTIONAL, 3),
+            new ShortField(StopTime.CONTINUOUS_PICK_UP_NAME, OPTIONAL, 3),
+            new ShortField(StopTime.CONTINUOUS_DROP_OFF_NAME, OPTIONAL, 3),
+            new DoubleField(StopTime.SHAPE_DIST_TRAVELED_NAME, OPTIONAL, 0, Double.POSITIVE_INFINITY, -1),
+            new ShortField(StopTime.TIMEPOINT_NAME, OPTIONAL, 1),
             new IntegerField("fare_units_traveled", EXTENSION), // OpenOV NL extension
-
-            // Additional GTFS Flex booking rule fields.
-            // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended-1
-            new StringField("pickup_booking_rule_id", OPTIONAL),
-            new StringField("drop_off_booking_rule_id", OPTIONAL),
-
-            // Additional GTFS Flex stop areas and locations fields
-            // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended
-            new TimeField("start_pickup_drop_off_window", OPTIONAL),
-            new TimeField("end_pickup_drop_off_window", OPTIONAL),
-            new DoubleField("mean_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("mean_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2)
+            new StringField(StopTime.PICKUP_BOOKING_RULE_ID_NAME, FLEX_OPTIONAL),
+            new StringField(StopTime.DROP_OFF_BOOKING_RULE_ID_NAME, FLEX_OPTIONAL),
+            new TimeField(StopTime.START_PICKUP_DROP_OFF_WINDOW_NAME, FLEX_OPTIONAL),
+            new TimeField(StopTime.END_PICKUP_DROP_OFF_WINDOW_NAME, FLEX_OPTIONAL)
     ).withParentTable(TRIPS)
-    .addPrimaryKeyNames("trip_id", "stop_sequence");
+    .addPrimaryKeyNames(StopTime.TRIP_ID_NAME, StopTime.STOP_SEQUENCE_NAME);
 
     // Must come after TRIPS table to which it has a reference
     public static final Table FREQUENCIES = new Table("frequencies", Frequency.class, OPTIONAL,
@@ -493,90 +486,44 @@ public class Table {
             new StringField("attribution_phone", OPTIONAL)
     ).addPrimaryKeyNames("attribution_id");
 
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#gtfs-bookingrules
-    public static final Table BOOKING_RULES = new Table("booking_rules", BookingRule.class, OPTIONAL,
-            new StringField("booking_rule_id", REQUIRED),
-            new ShortField("booking_type", OPTIONAL, 2),
-            new IntegerField("prior_notice_duration_min", OPTIONAL),
-            new IntegerField("prior_notice_duration_max", OPTIONAL),
-            new IntegerField("prior_notice_last_day", OPTIONAL),
-            new StringField("prior_notice_last_time", OPTIONAL),
-            new IntegerField("prior_notice_start_day", OPTIONAL),
-            new StringField("prior_notice_start_time", OPTIONAL),
-            new StringField("prior_notice_service_id", OPTIONAL).isReferenceTo(CALENDAR),
-            new StringField("message", OPTIONAL),
-            new StringField("pickup_message", OPTIONAL),
-            new StringField("drop_off_message", OPTIONAL),
-            new StringField("phone_number", OPTIONAL),
-            new URLField("info_url", OPTIONAL),
-            new URLField("booking_url", OPTIONAL)
+    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#booking_rulestxt
+    public static final Table BOOKING_RULES = new Table(BookingRule.TABLE_NAME, BookingRule.class, OPTIONAL,
+            new StringField(BookingRule.BOOKING_RULE_ID_NAME, REQUIRED),
+            new ShortField(BookingRule.BOOKING_TYPE_NAME, OPTIONAL, 2),
+            new IntegerField(BookingRule.PRIOR_NOTICE_DURATION_MIN_NAME, OPTIONAL),
+            new IntegerField(BookingRule.PRIOR_NOTICE_DURATION_MAX_NAME, OPTIONAL),
+            new IntegerField(BookingRule.PRIOR_NOTICE_LAST_DAY_NAME, OPTIONAL),
+            new StringField(BookingRule.PRIOR_NOTICE_LAST_TIME_NAME, OPTIONAL),
+            new IntegerField(BookingRule.PRIOR_NOTICE_START_DAY_NAME, OPTIONAL),
+            new StringField(BookingRule.PRIOR_NOTICE_START_TIME_NAME, OPTIONAL),
+            new StringField(BookingRule.PRIOR_NOTICE_SERVICE_ID_NAME, OPTIONAL).isReferenceTo(CALENDAR),
+            new StringField(BookingRule.MESSAGE_NAME, OPTIONAL),
+            new StringField(BookingRule.PICKUP_MESSAGE_NAME, OPTIONAL),
+            new StringField(BookingRule.DROP_OFF_MESSAGE_NAME, OPTIONAL),
+            new StringField(BookingRule.PHONE_NUMBER_NAME, OPTIONAL),
+            new URLField(BookingRule.INFO_URL_NAME, OPTIONAL),
+            new URLField(BookingRule.BOOKING_URL_NAME, OPTIONAL)
     )
-    .addPrimaryKeyNames("booking_rule_id");
+    .addPrimaryKeyNames(BookingRule.BOOKING_RULE_ID_NAME);
 
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#locationsgeojson-file-added
-    public static final Table LOCATION_SHAPES = new Table("location_shapes", LocationShape.class, OPTIONAL,
-        new StringField("location_id", REQUIRED).isReferenceTo(LOCATIONS),
-        new StringField("geometry_id", REQUIRED),
-        new DoubleField("geometry_pt_lat", REQUIRED, -80, 80, 6),
-        new DoubleField("geometry_pt_lon", REQUIRED, -180, 180, 6)
+    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#locationsgeojson
+    public static final Table LOCATION_SHAPES = new Table(LocationShape.TABLE_NAME, LocationShape.class, OPTIONAL,
+        new StringField(LocationShape.LOCATION_ID_NAME, REQUIRED).isReferenceTo(LOCATIONS),
+        new StringField(LocationShape.GEOMETRY_ID_NAME, REQUIRED),
+        new DoubleField(LocationShape.GEOMETRY_PT_LAT_NAME, REQUIRED, -80, 80, 6),
+        new DoubleField(LocationShape.GEOMETRY_PT_LON_NAME, REQUIRED, -180, 180, 6)
     )
     .keyFieldIsNotUnique()
     .withParentTable(LOCATIONS)
-    .addPrimaryKeyNames("location_id", "geometry_id", "geometry_pt_lat", "geometry_pt_lon");
-
-    public static final Table PATTERN_LOCATION = new Table("pattern_locations", PatternLocation.class, OPTIONAL,
-            new StringField("pattern_id", REQUIRED).isReferenceTo(PATTERNS),
-            new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
-            new StringField("location_id", REQUIRED).isReferenceTo(LOCATIONS),
-            // Editor-specific fields
-            new IntegerField("drop_off_type", EDITOR, 2),
-            new IntegerField("pickup_type", EDITOR, 2),
-            new ShortField("timepoint", EDITOR, 1),
-            new StringField("stop_headsign", EDITOR),
-            new ShortField("continuous_pickup", OPTIONAL,3),
-            new ShortField("continuous_drop_off", OPTIONAL,3),
-            new StringField("pickup_booking_rule_id", OPTIONAL),
-            new StringField("drop_off_booking_rule_id", OPTIONAL),
-
-            // Additional GTFS Flex stop areas and locations fields
-            // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended
-            new TimeField("flex_default_travel_time", OPTIONAL),
-            new TimeField("flex_default_zone_time", OPTIONAL),
-            new DoubleField("mean_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("mean_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2)
-
-    ).withParentTable(PATTERNS);
-
-    public static final Table PATTERN_STOP_AREA = new Table("pattern_stop_areas", PatternStopArea.class, OPTIONAL,
-            new StringField("pattern_id", REQUIRED).isReferenceTo(PATTERNS),
-            new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
-            new StringField("area_id", REQUIRED).isReferenceTo(STOP_AREAS),
-            // Editor-specific fields
-            new IntegerField("drop_off_type", EDITOR, 2),
-            new IntegerField("pickup_type", EDITOR, 2),
-            new ShortField("timepoint", EDITOR, 1),
-            new StringField("stop_headsign", EDITOR),
-            new ShortField("continuous_pickup", OPTIONAL,3),
-            new ShortField("continuous_drop_off", OPTIONAL,3),
-            new StringField("pickup_booking_rule_id", OPTIONAL),
-            new StringField("drop_off_booking_rule_id", OPTIONAL),
-
-            // Additional GTFS Flex stop areas and locations fields
-            // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended
-            new TimeField("flex_default_travel_time", OPTIONAL),
-            new TimeField("flex_default_zone_time", OPTIONAL),
-            new DoubleField("mean_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("mean_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
-            new DoubleField("safe_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2)
-
-    ).withParentTable(PATTERNS);
+    .addPrimaryKeyNames(
+        LocationShape.LOCATION_ID_NAME,
+        LocationShape.GEOMETRY_ID_NAME,
+        LocationShape.GEOMETRY_PT_LAT_NAME,
+        LocationShape.GEOMETRY_PT_LON_NAME
+    );
 
     /** List of tables in order needed for checking referential integrity during load stage. */
     public static final Table[] tablesInOrder = {
-        AREA,
         AGENCY,
         CALENDAR,
         SCHEDULE_EXCEPTIONS,
@@ -588,11 +535,10 @@ public class Table {
         SHAPES,
         STOPS,
         LOCATIONS,
-        STOP_AREAS,
+        LOCATION_GROUP,
+        LOCATION_GROUP_STOPS,
         FARE_RULES,
         PATTERN_STOP,
-        PATTERN_LOCATION,
-        PATTERN_STOP_AREA,
         TRANSFERS,
         TRIPS,
         STOP_TIMES,
@@ -676,10 +622,30 @@ public class Table {
      */
     public List<Field> editorFields() {
         List<Field> editorFields = new ArrayList<>();
-        for (Field f : fields) if (f.requirement == REQUIRED || f.requirement == OPTIONAL || f.requirement == EDITOR) {
-            editorFields.add(f);
+        for (Field f : fields) {
+            if (
+                f.requirement == REQUIRED ||
+                f.requirement == OPTIONAL ||
+                f.requirement == FLEX_OPTIONAL ||
+                f.requirement == EDITOR
+            ) {
+                editorFields.add(f);
+            }
         }
         return editorFields;
+    }
+
+    /**
+     * Get only optional flex fields.
+     */
+    public List<Field> flexOptionalFields() {
+        List<Field> flexOptionalFields = new ArrayList<>();
+        for (Field f : this.fields) {
+            if (f.requirement == FLEX_OPTIONAL) {
+                flexOptionalFields.add(f);
+            }
+        }
+        return flexOptionalFields;
     }
 
     /**
@@ -698,7 +664,11 @@ public class Table {
      */
     public List<Field> specFields () {
         List<Field> specFields = new ArrayList<>();
-        for (Field f : fields) if (f.requirement == REQUIRED || f.requirement == OPTIONAL) specFields.add(f);
+        for (Field f : fields) {
+            if (f.requirement == REQUIRED || f.requirement == OPTIONAL || f.requirement == FLEX_OPTIONAL) {
+                specFields.add(f);
+            }
+        }
         return specFields;
     }
 
@@ -776,6 +746,65 @@ public class Table {
             idValue,
             String.join(", ", Collections.nCopies(editorFields().size(), "?"))
         );
+    }
+
+    /**
+     * Create SQL string for use in insert statement. Note, this filters table's fields to only those used in editor and
+     * in the case of flex, provided optional fields.
+     */
+    public String generateInsertSql(ObjectNode jsonObject, String namespace, boolean setDefaultId) {
+        if (!hasOptionalFlexFields()) {
+            return generateInsertSql(namespace, setDefaultId);
+        }
+        String tableName = namespace == null
+            ? name
+            : String.join(".", namespace, name);
+
+        // Get the flex optional fields missing from the object to be inserted.
+        List<Field> missingFields = getMissingFlexFields(jsonObject);
+
+        // Remove missing fields from all table fields.
+        List<Field> allFields = editorFields();
+        allFields.removeAll(missingFields);
+
+        String idValue = setDefaultId ? "DEFAULT" : "?";
+        return String.format(
+            "insert into %s (id, %s) values (%s, %s)",
+            tableName,
+            commaSeparatedNames(allFields),
+            idValue,
+            String.join(
+                ", ",
+                Collections.nCopies(allFields.size(), "?")
+            )
+        );
+    }
+
+    /**
+     * {@link Table#STOP_TIMES} and {@link Table#PATTERN_STOP} contain optional flex fields. Some or all of these will
+     * be provided by the UI. In the case of non-flex feeds, none of these will be provided. This aids with producing
+     * the correct insert and update SQL statements.
+     */
+    private boolean hasOptionalFlexFields() {
+        for (Field field : fields) {
+            if (field.requirement == FLEX_OPTIONAL) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get the flex optional fields missing from the object to be inserted.
+     */
+    private List<Field> getMissingFlexFields(ObjectNode jsonObject) {
+        List<Field> missingFields = new ArrayList<>();
+        for (Field field : flexOptionalFields()) {
+            if (jsonObject.get(field.name) == null) {
+                missingFields.add(field);
+            }
+        }
+        return missingFields;
     }
 
     /**
@@ -866,8 +895,8 @@ public class Table {
         CsvReader csvReader;
         if (tableFileName.equals(LOCATION_GEO_JSON_FILE_NAME)) {
             csvReader = GeoJsonUtil.getCsvReaderFromGeoJson(name, zipFile, entry, errors);
-        } else if (tableFileName.equals(STOP_AREAS_FILE_NAME)) {
-            csvReader = StopArea.getCsvReader(zipFile, entry, errors);
+        } else if (tableFileName.equals(LOCATION_GROUP_STOPS_FILE_NAME)) {
+            csvReader = LocationGroupStop.getCsvReader(zipFile, entry, errors);
         } else {
             InputStream zipInputStream = zipFile.getInputStream(entry);
             // Skip any byte order mark that may be present. Files must be UTF-8,
@@ -910,9 +939,34 @@ public class Table {
     /**
      * Create SQL string for use in update statement. Note, this filters table's fields to only those used in editor.
      */
-    public String generateUpdateSql (String namespace, int id) {
+    private String generateUpdateSql (String namespace, int id) {
         // Collect field names for string joining from JsonObject.
         String joinedFieldNames = editorFields().stream()
+                // If updating, add suffix for use in set clause
+                .map(field -> field.name + " = ?")
+                .collect(Collectors.joining(", "));
+
+        String tableName = namespace == null ? name : String.join(".", namespace, name);
+        return String.format("update %s set %s where id = %d", tableName, joinedFieldNames, id);
+    }
+
+    /**
+     * Create SQL string for use in update statement. Note, this filters table's fields to only those used in editor.
+     */
+    public String generateUpdateSql (ObjectNode jsonObject, String namespace, int id) {
+        if (!hasOptionalFlexFields()) {
+            return generateUpdateSql(namespace, id);
+        }
+
+        // Get the flex optional fields missing from the object to be inserted.
+        List<Field> missingFields = getMissingFlexFields(jsonObject);
+
+        // Remove missing fields from all table fields.
+        List<Field> allFields = editorFields();
+        allFields.removeAll(missingFields);
+
+        // Collect field names for string joining from JsonObject.
+        String joinedFieldNames = allFields.stream()
                 // If updating, add suffix for use in set clause
                 .map(field -> field.name + " = ?")
                 .collect(Collectors.joining(", "));
@@ -1125,7 +1179,7 @@ public class Table {
      * (e.g., Patterns or PatternStops).
      */
     public boolean isSpecTable() {
-        return required == REQUIRED || required == OPTIONAL;
+        return required == REQUIRED || required == OPTIONAL || required == FLEX_OPTIONAL;
     }
 
     /**

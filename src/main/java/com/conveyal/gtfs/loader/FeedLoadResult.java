@@ -21,7 +21,6 @@ public class FeedLoadResult implements Serializable {
     public int errorCount;
     public String fatalException;
 
-    public TableLoadResult area;
     public TableLoadResult agency;
     public TableLoadResult bookingRules;
     public TableLoadResult calendar;
@@ -35,7 +34,8 @@ public class FeedLoadResult implements Serializable {
     public TableLoadResult patterns;
     public TableLoadResult routes;
     public TableLoadResult shapes;
-    public TableLoadResult stopAreas;
+    public TableLoadResult locationGroup;
+    public TableLoadResult locationGroupStops;
     public TableLoadResult stops;
     public TableLoadResult stopTimes;
     public TableLoadResult transfers;
@@ -54,7 +54,6 @@ public class FeedLoadResult implements Serializable {
      * Optional constructor to generate blank table load results on instantiation.
      */
     public FeedLoadResult (boolean constructTableResults) {
-        area = new TableLoadResult();
         agency = new TableLoadResult();
         bookingRules = new TableLoadResult();
         calendar = new TableLoadResult();
@@ -67,7 +66,8 @@ public class FeedLoadResult implements Serializable {
         locationShapes = new TableLoadResult();
         routes = new TableLoadResult();
         shapes = new TableLoadResult();
-        stopAreas = new TableLoadResult();
+        locationGroup = new TableLoadResult();
+        locationGroupStops = new TableLoadResult();
         stops = new TableLoadResult();
         stopTimes = new TableLoadResult();
         transfers = new TableLoadResult();
@@ -83,8 +83,9 @@ public class FeedLoadResult implements Serializable {
     public boolean isGTFSFlex() {
         return
             (bookingRules != null && bookingRules.rowCount > 0) ||
-            (stopAreas != null && stopAreas.rowCount > 0) ||
             (locations != null && locations.rowCount > 0) ||
+            (locationGroup != null && locationGroup.rowCount > 0) ||
+            (locationGroupStops != null && locationGroupStops.rowCount > 0) ||
             (locationShapes != null && locationShapes.rowCount > 0);
     }
 }

@@ -26,4 +26,18 @@ public class BookingRuleDTO {
     public String phone_number;
     public URL info_url;
     public URL booking_url;
+
+    public static BookingRuleDTO create() {
+        BookingRuleDTO bookingRuleDTO = new BookingRuleDTO();
+        bookingRuleDTO.booking_rule_id = "9471";
+        bookingRuleDTO.booking_type = 1;
+        bookingRuleDTO.prior_notice_duration_min = 60;
+        bookingRuleDTO.prior_notice_duration_max = 120;
+        bookingRuleDTO.prior_notice_last_time = "17:11:12";
+        bookingRuleDTO.prior_notice_start_time = "07:11:12";
+        // Set values to empty strings/null to later verify that they are set to null in the database.
+        bookingRuleDTO.message = "";
+        bookingRuleDTO.pickup_message = "";
+        return bookingRuleDTO;
+    }
 }

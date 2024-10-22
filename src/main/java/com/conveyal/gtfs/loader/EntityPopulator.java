@@ -1,7 +1,7 @@
 package com.conveyal.gtfs.loader;
 
 import com.conveyal.gtfs.model.Agency;
-import com.conveyal.gtfs.model.Area;
+import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.BookingRule;
 import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.CalendarDate;
@@ -11,15 +11,13 @@ import com.conveyal.gtfs.model.FareRule;
 import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.LocationShape;
-import com.conveyal.gtfs.model.PatternLocation;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.PatternStop;
-import com.conveyal.gtfs.model.PatternStopArea;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.ShapePoint;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopArea;
+import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import gnu.trove.map.TObjectIntMap;
@@ -65,6 +63,8 @@ public interface EntityPopulator<T> {
     EntityPopulator<PatternStop> PATTERN_STOP = (result, columnForName) -> {
         PatternStop patternStop = new PatternStop();
         patternStop.stop_id = getStringIfPresent(result, "stop_id", columnForName);
+        patternStop.location_group_id = getStringIfPresent(result, "location_group_id", columnForName);
+        patternStop.location_id = getStringIfPresent(result, "location_id", columnForName);
         patternStop.default_dwell_time = getIntIfPresent(result, "default_dwell_time", columnForName);
         patternStop.default_travel_time = getIntIfPresent(result, "default_travel_time", columnForName);
         patternStop.pattern_id = getStringIfPresent(result, "pattern_id", columnForName);
@@ -78,51 +78,9 @@ public interface EntityPopulator<T> {
         patternStop.continuous_drop_off = getIntIfPresent   (result, "continuous_drop_off", columnForName);
         patternStop.pickup_booking_rule_id = getStringIfPresent(result, "pickup_booking_rule_id", columnForName);
         patternStop.drop_off_booking_rule_id = getStringIfPresent(result, "drop_off_booking_rule_id", columnForName);
+        patternStop.start_pickup_drop_off_window = getIntIfPresent(result, "start_pickup_drop_off_window", columnForName);
+        patternStop.end_pickup_drop_off_window = getIntIfPresent(result, "end_pickup_drop_off_window", columnForName);
         return patternStop;
-    };
-
-    EntityPopulator<PatternLocation> PATTERN_LOCATION = (result, columnForName) -> {
-        PatternLocation patternLocation = new PatternLocation();
-        patternLocation.location_id = getStringIfPresent(result, "location_id", columnForName);
-        patternLocation.pattern_id = getStringIfPresent(result, "pattern_id", columnForName);
-        patternLocation.drop_off_type = getIntIfPresent(result, "drop_off_type", columnForName);
-        patternLocation.pickup_type = getIntIfPresent(result, "pickup_type", columnForName);
-        patternLocation.stop_sequence = getIntIfPresent(result, "stop_sequence", columnForName);
-        patternLocation.timepoint = getIntIfPresent(result, "timepoint", columnForName);
-        patternLocation.continuous_pickup   = getIntIfPresent   (result, "continuous_pickup",   columnForName);
-        patternLocation.continuous_drop_off = getIntIfPresent   (result, "continuous_drop_off", columnForName);
-
-        patternLocation.pickup_booking_rule_id = getStringIfPresent(result, "pickup_booking_rule_id", columnForName);
-        patternLocation.drop_off_booking_rule_id = getStringIfPresent(result, "drop_off_booking_rule_id", columnForName);
-        patternLocation.flex_default_travel_time = getIntIfPresent(result, "flex_default_travel_time", columnForName);
-        patternLocation.flex_default_zone_time = getIntIfPresent(result, "flex_default_zone_time", columnForName);
-        patternLocation.mean_duration_factor = getDoubleIfPresent(result, "mean_duration_factor", columnForName);
-        patternLocation.mean_duration_offset = getDoubleIfPresent(result, "mean_duration_offset", columnForName);
-        patternLocation.safe_duration_factor = getDoubleIfPresent(result, "safe_duration_factor", columnForName);
-        patternLocation.safe_duration_offset = getDoubleIfPresent(result, "safe_duration_offset", columnForName);
-        return patternLocation;
-    };
-
-    EntityPopulator<PatternStopArea> PATTERN_STOP_AREA = (result, columnForName) -> {
-        PatternStopArea patternStopArea = new PatternStopArea();
-        patternStopArea.area_id = getStringIfPresent(result, "area_id", columnForName);
-        patternStopArea.pattern_id = getStringIfPresent(result, "pattern_id", columnForName);
-        patternStopArea.drop_off_type = getIntIfPresent(result, "drop_off_type", columnForName);
-        patternStopArea.pickup_type = getIntIfPresent(result, "pickup_type", columnForName);
-        patternStopArea.stop_sequence = getIntIfPresent(result, "stop_sequence", columnForName);
-        patternStopArea.timepoint = getIntIfPresent(result, "timepoint", columnForName);
-        patternStopArea.continuous_pickup = getIntIfPresent(result, "continuous_pickup", columnForName);
-        patternStopArea.continuous_drop_off = getIntIfPresent(result, "continuous_drop_off", columnForName);
-
-        patternStopArea.pickup_booking_rule_id = getStringIfPresent(result, "pickup_booking_rule_id", columnForName);
-        patternStopArea.drop_off_booking_rule_id = getStringIfPresent(result, "drop_off_booking_rule_id", columnForName);
-        patternStopArea.flex_default_travel_time = getIntIfPresent(result, "flex_default_travel_time", columnForName);
-        patternStopArea.flex_default_zone_time = getIntIfPresent(result, "flex_default_zone_time", columnForName);
-        patternStopArea.mean_duration_factor = getDoubleIfPresent(result, "mean_duration_factor", columnForName);
-        patternStopArea.mean_duration_offset = getDoubleIfPresent(result, "mean_duration_offset", columnForName);
-        patternStopArea.safe_duration_factor = getDoubleIfPresent(result, "safe_duration_factor", columnForName);
-        patternStopArea.safe_duration_offset = getDoubleIfPresent(result, "safe_duration_offset", columnForName);
-        return patternStopArea;
     };
 
     EntityPopulator<Pattern> PATTERN = (result, columnForName) -> {
@@ -279,80 +237,78 @@ public interface EntityPopulator<T> {
 
     EntityPopulator<StopTime> STOP_TIME = (result, columnForName) -> {
         StopTime stopTime            = new StopTime();
-        stopTime.trip_id             = getStringIfPresent(result, "trip_id", columnForName);
-        stopTime.arrival_time        = getIntIfPresent   (result, "arrival_time", columnForName);
-        stopTime.departure_time      = getIntIfPresent   (result, "departure_time", columnForName);
-        stopTime.stop_id             = getStringIfPresent(result, "stop_id", columnForName);
-        stopTime.stop_sequence       = getIntIfPresent   (result, "stop_sequence", columnForName);
-        stopTime.stop_headsign       = getStringIfPresent(result, "stop_headsign", columnForName);
-        stopTime.pickup_type         = getIntIfPresent   (result, "pickup_type", columnForName);
-        stopTime.drop_off_type       = getIntIfPresent   (result, "drop_off_type", columnForName);
-        stopTime.continuous_pickup   = getIntIfPresent   (result, "continuous_pickup", columnForName);
-        stopTime.continuous_drop_off = getIntIfPresent   (result, "continuous_drop_off", columnForName);
-        stopTime.timepoint           = getIntIfPresent   (result, "timepoint", columnForName);
-        stopTime.shape_dist_traveled = getDoubleIfPresent(result, "shape_dist_traveled", columnForName);
-        stopTime.pickup_booking_rule_id = getStringIfPresent(result, "pickup_booking_rule_id", columnForName);
-        stopTime.drop_off_booking_rule_id = getStringIfPresent(result, "drop_off_booking_rule_id", columnForName);
-        stopTime.start_pickup_drop_off_window = getIntIfPresent(result, "start_pickup_drop_off_window", columnForName);
-        stopTime.end_pickup_drop_off_window = getIntIfPresent(result, "end_pickup_drop_off_window", columnForName);
-        stopTime.mean_duration_factor = getDoubleIfPresent(result, "mean_duration_factor", columnForName);
-        stopTime.mean_duration_offset = getDoubleIfPresent(result, "mean_duration_offset", columnForName);
-        stopTime.safe_duration_factor = getDoubleIfPresent(result, "safe_duration_factor", columnForName);
-        stopTime.safe_duration_offset = getDoubleIfPresent(result, "safe_duration_offset", columnForName);
+        stopTime.trip_id             = getStringIfPresent(result, StopTime.TRIP_ID_NAME, columnForName);
+        stopTime.arrival_time        = getIntIfPresent   (result, StopTime.ARRIVAL_TIME_NAME, columnForName);
+        stopTime.departure_time      = getIntIfPresent   (result, StopTime.DEPARTURE_TIME_NAME, columnForName);
+        stopTime.stop_id             = getStringIfPresent(result, StopTime.STOP_ID_NAME, columnForName);
+        stopTime.location_group_id   = getStringIfPresent(result, StopTime.LOCATION_GROUP_ID_NAME, columnForName);
+        stopTime.location_id         = getStringIfPresent(result, StopTime.LOCATION_ID_NAME, columnForName);
+        stopTime.stop_sequence       = getIntIfPresent   (result, StopTime.STOP_SEQUENCE_NAME, columnForName);
+        stopTime.stop_headsign       = getStringIfPresent(result, StopTime.STOP_HEADSIGN_NAME, columnForName);
+        stopTime.pickup_type         = getIntIfPresent   (result, StopTime.PICKUP_TYPE_NAME, columnForName);
+        stopTime.drop_off_type       = getIntIfPresent   (result, StopTime.DROP_OFF_TYPE_NAME, columnForName);
+        stopTime.continuous_pickup   = getIntIfPresent   (result, StopTime.CONTINUOUS_PICK_UP_NAME, columnForName);
+        stopTime.continuous_drop_off = getIntIfPresent   (result, StopTime.CONTINUOUS_DROP_OFF_NAME, columnForName);
+        stopTime.timepoint           = getIntIfPresent   (result, StopTime.TIMEPOINT_NAME, columnForName);
+        stopTime.shape_dist_traveled = getDoubleIfPresent(result, StopTime.SHAPE_DIST_TRAVELED_NAME, columnForName);
+        stopTime.pickup_booking_rule_id = getStringIfPresent(result, StopTime.PICKUP_BOOKING_RULE_ID_NAME, columnForName);
+        stopTime.drop_off_booking_rule_id = getStringIfPresent(result, StopTime.DROP_OFF_BOOKING_RULE_ID_NAME, columnForName);
+        stopTime.start_pickup_drop_off_window = getIntIfPresent(result, StopTime.START_PICKUP_DROP_OFF_WINDOW_NAME, columnForName);
+        stopTime.end_pickup_drop_off_window = getIntIfPresent(result, StopTime.END_PICKUP_DROP_OFF_WINDOW_NAME, columnForName);
         return stopTime;
     };
 
     EntityPopulator<BookingRule> BOOKING_RULE = (result, columnForName) -> {
         BookingRule bookingRule = new BookingRule();
-        bookingRule.booking_rule_id = getStringIfPresent(result, "bookingRule", columnForName);
-        bookingRule.booking_type = getIntIfPresent(result, "booking_type", columnForName);
-        bookingRule.prior_notice_duration_min = getIntIfPresent(result, "prior_notice_duration_min", columnForName);
-        bookingRule.prior_notice_duration_max = getIntIfPresent(result, "prior_notice_duration_max", columnForName);
-        bookingRule.prior_notice_last_day = getIntIfPresent(result, "prior_notice_last_day", columnForName);
-        bookingRule.prior_notice_last_time = getStringIfPresent(result, "prior_notice_last_time", columnForName);
-        bookingRule.prior_notice_start_day = getIntIfPresent(result, "prior_notice_start_day", columnForName);
-        bookingRule.prior_notice_start_time = getStringIfPresent(result, "prior_notice_start_time", columnForName);
-        bookingRule.prior_notice_service_id = getStringIfPresent(result, "prior_notice_service_id", columnForName);
-        bookingRule.message = getStringIfPresent(result, "message", columnForName);
-        bookingRule.pickup_message = getStringIfPresent(result, "pickup_message", columnForName);
-        bookingRule.drop_off_message = getStringIfPresent(result, "drop_off_message", columnForName);
-        bookingRule.phone_number = getStringIfPresent(result, "phone_number", columnForName);
-        bookingRule.info_url = getUrlIfPresent(result, "info_url", columnForName);
-        bookingRule.booking_url = getUrlIfPresent(result, "booking_url", columnForName);
+        bookingRule.booking_rule_id = getStringIfPresent(result, BookingRule.BOOKING_RULE_ID_NAME, columnForName);
+        bookingRule.booking_type = getIntIfPresent(result, BookingRule.BOOKING_TYPE_NAME, columnForName);
+        bookingRule.prior_notice_duration_min = getIntIfPresent(result, BookingRule.PRIOR_NOTICE_DURATION_MIN_NAME, columnForName);
+        bookingRule.prior_notice_duration_max = getIntIfPresent(result, BookingRule.PRIOR_NOTICE_DURATION_MAX_NAME, columnForName);
+        bookingRule.prior_notice_last_day = getIntIfPresent(result, BookingRule.PRIOR_NOTICE_LAST_DAY_NAME, columnForName);
+        bookingRule.prior_notice_last_time = getStringIfPresent(result, BookingRule.PRIOR_NOTICE_LAST_TIME_NAME, columnForName);
+        bookingRule.prior_notice_start_day = getIntIfPresent(result, BookingRule.PRIOR_NOTICE_START_DAY_NAME, columnForName);
+        bookingRule.prior_notice_start_time = getStringIfPresent(result, BookingRule.PRIOR_NOTICE_START_TIME_NAME, columnForName);
+        bookingRule.prior_notice_service_id = getStringIfPresent(result, BookingRule.PRIOR_NOTICE_SERVICE_ID_NAME, columnForName);
+        bookingRule.message = getStringIfPresent(result, BookingRule.MESSAGE_NAME, columnForName);
+        bookingRule.pickup_message = getStringIfPresent(result, BookingRule.PICKUP_MESSAGE_NAME, columnForName);
+        bookingRule.drop_off_message = getStringIfPresent(result, BookingRule.DROP_OFF_MESSAGE_NAME, columnForName);
+        bookingRule.phone_number = getStringIfPresent(result, BookingRule.PHONE_NUMBER_NAME, columnForName);
+        bookingRule.info_url = getUrlIfPresent(result, BookingRule.INFO_URL_NAME, columnForName);
+        bookingRule.booking_url = getUrlIfPresent(result, BookingRule.BOOKING_URL_NAME, columnForName);
         return bookingRule;
     };
 
     EntityPopulator<Location> LOCATION = (result, columnForName) -> {
         Location location = new Location();
-        location.location_id = getStringIfPresent(result, "location_id", columnForName);
-        location.stop_name = getStringIfPresent(result, "stop_name", columnForName);
-        location.stop_desc = getStringIfPresent(result, "stop_desc", columnForName);
-        location.zone_id = getStringIfPresent(result, "zone_id", columnForName);
-        location.stop_url = getUrlIfPresent(result, "stop_url", columnForName);
-        location.geometry_type = getStringIfPresent(result, "geometry_type", columnForName);
+        location.location_id = getStringIfPresent(result, Location.LOCATION_ID_NAME, columnForName);
+        location.stop_name = getStringIfPresent(result, Location.STOP_NAME_NAME, columnForName);
+        location.stop_desc = getStringIfPresent(result, Location.STOP_DESC_NAME, columnForName);
+        location.zone_id = getStringIfPresent(result, Location.ZONE_ID_NAME, columnForName);
+        location.stop_url = getUrlIfPresent(result, Location.STOP_URL_NAME, columnForName);
+        location.geometry_type = getStringIfPresent(result, Location.GEOMETRY_TYPE_NAME, columnForName);
         return location;
     };
 
-    EntityPopulator<StopArea> STOP_AREAS = (result, columnForName) -> {
-        StopArea stopArea = new StopArea();
-        stopArea.area_id = getStringIfPresent(result, "area_id", columnForName);
-        stopArea.stop_id = getStringIfPresent(result, "stop_id", columnForName);
-        return stopArea;
+    EntityPopulator<LocationGroupStop> LOCATION_GROUP_STOPS = (result, columnForName) -> {
+        LocationGroupStop locationGroupStop = new LocationGroupStop();
+        locationGroupStop.location_group_id = getStringIfPresent(result, LocationGroupStop.LOCATION_GROUP_ID_NAME, columnForName);
+        locationGroupStop.stop_id = getStringIfPresent(result, LocationGroupStop.STOP_ID_NAME, columnForName);
+        return locationGroupStop;
     };
 
-    EntityPopulator<Area> AREAS = (result, columnForName) -> {
-        Area area = new Area();
-        area.area_id = getStringIfPresent(result, "area_id", columnForName);
-        area.area_name = getStringIfPresent(result, "area_name", columnForName);
-        return area;
+    EntityPopulator<LocationGroup> LOCATION_GROUPS = (result, columnForName) -> {
+        LocationGroup locationGroup = new LocationGroup();
+        locationGroup.location_group_id = getStringIfPresent(result, LocationGroup.LOCATION_GROUP_ID_NAME, columnForName);
+        locationGroup.location_group_name = getStringIfPresent(result, LocationGroup.LOCATION_GROUP_NAME_NAME, columnForName);
+        return locationGroup;
     };
 
     EntityPopulator<LocationShape> LOCATION_SHAPES = (result, columnForName) -> {
         LocationShape locationShape = new LocationShape();
-        locationShape.location_id = getStringIfPresent(result, "location_id", columnForName);
-        locationShape.geometry_id = getStringIfPresent(result, "geometry_id", columnForName);
-        locationShape.geometry_pt_lat = getDoubleIfPresent(result, "geometry_pt_lat", columnForName);
-        locationShape.geometry_pt_lon = getDoubleIfPresent(result, "geometry_pt_lon", columnForName);
+        locationShape.location_id = getStringIfPresent(result, LocationShape.LOCATION_ID_NAME, columnForName);
+        locationShape.geometry_id = getStringIfPresent(result, LocationShape.GEOMETRY_ID_NAME, columnForName);
+        locationShape.geometry_pt_lat = getDoubleIfPresent(result, LocationShape.GEOMETRY_PT_LAT_NAME, columnForName);
+        locationShape.geometry_pt_lon = getDoubleIfPresent(result, LocationShape.GEOMETRY_PT_LON_NAME, columnForName);
         return locationShape;
     };
 

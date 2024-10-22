@@ -336,7 +336,7 @@ public class GeoJsonUtil {
             switch (location.geometry_type) {
                 // location geometry type (polyline) rather than spec LINESTRING
                 case GEOMETRY_TYPE_POLYLINE:
-                    LineString ls = buildLineString(getLineStings(location.location_id, locationShapes));
+                    LineString ls = buildLineString(getLineStrings(location.location_id, locationShapes));
                     LineString lineString = new LineString();
                     lineString.setPoints(ls.getPoints());
                     Feature lineStringFeature = new Feature();
@@ -347,7 +347,7 @@ public class GeoJsonUtil {
                 case GEOMETRY_TYPE_POLYGON:
                     // We are only supporting a polygon with a single line string so this ok for now. If multiple line
                     // strings are to be supported this will need to change.
-                    Polygon polygon = buildPolygon(getLineStings(location.location_id, locationShapes));
+                    Polygon polygon = buildPolygon(getLineStrings(location.location_id, locationShapes));
                     Feature polygonFeature = new Feature();
                     polygonFeature.setGeometry(new mil.nga.sf.geojson.Polygon(polygon));
                     setFeatureProps(location, polygonFeature);
@@ -411,15 +411,14 @@ public class GeoJsonUtil {
     /**
      * From the provided list of {@link LocationShape}s extract all line string entries and group by line string id.
      */
-    private static List<LocationShape> getLineStings(
-        String locationId,
-        List<LocationShape> locationShapes
-    ) {
+    private static List<LocationShape> getLineStrings(String locationId, List<LocationShape> locationShapes) {
         return locationShapes
             .stream()
-            .filter(
-                item -> item.location_id.equals(locationId)
-            )
+            .filter(item -> item.location_id.equals(locationId))
             .collect(toList());
+    }
+
+    public static String createCSVRow(String... columnData) {
+        return String.join(",", columnData) + System.lineSeparator();
     }
 }

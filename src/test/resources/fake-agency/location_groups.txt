@@ -1,0 +1,2 @@
+location_group_id,location_group_name
+area1,"This is the location group name"
