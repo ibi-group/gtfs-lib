@@ -3,12 +3,12 @@ package com.conveyal.gtfs.error;
 import java.io.Serializable;
 
 /** Represents a problem parsing location GeoJSON from a GTFS feed. */
-public class GeoJsonParseError extends GTFSError implements Serializable {
+public class LocationParseError extends GTFSError implements Serializable {
     public static final long serialVersionUID = 1L;
 
     public final String message;
 
-    public GeoJsonParseError(String file, String message) {
+    public LocationParseError(String file, String message) {
         super(file, 0, null);
         this.message = message;
     }

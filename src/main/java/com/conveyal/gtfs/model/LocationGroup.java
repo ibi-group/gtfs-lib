@@ -2,25 +2,45 @@ package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.graphql.fetchers.MapFetcher;
+import com.conveyal.gtfs.util.GeoJsonUtil;
+import com.csvreader.CsvReader;
 import graphql.schema.GraphQLObjectType;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
+import static com.conveyal.gtfs.util.CsvReaderUtil.hasExpectedNumberOfColumns;
 import static graphql.Scalars.GraphQLInt;
 import static graphql.schema.GraphQLObjectType.newObject;
 
 public class LocationGroup extends Entity {
 
     private static final long serialVersionUID = -7958476364523575940L;
+
     public String location_group_id;
     public String location_group_name;
 
     public static final String TABLE_NAME = "location_groups";
     public static final String LOCATION_GROUP_ID_NAME = "location_group_id";
     public static final String LOCATION_GROUP_NAME_NAME = "location_group_name";
+
+    public static final int NUMBER_OF_HEADERS = 2;
+    private static final int NUMBER_OF_COLUMNS = 2;
+    private static final String CSV_HEADER = String.format("%s,%s%s", LOCATION_GROUP_ID_NAME, LOCATION_GROUP_NAME_NAME, System.lineSeparator());
+
+    public LocationGroup() {
+    }
+
+    public LocationGroup(String locationGroupId, String locationGroupName) {
+        this.location_group_id = locationGroupId;
+        this.location_group_name = locationGroupName;
+    }
 
     @Override
     public String getId () {
@@ -84,6 +104,43 @@ public class LocationGroup extends Entity {
         public Iterator<LocationGroup> iterator() {
             return this.feed.locationGroup.values().iterator();
         }
+    }
+
+    /**
+     * Extract all data from the original CSV, order by location group id and create a new {@link CsvReader} with the
+     * data in the required order.
+     */
+    public static CsvReader getOrderedData(CsvReader csvReader, List<String> errors) {
+        int locationGroupIdIndex = 0;
+        int locationGroupNameIndex = 1;
+        SortedMap<String, String> locationGroups = new TreeMap<>();
+        try {
+            while (csvReader.readRecord()) {
+                if (!hasExpectedNumberOfColumns(csvReader, errors, NUMBER_OF_COLUMNS)) {
+                    continue;
+                }
+                LocationGroup locationGroup = new LocationGroup(
+                    csvReader.get(locationGroupIdIndex),
+                    csvReader.get(locationGroupNameIndex)
+                );
+                locationGroups.put(locationGroup.location_group_id, locationGroup.location_group_name);
+            }
+            return (locationGroups.isEmpty())
+                ? csvReader
+                : produceCsvPayload(locationGroups);
+        } catch (IOException e) {
+            return csvReader;
+        }
+    }
+
+    /**
+     * Convert the multiple location group stops back into CSV, with header and return a {@link CsvReader} representation.
+     */
+    private static CsvReader produceCsvPayload(SortedMap<String, String> locationGroups) {
+        StringBuilder csvContent = new StringBuilder();
+        csvContent.append(CSV_HEADER);
+        locationGroups.forEach((key, value) -> csvContent.append(GeoJsonUtil.createCSVRow(key, value)));
+        return new CsvReader(new StringReader(csvContent.toString()));
     }
 
     public static final GraphQLObjectType locationGroupType = newObject().name(TABLE_NAME)

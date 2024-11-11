@@ -4,6 +4,7 @@ import com.conveyal.gtfs.error.NewGTFSError;
 import com.conveyal.gtfs.error.NewGTFSErrorType;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.storage.StorageException;
+import com.conveyal.gtfs.util.CsvReaderUtil;
 import com.csvreader.CsvReader;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
@@ -228,7 +229,7 @@ public class JdbcGtfsLoader {
         // FIXME is this extra CSV reader used anymore? Check comment below.
         // First, inspect feed_info.txt to extract the ID and version.
         // We could get this with SQL after loading, but feed_info, feed_id and feed_version are all optional.
-        CsvReader csvReader = Table.FEED_INFO.getCsvReader(zip, errorStorage);
+        CsvReader csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(Table.FEED_INFO, zip, errorStorage);
         String feedId = "", feedVersion = "";
         if (csvReader != null) {
             // feed_info.txt has been found and opened.
@@ -327,7 +328,7 @@ public class JdbcGtfsLoader {
      * @return number of rows that were loaded.
      */
     private int loadInternal(Table table) throws Exception {
-        CsvReader csvReader = table.getCsvReader(zip, errorStorage);
+        CsvReader csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(table, zip, errorStorage);
         if (csvReader == null) {
             LOG.info("File {} not found in gtfs zip file.", Table.getTableFileNameWithExtension(table.name));
             // This GTFS table could not be opened in the zip, even in a subdirectory.
@@ -349,6 +350,7 @@ public class JdbcGtfsLoader {
         if (cleanFields.length == 0) {
             // Do not create the table if there are no valid fields.
             errorStorage.storeError(NewGTFSError.forTable(table, TABLE_MISSING_COLUMN_HEADERS));
+            csvReader.close();
             return 0;
         }
         // Replace the GTFS spec Table with one representing the SQL table we will populate, with reordered columns.
