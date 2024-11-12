@@ -28,6 +28,7 @@ public enum NewGTFSErrorType {
     FREQUENCY_PERIOD_OVERLAP(Priority.MEDIUM, "A frequency for a trip overlaps with another frequency defined for the same trip."),
     ILLEGAL_FIELD_VALUE(Priority.MEDIUM, "Fields may not contain tabs, carriage returns or new lines."),
     INTEGER_FORMAT(Priority.MEDIUM, "Incorrect integer format."),
+    INVALID_ARRIVAL_TIME(Priority.MEDIUM, "Arrival time at current stop is equal to the previous stop, which is impossible."),
     LANGUAGE_FORMAT(Priority.LOW, "Language should be specified with a valid BCP47 tag."),
     MISSING_ARRIVAL_OR_DEPARTURE(Priority.MEDIUM, "First and last stop times are required to have both an arrival and departure time."),
     MISSING_COLUMN(Priority.MEDIUM, "A required column was missing from a table."),
