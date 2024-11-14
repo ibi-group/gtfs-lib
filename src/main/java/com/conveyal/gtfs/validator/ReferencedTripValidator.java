@@ -1,7 +1,10 @@
 package com.conveyal.gtfs.validator;
 
+import com.conveyal.gtfs.error.NewGTFSError;
+import com.conveyal.gtfs.error.NewGTFSErrorType;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.loader.Feed;
+import com.conveyal.gtfs.loader.Table;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.Route;
@@ -92,7 +95,16 @@ public class ReferencedTripValidator extends TripValidator {
         List<Location> locations = Lists.newArrayList(feed.locations);
         feed.stopTimes.forEach(stopTime -> {
             if (stopTime.location_id != null && !referencedLocations.contains(stopTime.location_id)) {
-                registerError(getLocationById(locations, stopTime.location_id), LOCATION_UNUSED, stopTime.location_id);
+                Location location = getLocationById(locations, stopTime.location_id);
+                if (location != null) {
+                    registerError(location, LOCATION_UNUSED, stopTime.location_id);
+                } else {
+                    registerError(
+                        NewGTFSError
+                            .forTable(Table.STOP_TIMES, NewGTFSErrorType.REFERENTIAL_INTEGRITY)
+                            .setBadValue(stopTime.location_id)
+                    );
+                }
             }
         });
 

@@ -1,7 +1,6 @@
 package com.conveyal.gtfs.loader;
 
 import com.conveyal.gtfs.error.NewGTFSError;
-import com.conveyal.gtfs.error.NewGTFSErrorType;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.loader.conditions.AgencyHasMultipleRowsCheck;
 import com.conveyal.gtfs.loader.conditions.ConditionalRequirement;
@@ -35,17 +34,10 @@ import com.conveyal.gtfs.model.Transfer;
 import com.conveyal.gtfs.model.Translation;
 import com.conveyal.gtfs.model.Trip;
 import com.conveyal.gtfs.storage.StorageException;
-import com.conveyal.gtfs.util.GeoJsonUtil;
-import com.csvreader.CsvReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -55,20 +47,14 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.DUPLICATE_HEADER;
-import static com.conveyal.gtfs.error.NewGTFSErrorType.GEO_JSON_PARSING;
-import static com.conveyal.gtfs.error.NewGTFSErrorType.STOP_AREA_PARSING;
-import static com.conveyal.gtfs.error.NewGTFSErrorType.TABLE_IN_SUBDIRECTORY;
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.sanitize;
 import static com.conveyal.gtfs.loader.Requirement.EDITOR;
 import static com.conveyal.gtfs.loader.Requirement.EXTENSION;
@@ -76,6 +62,7 @@ import static com.conveyal.gtfs.loader.Requirement.FLEX_OPTIONAL;
 import static com.conveyal.gtfs.loader.Requirement.OPTIONAL;
 import static com.conveyal.gtfs.loader.Requirement.REQUIRED;
 import static com.conveyal.gtfs.loader.Requirement.UNKNOWN;
+import static com.conveyal.gtfs.model.LocationGroup.TABLE_NAME;
 
 
 /**
@@ -92,7 +79,8 @@ public class Table {
     private static final Logger LOG = LoggerFactory.getLogger(Table.class);
 
     public static final String LOCATION_GEO_JSON_FILE_NAME = "locations.geojson";
-    public static final String LOCATION_GROUP_STOPS_FILE_NAME = "location_group_stops.txt";
+    public static final String LOCATION_GROUP_FILE_NAME = LocationGroup.TABLE_NAME + ".txt";
+    public static final String LOCATION_GROUP_STOPS_FILE_NAME = LocationGroupStop.TABLE_NAME + ".txt";
 
     public final String name;
 
@@ -337,7 +325,7 @@ public class Table {
     .addPrimaryKeyNames(Location.LOCATION_ID_NAME);
 
     // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#location_groupstxt
-    public static final Table LOCATION_GROUP = new Table(LocationGroup.TABLE_NAME, LocationGroup.class, OPTIONAL,
+    public static final Table LOCATION_GROUP = new Table(TABLE_NAME, LocationGroup.class, OPTIONAL,
         new StringField(LocationGroup.LOCATION_GROUP_ID_NAME, REQUIRED),
         new StringField(LocationGroup.LOCATION_GROUP_NAME_NAME, OPTIONAL)
     )
@@ -831,80 +819,6 @@ public class Table {
         return (tableName.equals("patterns"))
             ? String.format("%s%s%s", PROPRIETARY_FILE_PREFIX, tableName, fileExtension)
             : String.format("%s%s", tableName, fileExtension);
-    }
-
-    /**
-     * In GTFS feeds, all files are supposed to be in the root of the zip file, but feed producers often put them
-     * in a subdirectory. This function will search subdirectories if the entry is not found in the root.
-     * It records an error if the entry is in a subdirectory (as long as errorStorage is not null).
-     * It then creates a CSV reader for that table if it's found.
-     */
-    public CsvReader getCsvReader(ZipFile zipFile, SQLErrorStorage sqlErrorStorage) {
-        final String tableFileName = getTableFileNameWithExtension(this.name);
-        ZipEntry entry = zipFile.getEntry(tableFileName);
-        if (entry == null) {
-            // Table was not found, check if it is in a subdirectory.
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry e = entries.nextElement();
-                // Include the file separator prefix to force the complete file name to be considered.
-                // This prevents stop_areas.txt from being loaded instead of areas.txt.
-                if (e.getName().endsWith(String.format("%s%s", File.separator, tableFileName))) {
-                    entry = e;
-                    if (sqlErrorStorage != null) sqlErrorStorage.storeError(NewGTFSError.forTable(this, TABLE_IN_SUBDIRECTORY));
-                    break;
-                }
-            }
-        }
-        if (entry == null) return null;
-        try {
-            List<String> errors = new ArrayList<>();
-            CsvReader csvReader = getCsvReader(tableFileName, name, zipFile, entry, errors);
-            if (!errors.isEmpty() && sqlErrorStorage != null) {
-                // Errors will only be populated if parsing locations.geojson or stop_areas.txt.
-                NewGTFSErrorType errorType = (tableFileName.equals(LOCATION_GEO_JSON_FILE_NAME))
-                    ? GEO_JSON_PARSING
-                    : STOP_AREA_PARSING;
-                errors.forEach(error ->
-                    sqlErrorStorage.storeError(NewGTFSError.forFeed(errorType, error))
-                );
-            }
-            // Don't skip empty records. This is set to true by default on CsvReader. We want to check for empty records
-            // during table load, so that they are logged as validation issues (WRONG_NUMBER_OF_FIELDS).
-            csvReader.setSkipEmptyRecords(false);
-            csvReader.readHeaders();
-            return csvReader;
-        } catch (IOException e) {
-            LOG.error("Exception while opening zip entry: {}", entry, e);
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    /**
-     * Create a CSV reader depending on the table to be loaded. If the table is "locations.geojson" unpack the GeoJSON
-     * data first and load into a CSV reader, else, read the table contents directly into the CSV reader.
-     */
-    public static CsvReader getCsvReader(
-        String tableFileName,
-        String name,
-        ZipFile zipFile,
-        ZipEntry entry,
-        List<String> errors
-    ) throws IOException {
-        CsvReader csvReader;
-        if (tableFileName.equals(LOCATION_GEO_JSON_FILE_NAME)) {
-            csvReader = GeoJsonUtil.getCsvReaderFromGeoJson(name, zipFile, entry, errors);
-        } else if (tableFileName.equals(LOCATION_GROUP_STOPS_FILE_NAME)) {
-            csvReader = LocationGroupStop.getCsvReader(zipFile, entry, errors);
-        } else {
-            InputStream zipInputStream = zipFile.getInputStream(entry);
-            // Skip any byte order mark that may be present. Files must be UTF-8,
-            // but the GTFS spec says that "files that include the UTF byte order mark are acceptable".
-            InputStream bomInputStream = new BOMInputStream(zipInputStream);
-            csvReader = new CsvReader(bomInputStream, ',', StandardCharsets.UTF_8);
-        }
-        return csvReader;
     }
 
     /**

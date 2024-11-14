@@ -3,35 +3,30 @@ package com.conveyal.gtfs.model;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
-import org.apache.commons.io.input.BOMInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import static com.conveyal.gtfs.util.CsvReaderUtil.hasExpectedNumberOfColumns;
 
 public class LocationGroupStop extends Entity {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LocationGroupStop.class);
     private static final long serialVersionUID = 469687473399554677L;
-    private static final int NUMBER_OF_HEADERS = 2;
+    public static final int NUMBER_OF_HEADERS = 2;
     private static final int NUMBER_OF_COLUMNS = 2;
     private static final String CSV_HEADER = "location_group_id,stop_id" + System.lineSeparator();
 
     public String location_group_id;
     /**
      * A comma separated list of ids referencing stops.stop_id or id from locations.geojson. These are grouped by
-     * {@link LocationGroupStop#getCsvReader(ZipFile, ZipEntry, List)}.
+     * {@link LocationGroupStop#getParsedData(CsvReader, List)}.
      */
     public String stop_id;
 
@@ -43,8 +38,8 @@ public class LocationGroupStop extends Entity {
     public LocationGroupStop() {
     }
 
-    public LocationGroupStop(String areaId, String stopId) {
-        this.location_group_id = areaId;
+    public LocationGroupStop(String locationGroupId, String stopId) {
+        this.location_group_id = locationGroupId;
         this.stop_id = stopId;
     }
 
@@ -136,70 +131,46 @@ public class LocationGroupStop extends Entity {
      * <p>
      * location_group_1,"stop_id_1,stop_id_2"
      * </p>
-     * If any issues are encountered or there are no location group stops, return the default CSV reader. This is to
-     * prevent downstream processing from failing where a CSV reader is expected.
+     * If any issues are encountered or there are no location group stops, return the default {@link CsvReader}. This is
+     * to prevent downstream processing from failing where a {@link CsvReader} is expected.
      */
-    public static CsvReader getCsvReader(ZipFile zipFile, ZipEntry entry, List<String> errors) {
-        CsvReader csvReader = new CsvReader(new StringReader(""));
-        int stopAreaIdIndex = 0;
+    public static CsvReader getParsedData(CsvReader csvReader, List<String> errors) {
+        int locationGroupIdIndex = 0;
         int stopIdIndex = 1;
-        HashMap<String, LocationGroupStop> multiStopAreas = new HashMap<>();
+        SortedMap<String, LocationGroupStop> multiLocationGroupStops = new TreeMap<>();
+
         try {
-            InputStream zipInputStream = zipFile.getInputStream(entry);
-            csvReader = new CsvReader(new BOMInputStream(zipInputStream), ',', StandardCharsets.UTF_8);
-            csvReader.setSkipEmptyRecords(false);
-            csvReader.readHeaders();
-            String[] headers = csvReader.getHeaders();
-            if (headers.length != NUMBER_OF_HEADERS) {
-                String message = String.format(
-                    "Wrong number of headers, expected=%d; found=%d in %s.",
-                    NUMBER_OF_HEADERS,
-                    headers.length,
-                    entry.getName()
-                );
-                LOG.warn(message);
-                if (errors != null) errors.add(message);
-                return csvReader;
-            }
             while (csvReader.readRecord()) {
-                int lineNumber = ((int) csvReader.getCurrentRecord()) + 2;
-                if (csvReader.getColumnCount() != NUMBER_OF_COLUMNS) {
-                    String message = String.format("Wrong number of columns for line number=%d; expected=%d; found=%d.",
-                        lineNumber,
-                        NUMBER_OF_COLUMNS,
-                        csvReader.getColumnCount()
-                    );
-                    LOG.warn(message);
-                    if (errors != null) errors.add(message);
+                if (!hasExpectedNumberOfColumns(csvReader, errors, NUMBER_OF_COLUMNS)) {
                     continue;
                 }
                 LocationGroupStop locationGroupStop = new LocationGroupStop(
-                    csvReader.get(stopAreaIdIndex),
+                    csvReader.get(locationGroupIdIndex),
                     csvReader.get(stopIdIndex)
                 );
-                if (multiStopAreas.containsKey(locationGroupStop.location_group_id)) {
+                if (multiLocationGroupStops.containsKey(locationGroupStop.location_group_id)) {
                     // Combine stop areas with matching stop areas ids.
-                    LocationGroupStop multiLocationGroupStop = multiStopAreas.get(locationGroupStop.location_group_id);
+                    LocationGroupStop multiLocationGroupStop = multiLocationGroupStops.get(locationGroupStop.location_group_id);
                     multiLocationGroupStop.stop_id += "," + locationGroupStop.stop_id;
                 } else {
-                    multiStopAreas.put(locationGroupStop.location_group_id, locationGroupStop);
+                    multiLocationGroupStops.put(locationGroupStop.location_group_id, locationGroupStop);
                 }
             }
+            return (multiLocationGroupStops.isEmpty())
+                ? csvReader
+                : produceCsvPayload(multiLocationGroupStops);
         } catch (IOException e) {
             return csvReader;
         }
-        return (multiStopAreas.isEmpty())
-            ? csvReader
-            : produceCsvPayload(multiStopAreas);
     }
 
     /**
      * Convert the multiple location group stops back into CSV, with header and return a {@link CsvReader} representation.
      */
-    private static CsvReader produceCsvPayload(HashMap<String, LocationGroupStop> multiStopAreaIds) {
+    private static CsvReader produceCsvPayload(SortedMap<String, LocationGroupStop> multiLocationGroupStops) {
         StringBuilder csvContent = new StringBuilder();
         csvContent.append(CSV_HEADER);
-        multiStopAreaIds.forEach((key, value) -> csvContent.append(value.toCsvRow()));
+        multiLocationGroupStops.forEach((key, value) -> csvContent.append(value.toCsvRow()));
         return new CsvReader(new StringReader(csvContent.toString()));
     }
 

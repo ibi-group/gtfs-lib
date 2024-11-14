@@ -5,7 +5,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.error.DateParseError;
 import com.conveyal.gtfs.error.EmptyFieldError;
 import com.conveyal.gtfs.error.EmptyTableError;
-import com.conveyal.gtfs.error.GeoJsonParseError;
+import com.conveyal.gtfs.error.LocationParseError;
 import com.conveyal.gtfs.error.MissingColumnError;
 import com.conveyal.gtfs.error.MissingTableError;
 import com.conveyal.gtfs.error.NumberParseError;
@@ -16,6 +16,7 @@ import com.conveyal.gtfs.error.TimeParseError;
 import com.conveyal.gtfs.error.URLParseError;
 import com.conveyal.gtfs.loader.DateField;
 import com.conveyal.gtfs.loader.Table;
+import com.conveyal.gtfs.util.CsvReaderUtil;
 import com.conveyal.gtfs.util.Deduplicator;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
@@ -279,7 +280,7 @@ public abstract class Entity implements Serializable {
         protected abstract void loadOneRow() throws IOException;
 
         /**
-         * The main entry point into an Entity.Loader. Interprets each row of a CSV file within a zip file as a sinle
+         * The main entry point into an Entity.Loader. Interprets each row of a CSV file within a zip file as a single
          * GTFS entity, and loads them into a table.
          *
          * @param zip the zip file from which to read a table
@@ -311,10 +312,11 @@ public abstract class Entity implements Serializable {
                 if (entry == null) return;
             }
             LOG.info("Loading GTFS table {} from {}", tableName, entry);
-            List<String> geoJsonErrors = new ArrayList<>();
-            this.reader = Table.getCsvReader(tableFileName, tableName, zip, entry, geoJsonErrors);
-            if (!geoJsonErrors.isEmpty()) {
-                geoJsonErrors.forEach(error -> feed.errors.add(new GeoJsonParseError(tableName, error)));
+            List<String> errors = new ArrayList<>();
+            this.reader = CsvReaderUtil.getCsvReaderAccordingToFileName(tableFileName, tableName, zip, entry, errors);
+            if (!errors.isEmpty()) {
+                // Error processing locations, location groups or location group stops.
+                errors.forEach(error -> feed.errors.add(new LocationParseError(tableName, error)));
             }
             boolean hasHeaders = reader.readHeaders();
             if (!hasHeaders) {
