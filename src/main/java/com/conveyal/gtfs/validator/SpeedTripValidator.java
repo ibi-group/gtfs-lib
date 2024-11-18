@@ -50,7 +50,7 @@ public class SpeedTripValidator extends TripValidator {
             StopTime currStopTime = stopTimes.get(i);
             // Additional check: Ensure arrival_time is not the same for consecutive stops
             if (currStopTime.arrival_time == prevStopTime.arrival_time) {
-                registerError(currStopTime, NewGTFSErrorType.INVALID_ARRIVAL_TIME);
+                registerError(currStopTime, NewGTFSErrorType.REPEATED_ARRIVAL_TIME);
             }
             if (currStopTime.pickup_type == 1 && currStopTime.drop_off_type == 1 && currStopTime.timepoint == 0) {
                 // stop_time allows neither pickup nor drop off and is not a timepoint, so it serves no purpose.

@@ -112,7 +112,9 @@ public class SpeedTripValidatorTest {
     }
 
     @Test
-    public void tripHasDuplicateArrivalTimesHasError(){checkFeedHasError(INVALID_ARRIVAL_TIME,"7",2);}
+    public void tripHasDuplicateArrivalTimesHasError() {
+        checkFeedHasError(REPEATED_ARRIVAL_TIME,"7",2);
+    }
 
     /**
      * Check that the test feed has exactly one error for the given type, entityId, and entitySequence.
