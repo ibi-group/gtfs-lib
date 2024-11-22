@@ -44,6 +44,7 @@ public enum NewGTFSErrorType {
     OVERLAPPING_TRIP(Priority.MEDIUM, "Blocks?"),
     REFERENTIAL_INTEGRITY(Priority.HIGH, "This line references an ID that does not exist in the target table."),
     REQUIRED_TABLE_EMPTY(Priority.MEDIUM, "This table is required by the GTFS specification but is empty."),
+    REPEATED_ARRIVAL_TIME(Priority.MEDIUM, "Arrival time at current stop is equal to the previous stop."),
     ROUTE_DESCRIPTION_SAME_AS_NAME(Priority.LOW, "The description of a route is identical to its name, so does not add any information."),
     ROUTE_LONG_NAME_CONTAINS_SHORT_NAME(Priority.LOW, "The long name of a route should complement the short name, not include it."),
     ROUTE_SHORT_AND_LONG_NAME_MISSING(Priority.MEDIUM, "A route has neither a long nor a short name."),
