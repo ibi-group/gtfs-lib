@@ -48,6 +48,11 @@ public class SpeedTripValidator extends TripValidator {
         double distanceMeters = 0;
         for (int i = beginIndex + 1; i < stopTimes.size(); i++) {
             StopTime currStopTime = stopTimes.get(i);
+            // Additional check: Ensure arrival_time is not the same for consecutive stops
+            if (currStopTime.arrival_time == prevStopTime.arrival_time) {
+                registerError(currStopTime, NewGTFSErrorType.REPEATED_ARRIVAL_TIME);
+            }
+
             if (currStopTime.pickup_type == 1 && currStopTime.drop_off_type == 1 && currStopTime.timepoint == 0) {
                 // stop_time allows neither pickup or drop off and is not a timepoint, so it serves no purpose.
                 registerError(currStopTime, NewGTFSErrorType.STOP_TIME_UNUSED);
