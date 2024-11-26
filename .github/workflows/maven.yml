@@ -1,5 +1,5 @@
 name: Java CI
-
+# This comment is a Dummy update to force a new jitpack version
 on: [push, pull_request]
 
 jobs:
