@@ -20,7 +20,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
-import java.util.Set;
 
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.copyFromFile;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
@@ -40,7 +39,7 @@ public class PatternBuilder {
         connection = feed.getConnection();
     }
 
-    public void create(Map<TripPatternKey, Pattern> patterns, Set<String> patternIdsLoadedFromFile) {
+    public void create(Map<TripPatternKey, Pattern> patterns, boolean usePatternsFromFeed) {
         String patternsTableName = feed.getTableNameWithSchemaPrefix("patterns");
         String tripsTableName = feed.getTableNameWithSchemaPrefix("trips");
         String patternStopsTableName = feed.getTableNameWithSchemaPrefix("pattern_stops");
@@ -53,13 +52,14 @@ public class PatternBuilder {
             LOG.info("Creating pattern and pattern stops tables.");
             Statement statement = connection.createStatement();
             statement.execute(String.format("alter table %s add column pattern_id varchar", tripsTableName));
-            if (patternIdsLoadedFromFile.isEmpty()) {
-                // No patterns were loaded from file so the pattern table has not previously been created.
+            if (!usePatternsFromFeed) {
+                // If no patterns were loaded from file, create the pattern table. Conversely, if the patterns loaded
+                // from file have been superseded by generated patterns, recreate the table to start afresh.
                 patternsTable.createSqlTable(connection, null, true);
             }
             patternStopsTable.createSqlTable(connection, null, true);
             try (PrintStream patternForTripsFileStream = createTempPatternForTripsTable(tempPatternForTripsTextFile, statement)) {
-                processPatternAndPatternStops(patternsTable, patternStopsTable, patternForTripsFileStream, patterns, patternIdsLoadedFromFile);
+                processPatternAndPatternStops(patternsTable, patternStopsTable, patternForTripsFileStream, patterns, usePatternsFromFeed);
             }
             updateTripPatternIds(tempPatternForTripsTextFile, statement, tripsTableName);
             createIndexes(statement, patternsTableName, patternStopsTableName, tripsTableName);
@@ -80,7 +80,7 @@ public class PatternBuilder {
         Table patternStopsTable,
         PrintStream patternForTripsFileStream,
         Map<TripPatternKey, Pattern> patterns,
-        Set<String> patternIdsLoadedFromFile
+        boolean usePatternsFromFeed
     ) throws SQLException {
         // Generate prepared statements for inserts.
         String insertPatternSql = patternsTable.generateInsertSql(true);
@@ -90,7 +90,7 @@ public class PatternBuilder {
         for (Map.Entry<TripPatternKey, Pattern> entry : patterns.entrySet()) {
             Pattern pattern = entry.getValue();
             LOG.debug("Batching pattern {}", pattern.pattern_id);
-            if (!patternIdsLoadedFromFile.contains(pattern.pattern_id)) {
+            if (!usePatternsFromFeed) {
                 // Only insert the pattern if it has not already been imported from file.
                 pattern.setStatementParameters(insertPatternStatement, true);
                 patternTracker.addBatch();

@@ -4,40 +4,20 @@ import com.conveyal.gtfs.PatternBuilder;
 import com.conveyal.gtfs.PatternFinder;
 import com.conveyal.gtfs.TripPatternKey;
 import com.conveyal.gtfs.error.SQLErrorStorage;
-import com.conveyal.gtfs.loader.BatchTracker;
 import com.conveyal.gtfs.loader.Feed;
-import com.conveyal.gtfs.loader.Requirement;
-import com.conveyal.gtfs.loader.Table;
 import com.conveyal.gtfs.model.Pattern;
-import com.conveyal.gtfs.model.PatternStop;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
-import org.apache.commons.dbutils.DbUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import static com.conveyal.gtfs.loader.JdbcGtfsLoader.copyFromFile;
-import static com.conveyal.gtfs.model.Entity.INT_MISSING;
-import static com.conveyal.gtfs.model.Entity.setDoubleParameter;
-import static com.conveyal.gtfs.model.Entity.setIntParameter;
 
 /**
  * Groups trips together into "patterns" that share the same sequence of stops.
@@ -72,9 +52,9 @@ public class PatternFinderValidator extends TripValidator {
      */
     @Override
     public void complete(ValidationResult validationResult) {
-        Set<String> patternIds = new HashSet<>();
+        List<Pattern> patternsFromFeed = new ArrayList<>();
         for(Pattern pattern :  feed.patterns) {
-            patternIds.add(pattern.pattern_id);
+            patternsFromFeed.add(pattern);
         }
         LOG.info("Finding patterns...");
         Map<String, Stop> stopById = new HashMap<>();
@@ -82,9 +62,8 @@ public class PatternFinderValidator extends TripValidator {
             stopById.put(stop.stop_id, stop);
         }
         // Although patterns may have already been loaded from file, the trip patterns are still required.
-        Map<TripPatternKey, Pattern> patterns = patternFinder.createPatternObjects(stopById, errorStorage);
-        patternBuilder.create(patterns, patternIds);
+        Map<TripPatternKey, Pattern> patterns = patternFinder.createPatternObjects(stopById, patternsFromFeed, errorStorage);
+        patternBuilder.create(patterns, patternFinder.canUsePatternsFromFeed(patternsFromFeed));
     }
-
 }
 
