@@ -12,7 +12,9 @@ import javax.sql.DataSource;
 import static com.conveyal.gtfs.GTFS.load;
 import static com.conveyal.gtfs.GTFS.validate;
 import static com.conveyal.gtfs.TestUtils.assertThatSqlCountQueryYieldsExpectedCount;
-import static com.conveyal.gtfs.error.NewGTFSErrorType.*;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.TRAVEL_TOO_FAST;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.TRAVEL_TOO_SLOW;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.REPEATED_ARRIVAL_TIME;
 
 /**
  * Distances recorded against each unit test have been produced using the lat/lon values from
