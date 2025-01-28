@@ -1,7 +1,7 @@
 query ($namespace: String) {
   feed(namespace: $namespace) {
     feed_version
-    timeFrame {
+    time_frame {
       timeframe_group_id
       start_time
       end_time

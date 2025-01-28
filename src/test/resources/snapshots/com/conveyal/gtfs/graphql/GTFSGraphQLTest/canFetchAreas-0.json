@@ -5,7 +5,7 @@
         "area_id" : "area_bl",
         "area_name" : "Blue Line",
         "id" : 2,
-        "stopAreas" : [ {
+        "stop_areas" : [ {
           "area_id" : "area_bl",
           "id" : 229,
           "stop_id" : "4u6g",
@@ -186,7 +186,7 @@
         "area_id" : "area_bl_airport",
         "area_name" : "Blue Line - Airport Station",
         "id" : 3,
-        "stopAreas" : [ {
+        "stop_areas" : [ {
           "area_id" : "area_bl_airport",
           "id" : 238,
           "stop_id" : "4u6g",

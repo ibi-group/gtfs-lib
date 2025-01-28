@@ -1,7 +1,7 @@
 query ($namespace: String) {
   feed(namespace: $namespace) {
     feed_version
-    fareMedia {
+    fare_media {
       fare_media_id
       fare_media_name
       fare_media_type

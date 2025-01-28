@@ -1,10 +1,10 @@
 {
   "data" : {
     "feed" : {
-      "fareProduct" : [ {
+      "fare_product" : [ {
         "amount" : "6.5",
         "currency" : "USD",
-        "fareMedia" : [ {
+        "fare_media" : [ {
           "fare_media_id" : "cash",
           "fare_media_name" : "Cash",
           "fare_media_type" : "0",
@@ -16,7 +16,7 @@
       }, {
         "amount" : "6.5",
         "currency" : "USD",
-        "fareMedia" : [ {
+        "fare_media" : [ {
           "fare_media_id" : "credit_debit",
           "fare_media_name" : "Credit/debit card",
           "fare_media_type" : "0",
@@ -28,7 +28,7 @@
       }, {
         "amount" : "6.5",
         "currency" : "USD",
-        "fareMedia" : [ {
+        "fare_media" : [ {
           "fare_media_id" : "mticket",
           "fare_media_name" : "mTicket app",
           "fare_media_type" : "4",
@@ -40,7 +40,7 @@
       }, {
         "amount" : "2.4",
         "currency" : "USD",
-        "fareMedia" : [ {
+        "fare_media" : [ {
           "fare_media_id" : "cash",
           "fare_media_name" : "Cash",
           "fare_media_type" : "0",
@@ -52,7 +52,7 @@
       }, {
         "amount" : "2.4",
         "currency" : "USD",
-        "fareMedia" : [ {
+        "fare_media" : [ {
           "fare_media_id" : "credit_debit",
           "fare_media_name" : "Credit/debit card",
           "fare_media_type" : "0",
@@ -64,7 +64,7 @@
       }, {
         "amount" : "2.4",
         "currency" : "USD",
-        "fareMedia" : [ {
+        "fare_media" : [ {
           "fare_media_id" : "mticket",
           "fare_media_name" : "mTicket app",
           "fare_media_type" : "4",
@@ -76,7 +76,7 @@
       }, {
         "amount" : "7.0",
         "currency" : "USD",
-        "fareMedia" : [ {
+        "fare_media" : [ {
           "fare_media_id" : "cash",
           "fare_media_name" : "Cash",
           "fare_media_type" : "0",
@@ -88,7 +88,7 @@
       }, {
         "amount" : "7.0",
         "currency" : "USD",
-        "fareMedia" : [ {
+        "fare_media" : [ {
           "fare_media_id" : "credit_debit",
           "fare_media_name" : "Credit/debit card",
           "fare_media_type" : "0",
@@ -100,7 +100,7 @@
       }, {
         "amount" : "7.0",
         "currency" : "USD",
-        "fareMedia" : [ {
+        "fare_media" : [ {
           "fare_media_id" : "mticket",
           "fare_media_name" : "mTicket app",
           "fare_media_type" : "4",
@@ -112,7 +112,7 @@
       }, {
         "amount" : "5.0",
         "currency" : "USD",
-        "fareMedia" : [ {
+        "fare_media" : [ {
           "fare_media_id" : "cash",
           "fare_media_name" : "Cash",
           "fare_media_type" : "0",

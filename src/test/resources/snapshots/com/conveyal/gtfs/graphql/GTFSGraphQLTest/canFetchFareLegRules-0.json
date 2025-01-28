@@ -1,20 +1,21 @@
 {
   "data" : {
     "feed" : {
-      "fareLegRule" : [ {
-        "fareProducts" : [ {
+      "fare_leg_rule" : [ {
+        "fare_product_id" : "prod_rapid_transit_quick_subway",
+        "fare_products" : [ {
           "amount" : "2.4",
           "currency" : "USD",
           "fare_media_id" : "charlieticket",
           "fare_product_id" : "prod_rapid_transit_quick_subway",
           "fare_product_name" : "Subway Quick Ticket"
         } ],
-        "fare_product_id" : "prod_rapid_transit_quick_subway",
-        "fromArea" : [ {
+        "from_area" : [ {
           "area_id" : "area_bl_airport",
           "area_name" : "Blue Line - Airport Station"
         } ],
-        "fromTimeFrame" : [ {
+        "from_area_id" : "area_bl_airport",
+        "from_time_frame" : [ {
           "end_time" : null,
           "service_id" : "04100312-8fe1-46a5-a9f2-556f39478f57",
           "start_time" : null,
@@ -25,7 +26,6 @@
           "start_time" : "9000",
           "timeframe_group_id" : "timeframe_regular"
         } ],
-        "from_area_id" : "area_bl_airport",
         "from_timeframe_group_id" : "timeframe_regular",
         "id" : 2,
         "leg_group_id" : "leg_airport_rapid_transit_quick_subway",
@@ -36,12 +36,13 @@
           "route_long_name" : "RL"
         } ],
         "rule_priority" : null,
-        "toArea" : [ ],
-        "toTimeFrame" : [ ],
+        "to_area" : [ ],
         "to_area_id" : null,
+        "to_time_frame" : [ ],
         "to_timeframe_group_id" : null
       }, {
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "fare_products" : [ {
           "amount" : "5.0",
           "currency" : "USD",
           "fare_media_id" : "cash",
@@ -60,13 +61,12 @@
           "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
           "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
         } ],
-        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
-        "fromArea" : [ {
+        "from_area" : [ {
           "area_id" : "area_cf_zone_buzzards",
           "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
         } ],
-        "fromTimeFrame" : [ ],
         "from_area_id" : "area_cf_zone_buzzards",
+        "from_time_frame" : [ ],
         "from_timeframe_group_id" : null,
         "id" : 3,
         "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
@@ -74,15 +74,16 @@
         "networks" : [ ],
         "routes" : [ ],
         "rule_priority" : null,
-        "toArea" : [ {
+        "to_area" : [ {
           "area_id" : "area_cf_zone_hyannis",
           "area_name" : "CapeFLYER - Hyannis"
         } ],
-        "toTimeFrame" : [ ],
         "to_area_id" : "area_cf_zone_hyannis",
+        "to_time_frame" : [ ],
         "to_timeframe_group_id" : null
       }, {
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "fare_products" : [ {
           "amount" : "5.0",
           "currency" : "USD",
           "fare_media_id" : "cash",
@@ -101,13 +102,12 @@
           "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
           "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
         } ],
-        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
-        "fromArea" : [ {
+        "from_area" : [ {
           "area_id" : "area_cf_zone_hyannis",
           "area_name" : "CapeFLYER - Hyannis"
         } ],
-        "fromTimeFrame" : [ ],
         "from_area_id" : "area_cf_zone_hyannis",
+        "from_time_frame" : [ ],
         "from_timeframe_group_id" : null,
         "id" : 4,
         "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
@@ -115,15 +115,16 @@
         "networks" : [ ],
         "routes" : [ ],
         "rule_priority" : null,
-        "toArea" : [ {
+        "to_area" : [ {
           "area_id" : "area_cf_zone_buzzards",
           "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
         } ],
-        "toTimeFrame" : [ ],
         "to_area_id" : "area_cf_zone_buzzards",
+        "to_time_frame" : [ ],
         "to_timeframe_group_id" : null
       }, {
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "fare_products" : [ {
           "amount" : "5.0",
           "currency" : "USD",
           "fare_media_id" : "cash",
@@ -142,13 +143,12 @@
           "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
           "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
         } ],
-        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
-        "fromArea" : [ {
+        "from_area" : [ {
           "area_id" : "area_cf_zone_hyannis",
           "area_name" : "CapeFLYER - Hyannis"
         } ],
-        "fromTimeFrame" : [ ],
         "from_area_id" : "area_cf_zone_hyannis",
+        "from_time_frame" : [ ],
         "from_timeframe_group_id" : null,
         "id" : 5,
         "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
@@ -156,15 +156,16 @@
         "networks" : [ ],
         "routes" : [ ],
         "rule_priority" : null,
-        "toArea" : [ {
+        "to_area" : [ {
           "area_id" : "area_commuter_rail_zone_8",
           "area_name" : "Commuter Rail Zone 8"
         } ],
-        "toTimeFrame" : [ ],
         "to_area_id" : "area_commuter_rail_zone_8",
+        "to_time_frame" : [ ],
         "to_timeframe_group_id" : null
       }, {
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "fare_products" : [ {
           "amount" : "5.0",
           "currency" : "USD",
           "fare_media_id" : "cash",
@@ -183,13 +184,12 @@
           "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
           "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare"
         } ],
-        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
-        "fromArea" : [ {
+        "from_area" : [ {
           "area_id" : "area_commuter_rail_zone_8",
           "area_name" : "Commuter Rail Zone 8"
         } ],
-        "fromTimeFrame" : [ ],
         "from_area_id" : "area_commuter_rail_zone_8",
+        "from_time_frame" : [ ],
         "from_timeframe_group_id" : null,
         "id" : 6,
         "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
@@ -197,15 +197,16 @@
         "networks" : [ ],
         "routes" : [ ],
         "rule_priority" : null,
-        "toArea" : [ {
+        "to_area" : [ {
           "area_id" : "area_cf_zone_hyannis",
           "area_name" : "CapeFLYER - Hyannis"
         } ],
-        "toTimeFrame" : [ ],
         "to_area_id" : "area_cf_zone_hyannis",
+        "to_time_frame" : [ ],
         "to_timeframe_group_id" : null
       }, {
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "fare_products" : [ {
           "amount" : "20.0",
           "currency" : "USD",
           "fare_media_id" : "cash",
@@ -224,13 +225,12 @@
           "fare_product_id" : "prod_cape_sbb_buzzards_fare",
           "fare_product_name" : "CapeFLYER Bourne one-way fare"
         } ],
-        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
-        "fromArea" : [ {
+        "from_area" : [ {
           "area_id" : "area_cf_zone_buzzards",
           "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
         } ],
-        "fromTimeFrame" : [ ],
         "from_area_id" : "area_cf_zone_buzzards",
+        "from_time_frame" : [ ],
         "from_timeframe_group_id" : null,
         "id" : 7,
         "leg_group_id" : "leg_cape_sbb_buzzards_cash",
@@ -238,15 +238,16 @@
         "networks" : [ ],
         "routes" : [ ],
         "rule_priority" : null,
-        "toArea" : [ {
+        "to_area" : [ {
           "area_id" : "area_commuter_rail_zone_1a",
           "area_name" : "Commuter Rail Zone 1A"
         } ],
-        "toTimeFrame" : [ ],
         "to_area_id" : "area_commuter_rail_zone_1a",
+        "to_time_frame" : [ ],
         "to_timeframe_group_id" : null
       }, {
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "fare_products" : [ {
           "amount" : "20.0",
           "currency" : "USD",
           "fare_media_id" : "cash",
@@ -265,13 +266,12 @@
           "fare_product_id" : "prod_cape_sbb_buzzards_fare",
           "fare_product_name" : "CapeFLYER Bourne one-way fare"
         } ],
-        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
-        "fromArea" : [ {
+        "from_area" : [ {
           "area_id" : "area_cf_zone_buzzards",
           "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
         } ],
-        "fromTimeFrame" : [ ],
         "from_area_id" : "area_cf_zone_buzzards",
+        "from_time_frame" : [ ],
         "from_timeframe_group_id" : null,
         "id" : 8,
         "leg_group_id" : "leg_cape_sbb_buzzards_cash",
@@ -279,15 +279,16 @@
         "networks" : [ ],
         "routes" : [ ],
         "rule_priority" : null,
-        "toArea" : [ {
+        "to_area" : [ {
           "area_id" : "area_commuter_rail_zone_2",
           "area_name" : "Commuter Rail Zone 2"
         } ],
-        "toTimeFrame" : [ ],
         "to_area_id" : "area_commuter_rail_zone_2",
+        "to_time_frame" : [ ],
         "to_timeframe_group_id" : null
       }, {
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "fare_products" : [ {
           "amount" : "20.0",
           "currency" : "USD",
           "fare_media_id" : "cash",
@@ -306,13 +307,12 @@
           "fare_product_id" : "prod_cape_sbb_buzzards_fare",
           "fare_product_name" : "CapeFLYER Bourne one-way fare"
         } ],
-        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
-        "fromArea" : [ {
+        "from_area" : [ {
           "area_id" : "area_cf_zone_buzzards",
           "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
         } ],
-        "fromTimeFrame" : [ ],
         "from_area_id" : "area_cf_zone_buzzards",
+        "from_time_frame" : [ ],
         "from_timeframe_group_id" : null,
         "id" : 9,
         "leg_group_id" : "leg_cape_sbb_buzzards_cash",
@@ -320,15 +320,16 @@
         "networks" : [ ],
         "routes" : [ ],
         "rule_priority" : null,
-        "toArea" : [ {
+        "to_area" : [ {
           "area_id" : "area_commuter_rail_zone_4",
           "area_name" : "Commuter Rail Zone 4"
         } ],
-        "toTimeFrame" : [ ],
         "to_area_id" : "area_commuter_rail_zone_4",
+        "to_time_frame" : [ ],
         "to_timeframe_group_id" : null
       }, {
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "fare_products" : [ {
           "amount" : "20.0",
           "currency" : "USD",
           "fare_media_id" : "cash",
@@ -347,13 +348,12 @@
           "fare_product_id" : "prod_cape_sbb_buzzards_fare",
           "fare_product_name" : "CapeFLYER Bourne one-way fare"
         } ],
-        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
-        "fromArea" : [ {
+        "from_area" : [ {
           "area_id" : "area_commuter_rail_zone_1a",
           "area_name" : "Commuter Rail Zone 1A"
         } ],
-        "fromTimeFrame" : [ ],
         "from_area_id" : "area_commuter_rail_zone_1a",
+        "from_time_frame" : [ ],
         "from_timeframe_group_id" : null,
         "id" : 10,
         "leg_group_id" : "leg_cape_sbb_buzzards_cash",
@@ -361,15 +361,16 @@
         "networks" : [ ],
         "routes" : [ ],
         "rule_priority" : null,
-        "toArea" : [ {
+        "to_area" : [ {
           "area_id" : "area_cf_zone_buzzards",
           "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
         } ],
-        "toTimeFrame" : [ ],
         "to_area_id" : "area_cf_zone_buzzards",
+        "to_time_frame" : [ ],
         "to_timeframe_group_id" : null
       }, {
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "fare_products" : [ {
           "amount" : "20.0",
           "currency" : "USD",
           "fare_media_id" : "cash",
@@ -388,13 +389,12 @@
           "fare_product_id" : "prod_cape_sbb_buzzards_fare",
           "fare_product_name" : "CapeFLYER Bourne one-way fare"
         } ],
-        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
-        "fromArea" : [ {
+        "from_area" : [ {
           "area_id" : "area_commuter_rail_zone_2",
           "area_name" : "Commuter Rail Zone 2"
         } ],
-        "fromTimeFrame" : [ ],
         "from_area_id" : "area_commuter_rail_zone_2",
+        "from_time_frame" : [ ],
         "from_timeframe_group_id" : null,
         "id" : 11,
         "leg_group_id" : "leg_cape_sbb_buzzards_cash",
@@ -402,12 +402,12 @@
         "networks" : [ ],
         "routes" : [ ],
         "rule_priority" : null,
-        "toArea" : [ {
+        "to_area" : [ {
           "area_id" : "area_cf_zone_buzzards",
           "area_name" : "CapeFLYER - Wareham/Buzzards Bay/Bourne"
         } ],
-        "toTimeFrame" : [ ],
         "to_area_id" : "area_cf_zone_buzzards",
+        "to_time_frame" : [ ],
         "to_timeframe_group_id" : null
       } ],
       "feed_version" : "1.0"

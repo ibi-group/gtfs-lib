@@ -1,7 +1,7 @@
 query ($namespace: String) {
   feed(namespace: $namespace) {
     feed_version
-    routeNetwork {
+    route_network {
       network_id
       route_id
     }

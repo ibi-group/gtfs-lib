@@ -1,27 +1,27 @@
 query ($namespace: String) {
   feed(namespace: $namespace) {
     feed_version
-    fareTransferRule (limit: 2) {
+    fare_transfer_rule (limit: 2) {
       from_leg_group_id
       to_leg_group_id
       transfer_count
       duration_limit
       duration_limit_type
       fare_product_id
-      fareProducts {
+      fare_products {
         fare_product_id
         fare_product_name
         fare_media_id
         amount
         currency
-        fareMedia {
+        fare_media {
           fare_media_id
           fare_media_name
           fare_media_type
           id
         }
       }
-      fromFareLegRule {
+      from_fare_leg_rule {
         leg_group_id
         network_id
         from_area_id
@@ -32,7 +32,7 @@ query ($namespace: String) {
         rule_priority
         id
       }
-      toFareLegRule {
+      to_fare_leg_rule {
         leg_group_id
         network_id
         from_area_id

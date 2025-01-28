@@ -1,13 +1,14 @@
 {
   "data" : {
     "feed" : {
-      "fareTransferRule" : [ {
+      "fare_transfer_rule" : [ {
         "duration_limit" : "7200",
         "duration_limit_type" : "1",
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_rapid_transit_quick_subway",
+        "fare_products" : [ {
           "amount" : "2.4",
           "currency" : "USD",
-          "fareMedia" : [ {
+          "fare_media" : [ {
             "fare_media_id" : "charlieticket",
             "fare_media_name" : "CharlieTicket",
             "fare_media_type" : "1",
@@ -17,8 +18,7 @@
           "fare_product_id" : "prod_rapid_transit_quick_subway",
           "fare_product_name" : "Subway Quick Ticket"
         } ],
-        "fare_product_id" : "prod_rapid_transit_quick_subway",
-        "fromFareLegRule" : [ {
+        "from_fare_leg_rule" : [ {
           "fare_product_id" : "prod_rapid_transit_quick_subway",
           "from_area_id" : "area_bl_airport",
           "from_timeframe_group_id" : "timeframe_regular",
@@ -30,7 +30,7 @@
           "to_timeframe_group_id" : null
         } ],
         "from_leg_group_id" : "leg_airport_rapid_transit_quick_subway",
-        "toFareLegRule" : [ {
+        "to_fare_leg_rule" : [ {
           "fare_product_id" : "prod_rapid_transit_quick_subway",
           "from_area_id" : "area_route_354_downtown",
           "from_timeframe_group_id" : null,
@@ -586,10 +586,11 @@
       }, {
         "duration_limit" : null,
         "duration_limit_type" : null,
-        "fareProducts" : [ {
+        "fare_product_id" : "prod_rapid_transit_quick_subway",
+        "fare_products" : [ {
           "amount" : "2.4",
           "currency" : "USD",
-          "fareMedia" : [ {
+          "fare_media" : [ {
             "fare_media_id" : "charlieticket",
             "fare_media_name" : "CharlieTicket",
             "fare_media_type" : "1",
@@ -599,8 +600,7 @@
           "fare_product_id" : "prod_rapid_transit_quick_subway",
           "fare_product_name" : "Subway Quick Ticket"
         } ],
-        "fare_product_id" : "prod_rapid_transit_quick_subway",
-        "fromFareLegRule" : [ {
+        "from_fare_leg_rule" : [ {
           "fare_product_id" : "prod_rapid_transit_quick_subway",
           "from_area_id" : "area_bl_airport",
           "from_timeframe_group_id" : "timeframe_regular",
@@ -612,7 +612,7 @@
           "to_timeframe_group_id" : null
         } ],
         "from_leg_group_id" : "leg_airport_rapid_transit_quick_subway",
-        "toFareLegRule" : [ {
+        "to_fare_leg_rule" : [ {
           "fare_product_id" : "prod_rapid_transit_quick_subway",
           "from_area_id" : "area_bl",
           "from_timeframe_group_id" : "timeframe_regular",
