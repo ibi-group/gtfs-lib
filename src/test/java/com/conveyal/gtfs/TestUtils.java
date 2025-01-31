@@ -39,6 +39,8 @@ public class TestUtils {
 
     private static final String JDBC_URL = "jdbc:postgresql://localhost";
 
+    static final String TEST_RESOURCE_PATH = "src/test/resources/";
+
     /**
      * Forcefully drops a database even if other users are connected to it.
      *
@@ -115,7 +117,7 @@ public class TestUtils {
     }
 
     /**
-     * Helper to return the relative path to a test resource file
+     * Helper to return the relative path to a test resource file.
      *
      * @param fileName
      * @return
@@ -123,6 +125,19 @@ public class TestUtils {
     public static String getResourceFileName(String fileName) {
         return String.format("./src/test/resources/%s", fileName);
     }
+
+    public static String getTestResourceAsString(String resourcePathName) throws IOException {
+        return getFileContents(TEST_RESOURCE_PATH + resourcePathName);
+    }
+
+    /**
+     * Extract the file contents from the provided path and file name.
+     */
+    public static String getFileContents(String pathAndFileName) throws IOException {
+        FileInputStream fileInputStream = new FileInputStream(pathAndFileName);
+        return IOUtils.toString(fileInputStream, StandardCharsets.UTF_8);
+    }
+
 
     /**
      * Zip files in a folder into a temporary zip file
