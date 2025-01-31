@@ -132,7 +132,7 @@ public class JDBCTableWriterFaresV2Test {
     private static String getEntityFromFile(String fileName) throws IOException {
         return TestUtils
             .getTestResourceAsString("fares-v2-json-entities/" + fileName)
-            .replace("\r\n", "")
+            .replace(System.lineSeparator(), "")
             .replace(" ", "")
             .replace("\"\"", "null");
     }
