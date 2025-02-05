@@ -65,7 +65,12 @@ public class JDBCTableWriterFaresV2Test {
         String entity,
         String entityUpdated
     ) throws IOException, SQLException, InvalidNamespaceException {
-        assertEquals(entity, createTestTableWriter(table).create(entity, true));
+        assertEquals(
+            entity,
+            createTestTableWriter(table)
+                .create(entity, true)
+                .replace(",\"id\":1", "")
+        );
 
         JdbcTableWriter updateTableWriter = createTestTableWriter(table);
         assertEquals(entityUpdated, updateTableWriter.update(1, entityUpdated, true));
@@ -74,7 +79,7 @@ public class JDBCTableWriterFaresV2Test {
     }
 
     /**
-     * Define JSON payload. ID must be set as 1.
+     * Define JSON payloads. ID must be set to 1 in the updated payloads.
      */
     private static Stream<Arguments> createEntityInput() throws IOException {
         return Stream.of(
@@ -137,6 +142,9 @@ public class JDBCTableWriterFaresV2Test {
             .replace("\"\"", "null");
     }
 
+    /**
+     * Delete entity with id of one and confirm no rows are returned matching this.
+     */
     private static void deleteEntity(Table table) throws InvalidNamespaceException, SQLException {
         JdbcTableWriter deleteTableWriter = createTestTableWriter(table);
         deleteTableWriter.delete(1, true);

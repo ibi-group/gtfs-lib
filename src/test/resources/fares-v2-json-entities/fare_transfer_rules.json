@@ -1,5 +1,4 @@
 {
-  "id": 1,
   "from_leg_group_id": "leg_airport_rapid_transit_quick_subway",
   "to_leg_group_id": "leg_local_bus_quick_subway",
   "transfer_count": "",
