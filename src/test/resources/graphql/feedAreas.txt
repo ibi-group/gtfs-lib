@@ -5,15 +5,6 @@ query ($namespace: String) {
       area_id
       area_name
       id
-      stop_areas {
-        area_id
-        stop_id
-        id
-        stops {
-          stop_id
-          stop_name
-        }
-      }
     }
   }
 }

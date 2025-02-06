@@ -395,12 +395,10 @@ public class Table {
     .addPrimaryKeyNames(Network.NETWORK_ID_NAME);
 
     public static final Table ROUTE_NETWORKS = new Table(RouteNetwork.TABLE_NAME, RouteNetwork.class, OPTIONAL,
-        new StringField(RouteNetwork.NETWORK_ID_NAME, REQUIRED).isReferenceTo(NETWORKS),
-        new StringField(RouteNetwork.ROUTE_ID_NAME, REQUIRED).isReferenceTo(ROUTES)
+        new StringField(RouteNetwork.ROUTE_ID_NAME, REQUIRED).isReferenceTo(ROUTES),
+        new StringField(RouteNetwork.NETWORK_ID_NAME, REQUIRED).isReferenceTo(NETWORKS)
     )
-    .keyFieldIsNotUnique()
     .addPrimaryKeyNames(RouteNetwork.ROUTE_ID_NAME);
-
 
     // GTFS reference: https://developers.google.com/transit/gtfs/reference#fare_rulestxt
     public static final Table FARE_RULES = new Table("fare_rules", FareRule.class, OPTIONAL,
