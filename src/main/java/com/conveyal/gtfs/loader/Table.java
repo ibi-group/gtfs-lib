@@ -398,6 +398,9 @@ public class Table {
         new StringField(RouteNetwork.ROUTE_ID_NAME, REQUIRED).isReferenceTo(ROUTES),
         new StringField(RouteNetwork.NETWORK_ID_NAME, REQUIRED).isReferenceTo(NETWORKS)
     )
+    // Although within the context of this table the route id is unique, the unique value e.g. route_id:1 has already
+    // been flagged as unique when the route table is loaded!
+    .keyFieldIsNotUnique()
     .addPrimaryKeyNames(RouteNetwork.ROUTE_ID_NAME);
 
     // GTFS reference: https://developers.google.com/transit/gtfs/reference#fare_rulestxt
