@@ -233,6 +233,14 @@ class FlexValidatorTest {
             Arguments.of(
                 createStopTimeForStopIdTest("stop-id-1", null, "location-id-1"),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_STOP_ID)
+            ),
+            Arguments.of(
+                createStopTimeForStopIdTest(null, null, "location-id-1"),
+                null
+            ),
+            Arguments.of(
+                createStopTimeForStopIdTest(null, "location-group-id-1", null),
+                null
             )
         );
     }

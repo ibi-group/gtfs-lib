@@ -574,7 +574,7 @@ public class FlexValidator extends FeedValidator {
      * If a location group or location is defined, a stop id is forbidden.
      */
     public static boolean isStopIdForbidden(StopTime stopTime) {
-        return stopTime.location_group_id != null || stopTime.location_id != null;
+        return isNotEmpty(stopTime.stop_id) && (stopTime.location_group_id != null || stopTime.location_id != null);
     }
 
     /**
