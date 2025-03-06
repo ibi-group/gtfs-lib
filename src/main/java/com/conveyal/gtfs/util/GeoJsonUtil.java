@@ -48,7 +48,7 @@ public class GeoJsonUtil {
     private static final Logger LOG = LoggerFactory.getLogger(GeoJsonUtil.class);
     public static final String GEOMETRY_TYPE_POLYLINE = "polyline";
     public static final String GEOMETRY_TYPE_POLYGON = "polygon";
-    private static final String UNSUPPORTED_GEOMETRY_TYPE_MESSAGE = "Geometry type %s unknown or not supported.";
+    public static final String UNSUPPORTED_GEOMETRY_TYPE_MESSAGE = "Geometry type %s unknown or not supported.";
     private static final String STOP_NAME = "stop_name";
     private static final String STOP_DESC = "stop_desc";
     private static final String ZONE_ID = "zone_id";

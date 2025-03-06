@@ -18,6 +18,8 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.conveyal.gtfs.util.GeoJsonUtil.UNSUPPORTED_GEOMETRY_TYPE_MESSAGE;
+
 public class LocationShape extends Entity {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocationShape.class);
@@ -129,7 +131,7 @@ public class LocationShape extends Entity {
                 return validatePolygon(jsonNode);
             // TODO: Add other geometry types when they are supported.
             default:
-                throw new IOException(String.format("Geometry type: %s, is not supported.", type));
+                throw new IOException(String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, type));
         }
     }
 
