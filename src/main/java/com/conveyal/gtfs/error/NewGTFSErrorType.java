@@ -118,6 +118,7 @@ public enum NewGTFSErrorType {
     TRIP_SPEED_NOT_VALIDATED(Priority.LOW, "Trip speed not validated because it contains at least one stop which is a location or stop area."),
     URL_FORMAT(Priority.MEDIUM, "URL format should be <scheme>://<authority><path>?<query>#<fragment>"),
     VALIDATOR_FAILED(Priority.HIGH, "The specified validation stage failed due to an error encountered during loading. This is likely due to an error encountered during loading (e.g., a date or number field is formatted incorrectly.)."),
+    VALIDATOR_INCOMPLETE(Priority.MEDIUM, "The specified validation stage is incomplete. This is likely due to an error encountered during loading (e.g. a missing required field.)."),
     WRONG_NUMBER_OF_FIELDS(Priority.MEDIUM, "A row did not have the same number of fields as there are headers in its table."),
 
     // MTC-specific errors.

@@ -1,7 +1,11 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.loader.Feed;
 import org.mapdb.Fun;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.sql.Connection;
@@ -18,6 +22,8 @@ import java.util.Objects;
  * because they are in a MapDB.
  */
 public class StopTime extends Entity implements Cloneable, Serializable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(StopTime.class);
 
     private static final long serialVersionUID = -8883780047901081832L;
     /* StopTime cannot directly reference Trips or Stops because they would be serialized into the MapDB. */
@@ -246,7 +252,7 @@ public class StopTime extends Entity implements Cloneable, Serializable {
      * Check that the flex columns exist. This is to guard against cases where booking rules, location
      * group stops or locations are defined in a feed but flex specific stop time columns are not.
      */
-    private static boolean flexColumnsExist(Connection connection, String tablePrefix) throws SQLException {
+    private static boolean flexColumnsExist(Connection connection, String tablePrefix) {
         boolean exists = false;
         String sql = String.format(
             "SELECT EXISTS (SELECT 1 " +
@@ -268,6 +274,9 @@ public class StopTime extends Entity implements Cloneable, Serializable {
             while (resultSet.next()) {
                 exists = resultSet.getBoolean(1);
             }
+        } catch (SQLException e) {
+            LOG.warn("Failed whilst checking for the existence of flex columns in table '{}'", tablePrefix, e);
+            exists = false;
         }
         return exists;
     }
@@ -277,7 +286,7 @@ public class StopTime extends Entity implements Cloneable, Serializable {
      * To match the expected import values, where applicable, integers and doubles that are null are set to INT_MISSING
      * and DOUBLE_MISSING respectively.
      */
-    public static List<StopTime> getFlexStopTimesForValidation(Connection connection, String tablePrefix) throws SQLException {
+    public static List<StopTime> getFlexStopTimesForValidation(Connection connection, String tablePrefix) {
         List<StopTime> stopTimes = new ArrayList<>();
         if (!flexColumnsExist(connection, tablePrefix)) {
             return stopTimes;
@@ -320,6 +329,8 @@ public class StopTime extends Entity implements Cloneable, Serializable {
                 stopTime.end_pickup_drop_off_window = getIntValue(resultSet.getString(11));
                 stopTimes.add(stopTime);
             }
+        } catch (SQLException e) {
+            LOG.warn("Failed whilst retrieving flex stop times.", e);
         }
         return stopTimes;
     }

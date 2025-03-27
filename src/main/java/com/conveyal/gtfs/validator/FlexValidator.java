@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.VALIDATOR_FAILED;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.VALIDATOR_INCOMPLETE;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
 import static com.conveyal.gtfs.model.StopTime.getFlexStopTimesForValidation;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
@@ -51,21 +52,30 @@ public class FlexValidator extends FeedValidator {
         List<Trip> trips = Lists.newArrayList(feed.trips);
 
         if (isFlexFeed(bookingRules, locationGroups, locationGroupStops, locations)) {
+            String message = String.join(
+                ":",
+                getClass().getSimpleName(),
+                "Stop times, trips and routes have not been validated."
+            );
             List<NewGTFSError> errors = new ArrayList<>();
             try (Connection connection = dataSource.getConnection()) {
                 List<StopTime> stopTimes = getFlexStopTimesForValidation(connection, feed.databaseSchemaPrefix);
-                stopTimes.forEach(stopTime -> errors.addAll(validateStopTime(stopTime)));
-                trips.forEach(trip -> errors.addAll(validateTrip(trip, stopTimes)));
-                routes.forEach(route -> errors.addAll(validateRoute(route, trips, stopTimes)));
+                if (!stopTimes.isEmpty()) {
+                    stopTimes.forEach(stopTime -> errors.addAll(validateStopTime(stopTime)));
+                    trips.forEach(trip -> errors.addAll(validateTrip(trip, stopTimes)));
+                    routes.forEach(route -> errors.addAll(validateRoute(route, trips, stopTimes)));
+                } else {
+                    errorStorage.storeError(NewGTFSError.forFeed(VALIDATOR_INCOMPLETE, message));
+                }
             } catch (SQLException e) {
                 String badValue = String.join(":", this.getClass().getSimpleName(), e.toString());
-                errorStorage.storeError(NewGTFSError.forFeed(VALIDATOR_FAILED, badValue));
+                errorStorage.storeError(NewGTFSError.forFeed(VALIDATOR_INCOMPLETE, badValue));
             }
             List<Stop> stops = Lists.newArrayList(feed.stops);
             List<FareRule> fareRules = Lists.newArrayList(feed.fareRules);
-            feed.bookingRules.forEach(bookingRule -> errors.addAll(validateBookingRule(bookingRule)));
-            feed.locationGroups.forEach(locationGroup -> errors.addAll(validateLocationGroup(locationGroup, stops, locations)));
-            feed.locations.forEach(location -> errors.addAll(validateLocation(locationGroups, location, stops, fareRules)));
+            bookingRules.forEach(bookingRule -> errors.addAll(validateBookingRule(bookingRule)));
+            locationGroups.forEach(locationGroup -> errors.addAll(validateLocationGroup(locationGroup, stops, locations)));
+            locations.forEach(location -> errors.addAll(validateLocation(locationGroups, location, stops, fareRules)));
             // Register errors, if any, once all checks have been completed.
             errors.forEach(this::registerError);
         }
