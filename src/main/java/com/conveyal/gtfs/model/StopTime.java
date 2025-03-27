@@ -252,7 +252,7 @@ public class StopTime extends Entity implements Cloneable, Serializable {
      * Check that the flex columns exist. This is to guard against cases where booking rules, location
      * group stops or locations are defined in a feed but flex specific stop time columns are not.
      */
-    private static boolean flexColumnsExist(Connection connection, String tablePrefix) {
+    public static boolean flexColumnsExist(Connection connection, String tablePrefix) {
         boolean exists = false;
         String sql = String.format(
             "SELECT EXISTS (SELECT 1 " +
@@ -288,9 +288,6 @@ public class StopTime extends Entity implements Cloneable, Serializable {
      */
     public static List<StopTime> getFlexStopTimesForValidation(Connection connection, String tablePrefix) {
         List<StopTime> stopTimes = new ArrayList<>();
-        if (!flexColumnsExist(connection, tablePrefix)) {
-            return stopTimes;
-        }
         String sql = String.format(
             "select id, %s, %s, %s, %s, %s, %s, %s, " +
             "%s, %s, %s " +

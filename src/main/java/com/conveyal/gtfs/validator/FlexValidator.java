@@ -25,6 +25,7 @@ import java.util.List;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.VALIDATOR_FAILED;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.VALIDATOR_INCOMPLETE;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
+import static com.conveyal.gtfs.model.StopTime.flexColumnsExist;
 import static com.conveyal.gtfs.model.StopTime.getFlexStopTimesForValidation;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
@@ -59,11 +60,13 @@ public class FlexValidator extends FeedValidator {
             );
             List<NewGTFSError> errors = new ArrayList<>();
             try (Connection connection = dataSource.getConnection()) {
-                List<StopTime> stopTimes = getFlexStopTimesForValidation(connection, feed.databaseSchemaPrefix);
-                if (!stopTimes.isEmpty()) {
-                    stopTimes.forEach(stopTime -> errors.addAll(validateStopTime(stopTime)));
-                    trips.forEach(trip -> errors.addAll(validateTrip(trip, stopTimes)));
-                    routes.forEach(route -> errors.addAll(validateRoute(route, trips, stopTimes)));
+                if (flexColumnsExist(connection, feed.databaseSchemaPrefix)) {
+                    List<StopTime> stopTimes = getFlexStopTimesForValidation(connection, feed.databaseSchemaPrefix);
+                    if (!stopTimes.isEmpty()) {
+                        stopTimes.forEach(stopTime -> errors.addAll(validateStopTime(stopTime)));
+                        trips.forEach(trip -> errors.addAll(validateTrip(trip, stopTimes)));
+                        routes.forEach(route -> errors.addAll(validateRoute(route, trips, stopTimes)));
+                    }
                 } else {
                     errorStorage.storeError(NewGTFSError.forFeed(VALIDATOR_INCOMPLETE, message));
                 }
