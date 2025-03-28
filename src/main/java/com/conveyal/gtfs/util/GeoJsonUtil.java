@@ -361,12 +361,26 @@ public class GeoJsonUtil {
                     if (errors != null) errors.add(message);
             }
         }
+
         featureCollection.setFeatures(features);
-        return FeatureConverter.toStringValue(featureCollection);
+        return getGeoJsonPayload(featureCollection);
     }
 
     /**
-     * Set the feature id and properties value based on the values held in {@link Location}.
+     * Convert the feature collection to a String representation. Remove all occurrences of the empty properties
+     * placeholder to meet validation expectation. E.g. "properties":{}.
+     */
+    private static String getGeoJsonPayload(FeatureCollection featureCollection) {
+        return FeatureConverter
+            .toStringValue(featureCollection)
+            .replace("\"empty\":null", "");
+    }
+
+    /**
+     * Set the feature id and properties value based on the values held in {@link Location}. In order to satisfy
+     * validation an "empty" placeholder is used when there are no properties. Serialization of the third party class
+     * then includes this parameter. This is done because it is not possible to influence serialization of the third
+     * party class using ObjectMapper's global configuration.
      */
     private static void setFeatureProps(Location location, Feature feature) {
         feature.setId(location.location_id);
@@ -375,6 +389,9 @@ public class GeoJsonUtil {
         if (location.stop_desc != null) properties.put(STOP_DESC, location.stop_desc);
         if (location.zone_id != null) properties.put(ZONE_ID, location.zone_id);
         if (location.stop_url != null) properties.put(STOP_URL, location.stop_url);
+        if (properties.isEmpty()) {
+            properties.put("empty", null);
+        }
         feature.setProperties(properties);
     }
 
