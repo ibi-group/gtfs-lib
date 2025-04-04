@@ -399,6 +399,25 @@ public class Table {
     .hasCompoundKey()
     .addPrimaryKeyNames("from_stop_id", "to_stop_id", "from_trip_id", "to_trip_id", "from_route_id", "to_route_id");
 
+    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#booking_rulestxt
+    public static final Table BOOKING_RULES = new Table(BookingRule.TABLE_NAME, BookingRule.class, OPTIONAL,
+        new StringField(BookingRule.BOOKING_RULE_ID_NAME, REQUIRED),
+        new ShortField(BookingRule.BOOKING_TYPE_NAME, OPTIONAL, 2),
+        new IntegerField(BookingRule.PRIOR_NOTICE_DURATION_MIN_NAME, OPTIONAL),
+        new IntegerField(BookingRule.PRIOR_NOTICE_DURATION_MAX_NAME, OPTIONAL),
+        new IntegerField(BookingRule.PRIOR_NOTICE_LAST_DAY_NAME, OPTIONAL),
+        new StringField(BookingRule.PRIOR_NOTICE_LAST_TIME_NAME, OPTIONAL),
+        new IntegerField(BookingRule.PRIOR_NOTICE_START_DAY_NAME, OPTIONAL),
+        new StringField(BookingRule.PRIOR_NOTICE_START_TIME_NAME, OPTIONAL),
+        new StringField(BookingRule.PRIOR_NOTICE_SERVICE_ID_NAME, OPTIONAL).isReferenceTo(CALENDAR),
+        new StringField(BookingRule.MESSAGE_NAME, OPTIONAL),
+        new StringField(BookingRule.PICKUP_MESSAGE_NAME, OPTIONAL),
+        new StringField(BookingRule.DROP_OFF_MESSAGE_NAME, OPTIONAL),
+        new StringField(BookingRule.PHONE_NUMBER_NAME, OPTIONAL),
+        new URLField(BookingRule.INFO_URL_NAME, OPTIONAL),
+        new URLField(BookingRule.BOOKING_URL_NAME, OPTIONAL)
+    )
+        .addPrimaryKeyNames(BookingRule.BOOKING_RULE_ID_NAME);
     // Must come after TRIPS and STOPS table to which it has references
     public static final Table STOP_TIMES = new Table(StopTime.TABLE_NAME, StopTime.class, REQUIRED,
             new StringField(StopTime.TRIP_ID_NAME, REQUIRED).isReferenceTo(TRIPS),
@@ -418,8 +437,8 @@ public class Table {
             new DoubleField(StopTime.SHAPE_DIST_TRAVELED_NAME, OPTIONAL, 0, Double.POSITIVE_INFINITY, -1),
             new ShortField(StopTime.TIMEPOINT_NAME, OPTIONAL, 1),
             new IntegerField("fare_units_traveled", EXTENSION), // OpenOV NL extension
-            new StringField(StopTime.PICKUP_BOOKING_RULE_ID_NAME, FLEX_OPTIONAL),
-            new StringField(StopTime.DROP_OFF_BOOKING_RULE_ID_NAME, FLEX_OPTIONAL),
+            new StringField(StopTime.PICKUP_BOOKING_RULE_ID_NAME, FLEX_OPTIONAL).isReferenceTo(BOOKING_RULES),
+            new StringField(StopTime.DROP_OFF_BOOKING_RULE_ID_NAME, FLEX_OPTIONAL).isReferenceTo(BOOKING_RULES),
             new TimeField(StopTime.START_PICKUP_DROP_OFF_WINDOW_NAME, FLEX_OPTIONAL),
             new TimeField(StopTime.END_PICKUP_DROP_OFF_WINDOW_NAME, FLEX_OPTIONAL)
     ).withParentTable(TRIPS)
@@ -474,26 +493,6 @@ public class Table {
             new StringField("attribution_phone", OPTIONAL)
     ).addPrimaryKeyNames("attribution_id");
 
-    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#booking_rulestxt
-    public static final Table BOOKING_RULES = new Table(BookingRule.TABLE_NAME, BookingRule.class, OPTIONAL,
-            new StringField(BookingRule.BOOKING_RULE_ID_NAME, REQUIRED),
-            new ShortField(BookingRule.BOOKING_TYPE_NAME, OPTIONAL, 2),
-            new IntegerField(BookingRule.PRIOR_NOTICE_DURATION_MIN_NAME, OPTIONAL),
-            new IntegerField(BookingRule.PRIOR_NOTICE_DURATION_MAX_NAME, OPTIONAL),
-            new IntegerField(BookingRule.PRIOR_NOTICE_LAST_DAY_NAME, OPTIONAL),
-            new StringField(BookingRule.PRIOR_NOTICE_LAST_TIME_NAME, OPTIONAL),
-            new IntegerField(BookingRule.PRIOR_NOTICE_START_DAY_NAME, OPTIONAL),
-            new StringField(BookingRule.PRIOR_NOTICE_START_TIME_NAME, OPTIONAL),
-            new StringField(BookingRule.PRIOR_NOTICE_SERVICE_ID_NAME, OPTIONAL).isReferenceTo(CALENDAR),
-            new StringField(BookingRule.MESSAGE_NAME, OPTIONAL),
-            new StringField(BookingRule.PICKUP_MESSAGE_NAME, OPTIONAL),
-            new StringField(BookingRule.DROP_OFF_MESSAGE_NAME, OPTIONAL),
-            new StringField(BookingRule.PHONE_NUMBER_NAME, OPTIONAL),
-            new URLField(BookingRule.INFO_URL_NAME, OPTIONAL),
-            new URLField(BookingRule.BOOKING_URL_NAME, OPTIONAL)
-    )
-    .addPrimaryKeyNames(BookingRule.BOOKING_RULE_ID_NAME);
-
     // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#locationsgeojson
     public static final Table LOCATION_SHAPES = new Table(LocationShape.TABLE_NAME, LocationShape.class, OPTIONAL,
         new StringField(LocationShape.LOCATION_ID_NAME, REQUIRED).isReferenceTo(LOCATIONS),
@@ -529,11 +528,11 @@ public class Table {
         PATTERN_STOP,
         TRANSFERS,
         TRIPS,
+        BOOKING_RULES,
         STOP_TIMES,
         FREQUENCIES,
         TRANSLATIONS,
         ATTRIBUTIONS,
-        BOOKING_RULES,
         LOCATION_SHAPES
     };
 
