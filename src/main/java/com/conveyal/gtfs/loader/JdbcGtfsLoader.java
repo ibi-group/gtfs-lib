@@ -170,10 +170,10 @@ public class JdbcGtfsLoader {
             result.locations = load(Table.LOCATIONS);
             result.locationGroup = load(Table.LOCATION_GROUP);
             result.locationGroupStops = load(Table.LOCATION_GROUP_STOPS);  // refs location groups.
-            result.stopTimes = load(Table.STOP_TIMES); // refs location groups, locations and stops
+            result.bookingRules = load(Table.BOOKING_RULES);
+            result.stopTimes = load(Table.STOP_TIMES); // refs booking rules, location groups, locations and stops
             result.translations = load(Table.TRANSLATIONS);
             result.attributions = load(Table.ATTRIBUTIONS);
-            result.bookingRules = load(Table.BOOKING_RULES);
             result.locationShapes = load(Table.LOCATION_SHAPES);
             result.errorCount = errorStorage.getErrorCount();
 
