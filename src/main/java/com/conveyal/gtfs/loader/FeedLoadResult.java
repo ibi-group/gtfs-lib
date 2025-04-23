@@ -77,8 +77,8 @@ public class FeedLoadResult implements Serializable {
     }
 
     /**
-     * Determine if the feed loaded has GTFS Flex enhancements. This is used in datatools-server -> FeedSource.java only
-     * which is why it is flagged as not used within gtfs-lib.
+     * Under the GTFS Flex spec, there is no value that definitively defines a flex feed. It is therefore assumed that
+     * if any of these flex only tables are populated, the feed is a GTFS Flex feed.
      */
     public boolean isGTFSFlex() {
         return

@@ -650,9 +650,13 @@ public class Table {
      * in the editor or extensions.
      */
     public List<Field> specFields () {
+        return specFields(true);
+    }
+
+    public List<Field> specFields (boolean includeFlexFields) {
         List<Field> specFields = new ArrayList<>();
         for (Field f : fields) {
-            if (f.requirement == REQUIRED || f.requirement == OPTIONAL || f.requirement == FLEX_OPTIONAL) {
+            if (f.requirement == REQUIRED || f.requirement == OPTIONAL || (includeFlexFields && f.requirement == FLEX_OPTIONAL)) {
                 specFields.add(f);
             }
         }
@@ -894,14 +898,18 @@ public class Table {
      * are included in the select. If "EDITOR" is the minimum requirement, editor, optional, and required fields will
      * all be included.
      */
-    public String generateSelectSql (String namespace, Requirement minimumRequirement) {
+    public String generateSelectSql(String namespace, Requirement minimumRequirement) {
+        return generateSelectSql(namespace, minimumRequirement, true);
+    }
+
+    public String generateSelectSql (String namespace, Requirement minimumRequirement, boolean includeFlexFields) {
         String fieldsString;
         String tableName = String.join(".", namespace, name);
         String fieldPrefix = tableName + ".";
         if (minimumRequirement.equals(EDITOR)) {
             fieldsString = commaSeparatedNames(editorFields(), fieldPrefix, true);
         } else if (minimumRequirement.equals(OPTIONAL)) {
-            fieldsString = commaSeparatedNames(specFields(), fieldPrefix, true);
+            fieldsString = commaSeparatedNames(specFields(includeFlexFields), fieldPrefix, true);
         } else if (minimumRequirement.equals(REQUIRED)) {
             fieldsString = commaSeparatedNames(requiredFields(), fieldPrefix, true);
         } else fieldsString = "*";
@@ -921,28 +929,38 @@ public class Table {
      * to be used when exporting to a GTFS and eventually generates the select all with each individual field and
      * applicable transformations listed out.
      */
-    public String generateSelectAllExistingFieldsSql(Connection connection, String namespace) throws SQLException {
-        // select all columns from table
-        // FIXME This is postgres-specific and needs to be made generic for non-postgres databases.
-        PreparedStatement statement = connection.prepareStatement(
+    public String generateSelectAllExistingFieldsSql(
+        boolean isFlex,
+        Connection connection,
+        String namespace
+    ) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
             "SELECT column_name FROM information_schema.columns WHERE table_schema = ? AND table_name = ?"
-        );
-        statement.setString(1, namespace);
-        statement.setString(2, name);
-        ResultSet result = statement.executeQuery();
+        )) {
+            statement.setString(1, namespace);
+            statement.setString(2, name);
+            ResultSet result = statement.executeQuery();
 
-        // get result and add fields that are defined in this table
-        List<Field> existingFields = new ArrayList<>();
-        while (result.next()) {
-            String columnName = result.getString(1);
-            existingFields.add(getFieldForName(columnName));
+            // get result and add fields that are defined in this table
+            List<Field> existingFields = new ArrayList<>();
+            while (result.next()) {
+                String columnName = result.getString(1);
+                Field field = getFieldForName(columnName);
+                existingFields.add(field);
+            }
+
+            if (!isFlex) {
+                existingFields.removeAll(flexOptionalFields());
+            }
+
+            String tableName = String.join(".", namespace, name);
+            String fieldPrefix = tableName + ".";
+            return String.format(
+                "select %s from %s",
+                commaSeparatedNames(existingFields, fieldPrefix, true),
+                tableName
+            );
         }
-
-        String tableName = String.join(".", namespace, name);
-        String fieldPrefix = tableName + ".";
-        return String.format(
-            "select %s from %s", commaSeparatedNames(existingFields, fieldPrefix, true), tableName
-        );
     }
 
     public String generateJoinSql (Table joinTable, String namespace, String fieldName, boolean prefixTableName) {

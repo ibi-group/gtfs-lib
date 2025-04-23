@@ -307,17 +307,19 @@ public class JdbcGtfsExporter {
             } else {
                 result.shapes = export(Table.SHAPES, connection);
             }
+            // Locations and location shapes are exported at the same time. The result will be the same for both.
+            result.locations = exportLocationsAndShapes();
+            result.locationShapes = result.locations;
             result.stops = export(Table.STOPS, connection);
             // Only write stop times for "approved" routes using COPY TO with results of select query
             if (fromEditor) {
                 // Generate filter SQL for trips if exporting a feed/schema that represents an editor snapshot.
                 // The filter clause for stop times requires two joins to reach the routes table and a where filter on
                 // route status.
-                // FIXME Replace with string literal query instead of clause generators
                 result.stopTimes = export(
                     Table.STOP_TIMES,
                     String.join(" ",
-                        Table.STOP_TIMES.generateSelectSql(feedIdToExport, Requirement.OPTIONAL),
+                        Table.STOP_TIMES.generateSelectSql(feedIdToExport, Requirement.OPTIONAL, result.isGTFSFlex()),
                         Table.STOP_TIMES.generateJoinSql(Table.TRIPS, feedIdToExport),
                         Table.TRIPS.generateJoinSql(
                             Table.ROUTES,
@@ -329,7 +331,7 @@ public class JdbcGtfsExporter {
                     )
                 );
             } else {
-                result.stopTimes = export(Table.STOP_TIMES, connection);
+                result.stopTimes = export(result.isGTFSFlex(), Table.STOP_TIMES, connection);
             }
             result.transfers = export(Table.TRANSFERS, connection);
             if (fromEditor) {
@@ -353,9 +355,6 @@ public class JdbcGtfsExporter {
             } else {
                 result.trips = export(Table.TRIPS, connection);
             }
-            // Locations and location shapes are exported at the same time. The result will be the same for both.
-            result.locations = exportLocationsAndShapes();
-            result.locationShapes = result.locations;
 
             exportProprietaryFiles(result);
 
@@ -425,22 +424,53 @@ public class JdbcGtfsExporter {
         LOG.info("Deleted {} empty files in {} ms", emptyTableList.size(), System.currentTimeMillis() - startTime);
     }
 
-    private TableLoadResult export (Table table, Connection connection) {
+    /**
+     * Generate a select statement with all table columns.
+     */
+    private String getExistingFieldsSelectStatement(boolean isFlex, Table table, Connection connection) throws SQLException {
+        String existingFieldsSelect;
+        try {
+            existingFieldsSelect = table.generateSelectAllExistingFieldsSql(isFlex, connection, feedIdToExport);
+        } catch (SQLException e) {
+            LOG.error("Failed to generate select statement for existing fields.");
+            throw new SQLException(e.getCause());
+        }
+        return existingFieldsSelect;
+    }
+
+    /**
+     * Only used by stop_times because it is the only table that has flex and non flex fields. The end result is no
+     * flex specific fields in the export for non flex feeds.
+     */
+    private TableLoadResult export(boolean isFlex, Table table, Connection connection) {
+        if (fromEditor) {
+            // Default behavior for exporting editor snapshot tables is to select only the spec fields.
+            return export(table, table.generateSelectSql(feedIdToExport, Requirement.OPTIONAL, isFlex));
+        } else {
+            try {
+                String existingFieldsSelect = getExistingFieldsSelectStatement(isFlex, table, connection);
+                return export(table, existingFieldsSelect);
+            } catch (SQLException e) {
+                TableLoadResult tableLoadResult = new TableLoadResult();
+                tableLoadResult.fatalException = e.toString();
+                return tableLoadResult;
+            }
+        }
+    }
+
+    private TableLoadResult export(Table table, Connection connection) {
         if (fromEditor) {
             // Default behavior for exporting editor snapshot tables is to select only the spec fields.
             return export(table, table.generateSelectSql(feedIdToExport, Requirement.OPTIONAL));
         } else {
-            String existingFieldsSelect = null;
             try {
-                existingFieldsSelect = table.generateSelectAllExistingFieldsSql(connection, feedIdToExport);
+                String existingFieldsSelect = getExistingFieldsSelectStatement(true, table, connection);
+                return export(table, existingFieldsSelect);
             } catch (SQLException e) {
-                LOG.error("failed to generate select statement for existing fields");
                 TableLoadResult tableLoadResult = new TableLoadResult();
                 tableLoadResult.fatalException = e.toString();
-                e.printStackTrace();
                 return tableLoadResult;
             }
-            return export(table, existingFieldsSelect);
         }
     }
 
@@ -457,6 +487,7 @@ public class JdbcGtfsExporter {
                 // Surround filter SQL in parentheses.
                 filterSql = String.format("(%s)", filterSql);
             }
+
 
             // Create entry for table
             String textFileName = Table.getTableFileNameWithExtension(table.name);
