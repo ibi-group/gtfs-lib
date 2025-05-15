@@ -87,7 +87,7 @@ public class MTCValidator extends FeedValidator {
     }
 
     /**
-     * Checks that the stop code contains primary and secondary prefixes.
+     * Checks that the stop code contains primary and optional secondary prefixes.
      * @param entity The containing GTFS entity (for error reporting purposes).
      * @param stopCode The stop code to check for prefix.
      * @return true if the stop code contains expected prefix or validation is skipped; false otherwise.
