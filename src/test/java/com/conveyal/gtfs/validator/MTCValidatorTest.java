@@ -33,7 +33,6 @@ class MTCValidatorTest {
         assertThat(validator.validateFieldLength(null, url, 30), is(true));
     }
 
-
     @ParameterizedTest
     @MethodSource("createValidateStopCodePrefixCases")
     void validateStopCodePrefix(PrefixTestCase prefixTestCase) {
@@ -75,24 +74,24 @@ class MTCValidatorTest {
                 .withMessage("No prefixes defined, will be valid."),
             new PrefixTestCase()
                 .withStopCode(secondaryPrefixOne + stopCodePrefix)
-                .withSecondaryPrefixes(Collections.singletonList(secondaryPrefixOne))
+                .withSecondaryPrefixes(secondaryPrefixOne)
                 .withValid(true)
                 .withMessage("Match on first and only secondary prefixes."),
             new PrefixTestCase()
                 .withStopCode(secondaryPrefixTwo + stopCodePrefix)
-                .withSecondaryPrefixes(Arrays.asList(secondaryPrefixOne, secondaryPrefixTwo))
+                .withSecondaryPrefixes(secondaryPrefixOne, secondaryPrefixTwo)
                 .withValid(true)
                 .withMessage("Match on second prefix in secondary prefixes."),
             new PrefixTestCase()
                 .withStopCode(stopCodePrefix)
                 .withPrimaryPrefix(primaryPrefix)
-                .withSecondaryPrefixes(Arrays.asList(secondaryPrefixOne, secondaryPrefixTwo))
+                .withSecondaryPrefixes(secondaryPrefixOne, secondaryPrefixTwo)
                 .withMessage("No match on any prefix."),
             new PrefixTestCase()
                 .withStopCode(secondaryPrefixThree + stopCodePrefix)
                 .withPrimaryPrefix(primaryPrefix)
                 .withValid(true)
-                .withSecondaryPrefixes(Arrays.asList(secondaryPrefixOne, secondaryPrefixTwo, secondaryPrefixThree))
+                .withSecondaryPrefixes(secondaryPrefixOne, secondaryPrefixTwo, secondaryPrefixThree)
                 .withMessage("Match on third secondary prefix with primary prefix defined.")
         );
     }
@@ -114,8 +113,8 @@ class MTCValidatorTest {
             return this;
         }
 
-        public PrefixTestCase withSecondaryPrefixes(List<String> secondaryPrefixes) {
-            this.secondaryPrefixes = secondaryPrefixes;
+        public PrefixTestCase withSecondaryPrefixes(String... secondaryPrefixes) {
+            this.secondaryPrefixes = Arrays.asList(secondaryPrefixes);
             return this;
         }
 
