@@ -62,6 +62,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     // This is how you do a multimap in mapdb: https://github.com/jankotek/MapDB/blob/release-1.0/src/test/java/examples/MultiMap.java
     public final NavigableSet<Tuple2<String, Frequency>> frequencies;
     public final Map<String, Route> routes;
+    public final Map<String, StopArea> stop_areas;
     public final Map<String, Stop> stops;
     public final Map<String, Transfer> transfers;
     public final BTreeMap<String, Trip> trips;
@@ -111,7 +112,6 @@ public class GTFSFeed implements Cloneable, Closeable {
     public transient EventBus eventBus;
 
     public final Map<String, Area> areas;
-    public final Map<String, StopArea> stop_areas;
     public final Map<String, FareProduct> fare_products;
     public final Map<String, FareMedia> fare_medias;
     public final Map<String, TimeFrame> time_frames;
@@ -182,7 +182,11 @@ public class GTFSFeed implements Cloneable, Closeable {
         new Pattern.Loader(this).loadTable(zip);
         new Route.Loader(this).loadTable(zip);
         new ShapePoint.Loader(this).loadTable(zip);
+        new StopArea.Loader(this).loadTable(zip);
         new Stop.Loader(this).loadTable(zip);
+        if (!stop_areas.isEmpty()) {
+            Stop.updateStopAreas(stops, stop_areas);
+        }
         new Transfer.Loader(this).loadTable(zip);
         new Trip.Loader(this).loadTable(zip);
         new Frequency.Loader(this).loadTable(zip);
@@ -190,7 +194,6 @@ public class GTFSFeed implements Cloneable, Closeable {
 
         // Fares v2.
         new Area.Loader(this).loadTable(zip);
-        new StopArea.Loader(this).loadTable(zip);
         new TimeFrame.Loader(this).loadTable(zip);
         new Network.Loader(this).loadTable(zip);
         new RouteNetwork.Loader(this).loadTable(zip);
@@ -235,6 +238,10 @@ public class GTFSFeed implements Cloneable, Closeable {
             new Frequency.Writer(this).writeTable(zip);
             new Route.Writer(this).writeTable(zip);
             new Stop.Writer(this).writeTable(zip);
+            if (!stops.isEmpty()) {
+                // Export stop areas.
+                Stop.writeStopAreasToFile(zip, new ArrayList<>(stops.values()));
+            }
             new ShapePoint.Writer(this).writeTable(zip);
             new Transfer.Writer(this).writeTable(zip);
             new Trip.Writer(this).writeTable(zip);
@@ -243,7 +250,6 @@ public class GTFSFeed implements Cloneable, Closeable {
 
             // Fares v2.
             new Area.Writer(this).writeTable(zip);
-            new StopArea.Writer(this).writeTable(zip);
             new TimeFrame.Writer(this).writeTable(zip);
             new Network.Writer(this).writeTable(zip);
             new RouteNetwork.Writer(this).writeTable(zip);
@@ -654,11 +660,11 @@ public class GTFSFeed implements Cloneable, Closeable {
         stop_times = db.getTreeMap("stop_times");
         frequencies = db.getTreeSet("frequencies");
         transfers = db.getTreeMap("transfers");
+        stop_areas = db.getTreeMap("stop_areas");
         stops = db.getTreeMap("stops");
         fares = db.getTreeMap("fares");
         services = db.getTreeMap("services");
         shape_points = db.getTreeMap("shape_points");
-        stop_areas = db.getTreeMap("stop_areas");
         time_frames = db.getTreeMap("time_frames");
         translations = db.getTreeMap("translations");
         attributions = db.getTreeMap("attributions");

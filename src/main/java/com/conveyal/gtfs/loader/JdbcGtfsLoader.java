@@ -4,6 +4,7 @@ import com.conveyal.gtfs.error.NewGTFSError;
 import com.conveyal.gtfs.error.NewGTFSErrorType;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.storage.StorageException;
+import com.conveyal.gtfs.util.CsvReaderUtil;
 import com.csvreader.CsvReader;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
@@ -170,7 +171,6 @@ public class JdbcGtfsLoader {
             result.shapes = load(Table.SHAPES);
             result.patterns = load(Table.PATTERNS); // refs shapes and routes.
             result.stops = load(Table.STOPS);
-            result.stopAreas = load(Table.STOP_AREAS);
             result.fareRules = load(Table.FARE_RULES);
             result.trips = load(Table.TRIPS); // refs routes
             result.transfers = load(Table.TRANSFERS); // refs trips.
@@ -232,7 +232,7 @@ public class JdbcGtfsLoader {
         // FIXME is this extra CSV reader used anymore? Check comment below.
         // First, inspect feed_info.txt to extract the ID and version.
         // We could get this with SQL after loading, but feed_info, feed_id and feed_version are all optional.
-        CsvReader csvReader = Table.FEED_INFO.getCsvReader(zip, errorStorage);
+        CsvReader csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(Table.FEED_INFO, zip, errorStorage);
         String feedId = "", feedVersion = "";
         if (csvReader != null) {
             // feed_info.txt has been found and opened.
@@ -331,7 +331,7 @@ public class JdbcGtfsLoader {
      * @return number of rows that were loaded.
      */
     private int loadInternal(Table table) throws Exception {
-        CsvReader csvReader = table.getCsvReader(zip, errorStorage);
+        CsvReader csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(table, zip, errorStorage);
         if (csvReader == null) {
             LOG.info("File {} not found in gtfs zip file.", Table.getTableFileNameWithExtension(table.name));
             // This GTFS table could not be opened in the zip, even in a subdirectory.
@@ -400,6 +400,7 @@ public class JdbcGtfsLoader {
             int lineNumber = ((int) csvReader.getCurrentRecord()) + 2;
             if (lineNumber % 500_000 == 0) LOG.info("Processed {}", human(lineNumber));
             if (csvReader.getColumnCount() != fields.length) {
+                System.out.println(Arrays.toString(csvReader.getHeaders()));
                 String badValues = String.format("expected=%d; found=%d", fields.length, csvReader.getColumnCount());
                 errorStorage.storeError(NewGTFSError.forLine(table, lineNumber, WRONG_NUMBER_OF_FIELDS, badValues));
                 continue;

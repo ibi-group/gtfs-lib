@@ -345,7 +345,6 @@ public class JdbcGtfsExporter {
             }
 
             result.areas = export(Table.AREAS, connection);
-            result.stopAreas = export(Table.STOP_AREAS, connection);
             result.fareMedias = export(Table.FARE_MEDIAS, connection);
             result.fareProducts = export(Table.FARE_PRODUCTS, connection);
             result.timeFrames = export(Table.TIME_FRAMES, connection);

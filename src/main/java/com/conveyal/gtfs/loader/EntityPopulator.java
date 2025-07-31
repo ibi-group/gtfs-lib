@@ -19,7 +19,6 @@ import com.conveyal.gtfs.model.RouteNetwork;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.ShapePoint;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopArea;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.TimeFrame;
 import com.conveyal.gtfs.model.Trip;
@@ -181,19 +180,20 @@ public interface EntityPopulator<T> {
 
     EntityPopulator<Stop> STOP = (result, columnForName) -> {
         Stop stop           = new Stop();
-        stop.stop_id        = getStringIfPresent(result, "stop_id",        columnForName);
-        stop.stop_code      = getStringIfPresent(result, "stop_code",      columnForName);
-        stop.stop_name      = getStringIfPresent(result, "stop_name",      columnForName);
-        stop.stop_desc      = getStringIfPresent(result, "stop_desc",      columnForName);
-        stop.stop_lat       = getDoubleIfPresent(result, "stop_lat",       columnForName);
-        stop.stop_lon       = getDoubleIfPresent(result, "stop_lon",       columnForName);
-        stop.zone_id        = getStringIfPresent(result, "zone_id",        columnForName);
-        stop.parent_station = getStringIfPresent(result, "parent_station", columnForName);
-        stop.stop_timezone  = getStringIfPresent(result, "stop_timezone",  columnForName);
-        stop.stop_url       = getUrlIfPresent   (result, "stop_url",       columnForName);
-        stop.location_type  = getIntIfPresent   (result, "location_type",  columnForName);
-        stop.wheelchair_boarding = getIntIfPresent(result, "wheelchair_boarding", columnForName);
-        stop.platform_code  = getStringIfPresent(result, "platform_code",  columnForName);
+        stop.stop_id        = getStringIfPresent(result, Stop.STOP_ID_FIELD, columnForName);
+        stop.stop_code      = getStringIfPresent(result, Stop.STOP_CODE_FIELD, columnForName);
+        stop.stop_name      = getStringIfPresent(result, Stop.STOP_NAME_FIELD, columnForName);
+        stop.stop_desc      = getStringIfPresent(result, Stop.STOP_DESC_FIELD, columnForName);
+        stop.stop_lat       = getDoubleIfPresent(result, Stop.STOP_LAT_FIELD, columnForName);
+        stop.stop_lon       = getDoubleIfPresent(result, Stop.STOP_LON_FIELD, columnForName);
+        stop.zone_id        = getStringIfPresent(result, Stop.ZONE_ID_FIELD, columnForName);
+        stop.parent_station = getStringIfPresent(result, Stop.PARENT_STATION_FIELD, columnForName);
+        stop.stop_timezone  = getStringIfPresent(result, Stop.STOP_TIMEZONE_FIELD, columnForName);
+        stop.stop_url       = getUrlIfPresent(result, Stop.STOP_URL_FIELD, columnForName);
+        stop.location_type  = getIntIfPresent(result, Stop.LOCATION_TYPE_FIELD, columnForName);
+        stop.wheelchair_boarding = getIntIfPresent(result, Stop.WHEELCHAIR_BOARDING_FIELD, columnForName);
+        stop.platform_code  = getStringIfPresent(result, Stop.PLATFORM_CODE_FIELD, columnForName);
+        stop.stop_area_ids  = getStringIfPresent(result, Stop.STOP_AREA_IDS_FIELD, columnForName);
         return stop;
     };
 
@@ -244,13 +244,6 @@ public interface EntityPopulator<T> {
         area.area_id = getStringIfPresent(result, Area.AREA_ID_NAME, columnForName);
         area.area_name = getStringIfPresent(result, Area.AREA_NAME_NAME, columnForName);
         return area;
-    };
-
-    EntityPopulator<StopArea> STOP_AREA = (result, columnForName) -> {
-        StopArea stopArea = new StopArea();
-        stopArea.area_id = getStringIfPresent(result, StopArea.AREA_ID_NAME, columnForName);
-        stopArea.stop_id = getStringIfPresent(result, StopArea.STOP_ID_NAME, columnForName);
-        return stopArea;
     };
 
     EntityPopulator<FareMedia> FARE_MEDIA = (result, columnForName) -> {

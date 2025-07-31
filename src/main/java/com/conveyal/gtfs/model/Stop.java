@@ -1,14 +1,33 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.csvreader.CsvReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static com.conveyal.gtfs.util.CsvReaderUtil.hasExpectedNumberOfColumns;
 
 public class Stop extends Entity {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Stop.class);
 
     private static final long serialVersionUID = 464065335273514677L;
     public String stop_id;
@@ -18,13 +37,55 @@ public class Stop extends Entity {
     public double stop_lat;
     public double stop_lon;
     public String zone_id;
-    public URL    stop_url;
-    public int    location_type;
+    public URL stop_url;
+    public int location_type;
     public String parent_station;
     public String stop_timezone;
     public int wheelchair_boarding;
     public String feed_id;
     public String platform_code;
+    public String stop_area_ids;
+
+    public static final String STOP_ID_FIELD = "stop_id";
+    public static final String STOP_CODE_FIELD = "stop_code";
+    public static final String STOP_NAME_FIELD = "stop_name";
+    public static final String STOP_DESC_FIELD = "stop_desc";
+    public static final String STOP_LAT_FIELD = "stop_lat";
+    public static final String STOP_LON_FIELD = "stop_lon";
+    public static final String ZONE_ID_FIELD = "zone_id";
+    public static final String STOP_URL_FIELD = "stop_url";
+    public static final String LOCATION_TYPE_FIELD = "location_type";
+    public static final String PARENT_STATION_FIELD = "parent_station";
+    public static final String STOP_TIMEZONE_FIELD = "stop_timezone";
+    public static final String WHEELCHAIR_BOARDING_FIELD = "wheelchair_boarding";
+    public static final String PLATFORM_CODE_FIELD = "platform_code";
+    public static final String STOP_AREA_IDS_FIELD = "stop_area_ids";
+
+    public static final String STOPS_FILE_NAME = "stops.txt";
+    public static final String AREA_ID_FIELD = "area_id";
+    public static final String STOP_AREAS_FILE_NAME = "stop_areas.txt";
+    public static final int STOP_AREAS_NUMBER_OF_HEADERS = 2;
+    private static final String[] CSV_HEADER_FOR_WRITE = new String[] {
+        STOP_ID_FIELD,
+        STOP_CODE_FIELD,
+        STOP_NAME_FIELD,
+        STOP_DESC_FIELD,
+        STOP_LAT_FIELD,
+        STOP_LON_FIELD,
+        ZONE_ID_FIELD,
+        STOP_URL_FIELD,
+        LOCATION_TYPE_FIELD,
+        PARENT_STATION_FIELD,
+        STOP_TIMEZONE_FIELD,
+        WHEELCHAIR_BOARDING_FIELD,
+        PLATFORM_CODE_FIELD
+    };
+    private static final String CSV_HEADER_FOR_MERGE = String.format(
+        "%s,%s%s",
+        String.join(",", CSV_HEADER_FOR_WRITE),
+        STOP_AREA_IDS_FIELD,
+        System.lineSeparator()
+    );
 
     @Override
     public String getId () {
@@ -52,6 +113,7 @@ public class Stop extends Entity {
         statement.setString(oneBasedIndex++, stop_timezone);
         setIntParameter(statement, oneBasedIndex++, wheelchair_boarding);
         statement.setString(oneBasedIndex++, platform_code);
+        statement.setString(oneBasedIndex, stop_area_ids);
     }
 
     public static class Loader extends Entity.Loader<Stop> {
@@ -69,21 +131,22 @@ public class Stop extends Entity {
         public void loadOneRow() throws IOException {
             Stop s = new Stop();
             s.id = row + 1; // offset line number by 1 to account for 0-based row index
-            s.stop_id   = getStringField("stop_id", true);
-            s.stop_code = getStringField("stop_code", false);
-            s.stop_name = getStringField("stop_name", true);
-            s.stop_desc = getStringField("stop_desc", false);
-            s.stop_lat  = getDoubleField("stop_lat", true, -90D, 90D);
-            s.stop_lon  = getDoubleField("stop_lon", true, -180D, 180D);
-            s.zone_id   = getStringField("zone_id", false);
-            s.stop_url  = getUrlField("stop_url", false);
-            s.location_type  = getIntField("location_type", false, 0, 1);
-            s.parent_station = getStringField("parent_station", false);
-            s.stop_timezone  = getStringField("stop_timezone", false);
-            s.wheelchair_boarding = getIntField("wheelchair_boarding", false, 0, 2);
+            s.stop_id   = getStringField(STOP_ID_FIELD, true);
+            s.stop_code = getStringField(STOP_CODE_FIELD, false);
+            s.stop_name = getStringField(STOP_NAME_FIELD, true);
+            s.stop_desc = getStringField(STOP_DESC_FIELD, false);
+            s.stop_lat  = getDoubleField(STOP_LAT_FIELD, true, -90D, 90D);
+            s.stop_lon  = getDoubleField(STOP_LON_FIELD, true, -180D, 180D);
+            s.zone_id   = getStringField(ZONE_ID_FIELD, false);
+            s.stop_url  = getUrlField(STOP_URL_FIELD, false);
+            s.location_type  = getIntField(LOCATION_TYPE_FIELD, false, 0, 1);
+            s.parent_station = getStringField(PARENT_STATION_FIELD, false);
+            s.stop_timezone  = getStringField(STOP_TIMEZONE_FIELD, false);
+            s.wheelchair_boarding = getIntField(WHEELCHAIR_BOARDING_FIELD, false, 0, 2);
             s.feed = feed;
             s.feed_id = feed.feedId;
-            s.platform_code = getStringField("platform_code", false);
+            s.platform_code = getStringField(PLATFORM_CODE_FIELD, false);
+            s.stop_area_ids = getStringField(STOP_AREA_IDS_FIELD, false);
             /* TODO check ref integrity later, this table self-references via parent_station */
             // Attempting to put a null key or value will cause an NPE in BTreeMap
             if (s.stop_id != null) feed.stops.put(s.stop_id, s);
@@ -98,8 +161,7 @@ public class Stop extends Entity {
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"stop_id", "stop_code", "stop_name", "stop_desc", "stop_lat", "stop_lon", "zone_id",					
-                    "stop_url", "location_type", "parent_station", "stop_timezone", "wheelchair_boarding", "platform_code"});
+            writer.writeRecord(CSV_HEADER_FOR_WRITE);
         }
 
         @Override
@@ -124,5 +186,132 @@ public class Stop extends Entity {
         public Iterator<Stop> iterator() {
             return feed.stops.values().iterator();
         }   	
+    }
+
+    public static void updateStopAreas(Map<String, Stop> stops, Map<String, StopArea> stopAreas) {
+        // Group StopArea IDs by Stop ID
+        Map<String, Set<String>> stopAreasByStopId = new HashMap<>();
+
+        stopAreas.values().forEach(stopArea ->
+            stopAreasByStopId
+                .computeIfAbsent(stopArea.stop_id, id -> new HashSet<>())
+                .add(stopArea.area_id)
+        );
+
+        // Update each Stop with corresponding StopArea IDs
+        stops.values().forEach(stop -> stop.stop_area_ids = Optional.ofNullable(stopAreasByStopId.get(stop.stop_id))
+            .map(areaIds -> String.join(";", areaIds))
+            .orElse(""));
+    }
+
+    public static CsvReader mergeStopAreasIntoStops(
+        CsvReader stopsReader,
+        Map<String, Set<String>> stopAreasGroupedByStopId
+    ) {
+        List<String> rows = new ArrayList<>();
+        try {
+            while (stopsReader.readRecord()) {
+                String stopId = stopsReader.get(STOP_ID_FIELD);
+                String stopAreaIds = Optional.ofNullable(stopAreasGroupedByStopId.get(stopId))
+                    .map(areas -> String.join(";", areas))
+                    .orElse("");
+                rows.add(createRow(stopsReader, stopId, stopAreaIds));
+            }
+            return (rows.isEmpty())
+                ? stopsReader
+                : produceCsvPayload(rows);
+        } catch (Exception e) {
+            LOG.error("Error while merging stops", e);
+            // Any issues, return the original stops reader (minus stop areas).
+            return stopsReader;
+        }
+    }
+
+    private static String createRow(CsvReader stopsReader, String stopId, String stopAreaIds) throws IOException {
+        StringBuilder row = new StringBuilder();
+        row.append(stopId).append(",");
+        row.append(stopsReader.get(STOP_CODE_FIELD)).append(",");
+        row.append(stopsReader.get(STOP_NAME_FIELD)).append(",");
+        row.append(stopsReader.get(STOP_DESC_FIELD)).append(",");
+        row.append(stopsReader.get(STOP_LAT_FIELD)).append(",");
+        row.append(stopsReader.get(STOP_LON_FIELD)).append(",");
+        row.append(stopsReader.get(ZONE_ID_FIELD)).append(",");
+        row.append(stopsReader.get(STOP_URL_FIELD)).append(",");
+        row.append(stopsReader.get(LOCATION_TYPE_FIELD)).append(",");
+        row.append(stopsReader.get(PARENT_STATION_FIELD)).append(",");
+        row.append(stopsReader.get(STOP_TIMEZONE_FIELD)).append(",");
+        row.append(stopsReader.get(WHEELCHAIR_BOARDING_FIELD)).append(",");
+        row.append(stopsReader.get(PLATFORM_CODE_FIELD)).append(",");
+        row.append(stopAreaIds);
+        return row.toString();
+    }
+
+    /**
+     * Convert the multiple stops (with stop areas) back into CSV, with header and return a {@link CsvReader}
+     * representation.
+     */
+    private static CsvReader produceCsvPayload(List<String> rows) {
+        StringBuilder csvContent = new StringBuilder();
+        csvContent.append(CSV_HEADER_FOR_MERGE);
+        rows.forEach(row -> csvContent.append(row).append(System.lineSeparator()));
+        return new CsvReader(new StringReader(csvContent.toString()));
+    }
+
+    /**
+     * Extract the stop areas from file and group by stop id. This is to allow for easier CRUD by the DT UI.
+     */
+    public static Map<String, Set<String>> groupStopAreaIds(CsvReader csvReader, List<String> errors) {
+        Map<String, Set<String>> stopAreasGroupedByStopId = new HashMap<>();
+
+        try {
+            while (csvReader.readRecord()) {
+                if (!hasExpectedNumberOfColumns(csvReader, errors, 2)) {
+                    continue;
+                }
+                String stopAreaId = csvReader.get(AREA_ID_FIELD);
+                String stopId = csvReader.get(STOP_ID_FIELD);
+                stopAreasGroupedByStopId.computeIfAbsent(stopId, k -> new HashSet<>()).add(stopAreaId);
+            }
+            return stopAreasGroupedByStopId;
+        } catch (IOException e) {
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Expand the stop area ids and write to zip file.
+     */
+    public static void writeStopAreasToFile(ZipOutputStream zipOutputStream, List<Stop> stops) throws IOException {
+        // Create entry for table.
+        zipOutputStream.putNextEntry(new ZipEntry(STOP_AREAS_FILE_NAME));
+        // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
+        PrintWriter p = new PrintWriter(zipOutputStream);
+        p.print(packStopAreas(stops));
+        p.flush();
+        zipOutputStream.closeEntry();
+    }
+
+    /**
+     * Expand all stop area ids into a single row for each area id. This is to conform with the GTFS Fares v2 standard.
+     */
+    public static String packStopAreas(List<Stop> stops) {
+        StringBuilder csvContent = new StringBuilder(AREA_ID_FIELD)
+            .append(",")
+            .append(STOP_ID_FIELD)
+            .append(System.lineSeparator());
+
+        stops.stream()
+            .filter(stop -> stop.stop_area_ids != null)
+            .forEach(stop -> {
+                String[] areaIds = stop.stop_area_ids.split(";");
+                for (String areaId : areaIds) {
+                    csvContent
+                        .append(areaId)
+                        .append(",")
+                        .append(stop.stop_id)
+                        .append(System.lineSeparator());
+                }
+            });
+        return csvContent.toString();
     }
 }

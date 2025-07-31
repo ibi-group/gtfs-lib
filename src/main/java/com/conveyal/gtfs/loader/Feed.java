@@ -41,7 +41,6 @@ public class Feed {
     public final TableReader<StopTime>      stopTimes;
     public final TableReader<Pattern>       patterns;
     public final TableReader<Area> areas;
-    public final TableReader<StopArea> stopAreas;
     public final TableReader<FareMedia> fareMedia;
     public final TableReader<FareProduct> fareProducts;
     public final TableReader<TimeFrame> timeFrames;
@@ -71,7 +70,6 @@ public class Feed {
         stopTimes = new JDBCTableReader(Table.STOP_TIMES, dataSource, databaseSchemaPrefix, EntityPopulator.STOP_TIME);
         patterns = new JDBCTableReader(Table.PATTERNS, dataSource, databaseSchemaPrefix, EntityPopulator.PATTERN);
         areas = new JDBCTableReader(Table.AREAS, dataSource, databaseSchemaPrefix, EntityPopulator.AREA);
-        stopAreas = new JDBCTableReader(Table.STOP_AREAS, dataSource, databaseSchemaPrefix, EntityPopulator.STOP_AREA);
         fareMedia = new JDBCTableReader(Table.FARE_MEDIAS, dataSource, databaseSchemaPrefix, EntityPopulator.FARE_MEDIA);
         fareProducts = new JDBCTableReader(Table.FARE_PRODUCTS, dataSource, databaseSchemaPrefix, EntityPopulator.FARE_PRODUCT);
         timeFrames = new JDBCTableReader(Table.TIME_FRAMES, dataSource, databaseSchemaPrefix, EntityPopulator.TIME_FRAME);

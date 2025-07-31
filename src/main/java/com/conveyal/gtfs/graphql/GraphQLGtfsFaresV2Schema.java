@@ -8,7 +8,6 @@ import com.conveyal.gtfs.model.FareProduct;
 import com.conveyal.gtfs.model.FareTransferRule;
 import com.conveyal.gtfs.model.Network;
 import com.conveyal.gtfs.model.RouteNetwork;
-import com.conveyal.gtfs.model.StopArea;
 import com.conveyal.gtfs.model.TimeFrame;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
@@ -23,7 +22,6 @@ import static graphql.schema.GraphQLObjectType.newObject;
 public class GraphQLGtfsFaresV2Schema {
 
     private static final String AREA_TYPE_NAME = "area";
-    private static final String STOP_AREA_TYPE_NAME = "stop_area";
     private static final String TIME_FRAME_TYPE_NAME = "time_frame";
     private static final String NETWORK_TYPE_NAME = "network";
     private static final String ROUTE_NETWORK_TYPE_NAME = "route_network";
@@ -33,13 +31,6 @@ public class GraphQLGtfsFaresV2Schema {
     private static final String FARE_TRANSFER_RULE_TYPE_NAME = "fare_transfer_rule";
 
     private GraphQLGtfsFaresV2Schema() {}
-
-    public static final GraphQLObjectType stopAreaType = newObject().name(STOP_AREA_TYPE_NAME)
-        .description("A GTFS stop area object")
-        .field(MapFetcher.field("id", GraphQLInt))
-        .field(MapFetcher.field(StopArea.AREA_ID_NAME))
-        .field(MapFetcher.field(StopArea.STOP_ID_NAME))
-        .build();
 
     public static final GraphQLObjectType areaType = newObject().name(AREA_TYPE_NAME)
         .description("A GTFS area object")
@@ -123,7 +114,6 @@ public class GraphQLGtfsFaresV2Schema {
             createFieldDefinition(FARE_TRANSFER_RULE_TYPE_NAME, fareTransferRuleType, FareTransferRule.TABLE_NAME),
             createFieldDefinition(NETWORK_TYPE_NAME, networkType, Network.TABLE_NAME),
             createFieldDefinition(ROUTE_NETWORK_TYPE_NAME, routeNetworkType, RouteNetwork.TABLE_NAME),
-            createFieldDefinition(STOP_AREA_TYPE_NAME, stopAreaType, StopArea.TABLE_NAME),
             createFieldDefinition(TIME_FRAME_TYPE_NAME, timeFrameType, TimeFrame.TABLE_NAME)
         );
     }

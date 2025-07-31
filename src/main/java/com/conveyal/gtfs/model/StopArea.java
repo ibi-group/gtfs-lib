@@ -7,6 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Iterator;
 
+/**
+ * This is only included to read the values from file. No stop areas are saved to the database. Instead, they are merged
+ * with the appropriate stop.
+ */
 public class StopArea extends Entity {
 
     private static final long serialVersionUID = -2825890165823575940L;
@@ -23,10 +27,6 @@ public class StopArea extends Entity {
         return createPrimaryKey(area_id, stop_id);
     }
 
-    /**
-     * Sets the parameters for a prepared statement following the parameter order defined in
-     * {@link com.conveyal.gtfs.loader.Table#STOP_AREAS}. JDBC prepared statement parameters use a one-based index.
-     */
     @Override
     public void setStatementParameters(PreparedStatement statement, boolean setDefaultId) throws SQLException {
         int oneBasedIndex = 1;
@@ -35,7 +35,7 @@ public class StopArea extends Entity {
         statement.setString(oneBasedIndex, stop_id);
     }
 
-    public static class Loader extends Entity.Loader<Area> {
+    public static class Loader extends Entity.Loader<StopArea> {
 
         public Loader(GTFSFeed feed) {
             super(feed, TABLE_NAME);
@@ -89,5 +89,3 @@ public class StopArea extends Entity {
         }
     }
 }
-
-
