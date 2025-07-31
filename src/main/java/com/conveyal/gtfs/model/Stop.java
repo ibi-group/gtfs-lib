@@ -188,8 +188,10 @@ public class Stop extends Entity {
         }   	
     }
 
-    public static void updateStopAreas(Map<String, Stop> stops, Map<String, StopArea> stopAreas) {
-        // Group StopArea IDs by Stop ID
+    /**
+     * Merge stop areas into stops when loading from file.
+     */
+    public static void mergeStopAreasIntoStops(Map<String, Stop> stops, Map<String, StopArea> stopAreas) {
         Map<String, Set<String>> stopAreasByStopId = new HashMap<>();
 
         stopAreas.values().forEach(stopArea ->
@@ -198,24 +200,21 @@ public class Stop extends Entity {
                 .add(stopArea.area_id)
         );
 
-        // Update each Stop with corresponding StopArea IDs
-        stops.values().forEach(stop -> stop.stop_area_ids = Optional.ofNullable(stopAreasByStopId.get(stop.stop_id))
-            .map(areaIds -> String.join(";", areaIds))
-            .orElse(""));
+        stops.values().forEach(stop -> stop.stop_area_ids = getStopAreaIds(stopAreasByStopId, stop.stop_id));
     }
 
+    /**
+     * Merge stop areas into stops when loading into DB.
+     */
     public static CsvReader mergeStopAreasIntoStops(
         CsvReader stopsReader,
-        Map<String, Set<String>> stopAreasGroupedByStopId
+        Map<String, Set<String>> stopAreasByStopId
     ) {
         List<String> rows = new ArrayList<>();
         try {
             while (stopsReader.readRecord()) {
                 String stopId = stopsReader.get(STOP_ID_FIELD);
-                String stopAreaIds = Optional.ofNullable(stopAreasGroupedByStopId.get(stopId))
-                    .map(areas -> String.join(";", areas))
-                    .orElse("");
-                rows.add(createRow(stopsReader, stopId, stopAreaIds));
+                rows.add(createRow(stopsReader, stopId, getStopAreaIds(stopAreasByStopId, stopId)));
             }
             return (rows.isEmpty())
                 ? stopsReader
@@ -227,23 +226,34 @@ public class Stop extends Entity {
         }
     }
 
+    /**
+     * Get all stop areas matching provided stop id.
+     */
+    private static String getStopAreaIds(Map<String, Set<String>> stopAreasByStopId, String stopId) {
+        return Optional.ofNullable(stopAreasByStopId.get(stopId))
+            .map(areas -> String.join(";", areas))
+            .orElse("");
+    }
+
+    /**
+     * Create a CSV row of original stop fields plus the stop area ids.
+     */
     private static String createRow(CsvReader stopsReader, String stopId, String stopAreaIds) throws IOException {
-        StringBuilder row = new StringBuilder();
-        row.append(stopId).append(",");
-        row.append(stopsReader.get(STOP_CODE_FIELD)).append(",");
-        row.append(stopsReader.get(STOP_NAME_FIELD)).append(",");
-        row.append(stopsReader.get(STOP_DESC_FIELD)).append(",");
-        row.append(stopsReader.get(STOP_LAT_FIELD)).append(",");
-        row.append(stopsReader.get(STOP_LON_FIELD)).append(",");
-        row.append(stopsReader.get(ZONE_ID_FIELD)).append(",");
-        row.append(stopsReader.get(STOP_URL_FIELD)).append(",");
-        row.append(stopsReader.get(LOCATION_TYPE_FIELD)).append(",");
-        row.append(stopsReader.get(PARENT_STATION_FIELD)).append(",");
-        row.append(stopsReader.get(STOP_TIMEZONE_FIELD)).append(",");
-        row.append(stopsReader.get(WHEELCHAIR_BOARDING_FIELD)).append(",");
-        row.append(stopsReader.get(PLATFORM_CODE_FIELD)).append(",");
-        row.append(stopAreaIds);
-        return row.toString();
+        return
+            stopId + "," +
+            stopsReader.get(STOP_CODE_FIELD) + "," +
+            stopsReader.get(STOP_NAME_FIELD) + "," +
+            stopsReader.get(STOP_DESC_FIELD) + "," +
+            stopsReader.get(STOP_LAT_FIELD) + "," +
+            stopsReader.get(STOP_LON_FIELD) + "," +
+            stopsReader.get(ZONE_ID_FIELD) + "," +
+            stopsReader.get(STOP_URL_FIELD) + "," +
+            stopsReader.get(LOCATION_TYPE_FIELD) + "," +
+            stopsReader.get(PARENT_STATION_FIELD) + "," +
+            stopsReader.get(STOP_TIMEZONE_FIELD) + "," +
+            stopsReader.get(WHEELCHAIR_BOARDING_FIELD) + "," +
+            stopsReader.get(PLATFORM_CODE_FIELD) + "," +
+            stopAreaIds;
     }
 
     /**

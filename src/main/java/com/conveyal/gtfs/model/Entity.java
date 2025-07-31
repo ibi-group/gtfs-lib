@@ -278,7 +278,7 @@ public abstract class Entity implements Serializable {
         protected abstract void loadOneRow() throws IOException;
 
         /**
-         * The main entry point into an Entity.Loader. Interprets each row of a CSV file within a zip file as a sinle
+         * The main entry point into an Entity.Loader. Interprets each row of a CSV file within a zip file as a single
          * GTFS entity, and loads them into a table.
          *
          * @param zip the zip file from which to read a table

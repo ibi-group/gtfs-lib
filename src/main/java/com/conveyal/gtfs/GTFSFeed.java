@@ -185,7 +185,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         new StopArea.Loader(this).loadTable(zip);
         new Stop.Loader(this).loadTable(zip);
         if (!stop_areas.isEmpty()) {
-            Stop.updateStopAreas(stops, stop_areas);
+            Stop.mergeStopAreasIntoStops(stops, stop_areas);
         }
         new Transfer.Loader(this).loadTable(zip);
         new Trip.Loader(this).loadTable(zip);
