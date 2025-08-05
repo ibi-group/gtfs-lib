@@ -206,6 +206,14 @@ public class GTFSGraphQLTest {
         });
     }
 
+    /** Tests that the stops of a feed can be fetched. */
+    @Test
+    void canFetchStopsFaresV2() {
+        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedStopsFaresV2.txt"), matchesSnapshot());
+        });
+    }
+
     /** Tests that stops with children can be fetched. */
     @Test
     void canFetchStopWithChildren() {
@@ -252,13 +260,6 @@ public class GTFSGraphQLTest {
     void canFetchAreas() {
         assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
             MatcherAssert.assertThat(queryFaresV2GraphQL("feedAreas.txt"), matchesSnapshot());
-        });
-    }
-
-    @Test
-    void canFetchStopAreas() {
-        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
-            MatcherAssert.assertThat(queryFaresV2GraphQL("feedStopAreas.txt"), matchesSnapshot());
         });
     }
 
