@@ -234,7 +234,7 @@ public class Stop extends Entity {
      */
     private static String getStopAreaIds(Map<String, Set<String>> stopAreasByStopId, String stopId) {
         return Optional.ofNullable(stopAreasByStopId.get(stopId))
-            .map(areas -> String.join(";", areas))
+            .map(areas -> String.join(STOP_AREAS_SEPARATOR, areas))
             .orElse("");
     }
 
