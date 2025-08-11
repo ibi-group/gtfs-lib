@@ -29,7 +29,6 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.Paths;
 import java.sql.JDBCType;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -38,7 +37,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -48,6 +46,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import static com.conveyal.gtfs.util.CsvReaderUtil.getEntryFromZipFile;
 
 /**
  * An abstract base class that represents a row in a GTFS table, e.g. a Stop, Trip, or Agency.
@@ -320,25 +320,6 @@ public abstract class Entity implements Serializable {
         }
 
     }
-
-    /**
-     * Get entry and allow for the file being in a subdirectory.
-     */
-    public static ZipEntry getEntryFromZipFile(ZipFile zipFile, String fileName) {
-        ZipEntry entry = zipFile.getEntry(fileName);
-        if (entry == null) {
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            // check if table is contained within sub-directory
-            while (entries.hasMoreElements()) {
-                ZipEntry e = entries.nextElement();
-                if (Paths.get(e.getName()).getFileName().toString().equals(fileName)) {
-                    entry = e;
-                }
-            }
-        }
-        return entry;
-    }
-
 
     /**
      * An output stream that cannot be closed. CSVWriters try to close their output streams when they are garbage-collected,

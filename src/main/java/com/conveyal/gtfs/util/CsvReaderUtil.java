@@ -9,10 +9,10 @@ import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -23,7 +23,6 @@ import java.util.zip.ZipFile;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.TABLE_IN_SUBDIRECTORY;
 import static com.conveyal.gtfs.loader.Table.getTableFileNameWithExtension;
-import static com.conveyal.gtfs.model.Entity.getEntryFromZipFile;
 import static com.conveyal.gtfs.model.Stop.STOPS_FILE_NAME;
 
 public class CsvReaderUtil {
@@ -43,24 +42,16 @@ public class CsvReaderUtil {
     public static CsvReader getCsvReaderAccordingToFileName(Table table, ZipFile zipFile, SQLErrorStorage sqlErrorStorage) {
         final String tableFileName = getTableFileNameWithExtension(table.name);
         ZipEntry entry = zipFile.getEntry(tableFileName);
+
         if (entry == null) {
-            // Table was not found, check if it is in a subdirectory.
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry e = entries.nextElement();
-                // Include the file separator prefix to force the complete file name to be considered.
-                // This prevents stop_areas.txt from being loaded instead of areas.txt.
-                if (e.getName().endsWith(String.format("%s%s", File.separator, tableFileName))) {
-                    entry = e;
-                    if (sqlErrorStorage != null) {
-                        sqlErrorStorage.storeError(NewGTFSError.forTable(table, TABLE_IN_SUBDIRECTORY));
-                    }
-                    break;
-                }
+            entry = getEntryFromZipFile(zipFile, tableFileName);
+
+            if (entry != null && sqlErrorStorage != null) {
+                sqlErrorStorage.storeError(NewGTFSError.forTable(table, TABLE_IN_SUBDIRECTORY));
             }
-        }
-        if (entry == null) {
-            return null;
+            if (entry == null) {
+                return null;
+            }
         }
 
         try {
@@ -190,5 +181,24 @@ public class CsvReaderUtil {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Get entry and allow for the file being in a subdirectory.
+     */
+    public static ZipEntry getEntryFromZipFile(ZipFile zipFile, String fileName) {
+        ZipEntry entry = zipFile.getEntry(fileName);
+        if (entry == null) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            // check if table is contained within subdirectory
+            while (entries.hasMoreElements()) {
+                ZipEntry e = entries.nextElement();
+                if (Paths.get(e.getName()).getFileName().toString().equals(fileName)) {
+                    entry = e;
+                    break;
+                }
+            }
+        }
+        return entry;
     }
 }
