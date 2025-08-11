@@ -23,6 +23,7 @@ import java.util.zip.ZipFile;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.TABLE_IN_SUBDIRECTORY;
 import static com.conveyal.gtfs.loader.Table.getTableFileNameWithExtension;
+import static com.conveyal.gtfs.model.Entity.getEntryFromZipFile;
 import static com.conveyal.gtfs.model.Stop.STOPS_FILE_NAME;
 
 public class CsvReaderUtil {
@@ -111,7 +112,7 @@ public class CsvReaderUtil {
         ZipEntry stopsEntry,
         List<String> errors
     ) throws IOException {
-        ZipEntry stopAreasEntry = zipFile.getEntry(Stop.STOP_AREAS_FILE_NAME);
+        ZipEntry stopAreasEntry = getEntryFromZipFile(zipFile, Stop.STOP_AREAS_FILE_NAME);
         CsvReader stopsReader = getCsvReaderFromFile(zipFile, stopsEntry);
         if (stopAreasEntry != null) {
             stopsReader.setSkipEmptyRecords(false);

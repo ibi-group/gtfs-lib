@@ -287,23 +287,18 @@ public abstract class Entity implements Serializable {
             String fileName = tableName + ".txt";
             ZipEntry entry = zip.getEntry(fileName);
             if (entry == null) {
-                Enumeration<? extends ZipEntry> entries = zip.entries();
-                // check if table is contained within sub-directory
-                while (entries.hasMoreElements()) {
-                    ZipEntry e = entries.nextElement();
-                    if (Paths.get(e.getName()).getFileName().toString().equals(fileName)) {
-                        entry = e;
-                        feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(fileName, "")));
-                    }
-                }
-                /* This GTFS table did not exist in the zip. */
-                if (this.isRequired()) {
-                    feed.errors.add(new MissingTableError(tableName));
+                entry = getEntryFromZipFile(zip, fileName);
+                if (entry != null) {
+                    feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(fileName, "")));
                 } else {
-                    LOG.info("Table {} was missing but it is not required.", tableName);
+                    /* This GTFS table did not exist in the zip. */
+                    if (this.isRequired()) {
+                        feed.errors.add(new MissingTableError(tableName));
+                    } else {
+                        LOG.info("Table {} was missing but it is not required.", tableName);
+                    }
+                    return;
                 }
-
-                if (entry == null) return;
             }
             LOG.info("Loading GTFS table {} from {}", tableName, entry);
             List<String> errors = new ArrayList<>();
@@ -325,6 +320,25 @@ public abstract class Entity implements Serializable {
         }
 
     }
+
+    /**
+     * Get entry and allow for the file being in a subdirectory.
+     */
+    public static ZipEntry getEntryFromZipFile(ZipFile zipFile, String fileName) {
+        ZipEntry entry = zipFile.getEntry(fileName);
+        if (entry == null) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            // check if table is contained within sub-directory
+            while (entries.hasMoreElements()) {
+                ZipEntry e = entries.nextElement();
+                if (Paths.get(e.getName()).getFileName().toString().equals(fileName)) {
+                    entry = e;
+                }
+            }
+        }
+        return entry;
+    }
+
 
     /**
      * An output stream that cannot be closed. CSVWriters try to close their output streams when they are garbage-collected,
