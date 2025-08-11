@@ -87,6 +87,9 @@ public class Stop extends Entity {
         System.lineSeparator()
     );
 
+    // "§" (section sign, U+00A7)
+    private static final String STOP_AREAS_SEPARATOR = "§";
+
     @Override
     public String getId () {
         return stop_id;
@@ -313,7 +316,7 @@ public class Stop extends Entity {
         stops.stream()
             .filter(stop -> stop.stop_area_ids != null)
             .forEach(stop -> {
-                String[] areaIds = stop.stop_area_ids.split(";");
+                String[] areaIds = stop.stop_area_ids.split(STOP_AREAS_SEPARATOR);
                 for (String areaId : areaIds) {
                     csvContent
                         .append(areaId)
