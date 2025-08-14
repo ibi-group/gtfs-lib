@@ -340,4 +340,19 @@ public class TestUtils {
     public static void assertThatSqlQueryYieldsZeroRows(DataSource dataSource, String sql) throws SQLException {
         assertThatSqlQueryYieldsRowCount(dataSource, sql, 0);
     }
+
+    /**
+     * Helper function to export a GTFS from the database to a temporary zip file.
+     */
+    public static File exportGtfs(
+        String namespace,
+        DataSource dataSource,
+        boolean fromEditor,
+        boolean publishProprietaryFiles
+    ) throws IOException {
+        File tempFile = File.createTempFile("snapshot", ".zip");
+        GTFS.export(namespace, tempFile.getAbsolutePath(), dataSource, fromEditor, publishProprietaryFiles);
+        return tempFile;
+    }
+
 }

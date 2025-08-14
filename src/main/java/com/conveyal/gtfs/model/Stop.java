@@ -1,10 +1,16 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.loader.EntityPopulator;
+import com.conveyal.gtfs.loader.JDBCTableReader;
+import com.conveyal.gtfs.loader.Table;
+import com.conveyal.gtfs.loader.TableLoadResult;
+import com.conveyal.gtfs.loader.TableReader;
 import com.csvreader.CsvReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
@@ -20,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -326,5 +334,49 @@ public class Stop extends Entity {
                 }
             });
         return csvContent.toString();
+    }
+
+    /**
+     * Export stop areas.
+     */
+    public static TableLoadResult exportStopAreas(
+        DataSource dataSource,
+        String feedIdToExport,
+        ZipOutputStream zipOutputStream
+    ) {
+        long startTime = System.currentTimeMillis();
+        TableLoadResult tableLoadResult = new TableLoadResult();
+
+        try {
+            final TableReader<Stop> stopIterator = new JDBCTableReader<>(
+                Table.STOPS,
+                dataSource,
+                feedIdToExport + ".",
+                EntityPopulator.STOP
+            );
+
+            List<Stop> stopsWithStopAreas = StreamSupport
+                .stream(stopIterator.spliterator(), false)
+                .filter(stop -> stop.stop_area_ids != null && !stop.stop_area_ids.isEmpty())
+                .collect(Collectors.toList());
+
+            if (stopsWithStopAreas.isEmpty()) {
+                LOG.warn("No stop areas exported as none have been defined!");
+                return tableLoadResult;
+            }
+
+            // Only export if data is available.
+            tableLoadResult.rowCount = stopsWithStopAreas.size();
+            writeStopAreasToFile(zipOutputStream, stopsWithStopAreas);
+
+            long duration = System.currentTimeMillis() - startTime;
+            LOG.info("Copied {} {} in {} ms.", tableLoadResult.rowCount, STOP_AREAS_FILE_NAME, duration);
+
+        } catch (IOException e) {
+            tableLoadResult.fatalException = e.toString();
+            LOG.error("Exception while exporting {}", STOP_AREAS_FILE_NAME, e);
+        }
+
+        return tableLoadResult;
     }
 }

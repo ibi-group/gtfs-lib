@@ -17,6 +17,7 @@ public class RouteNetwork extends Entity {
     public static final String TABLE_NAME = "route_networks";
     public static final String NETWORK_ID_NAME = "network_id";
     public static final String ROUTE_ID_NAME = "route_id";
+    public static final String ROUTE_NETWORK_FILE_NAME = "route_networks.txt";
 
     @Override
     public String getId () {

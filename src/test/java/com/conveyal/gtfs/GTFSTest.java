@@ -44,6 +44,7 @@ import java.util.Iterator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.conveyal.gtfs.TestUtils.exportGtfs;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -978,15 +979,6 @@ public class GTFSTest {
     private void assertThatSnapshotIsErrorFree(SnapshotResult snapshotResult) {
         assertThatLoadIsErrorFree(snapshotResult);
         assertThat(snapshotResult.scheduleExceptions.fatalException, is(nullValue()));
-    }
-
-    /**
-     * Helper function to export a GTFS from the database to a temporary zip file.
-     */
-    private File exportGtfs(String namespace, DataSource dataSource, boolean fromEditor, boolean publishProprietaryFiles) throws IOException {
-        File tempFile = File.createTempFile("snapshot", ".zip");
-        GTFS.export(namespace, tempFile.getAbsolutePath(), dataSource, fromEditor, publishProprietaryFiles);
-        return tempFile;
     }
 
     private class ValuePair {
