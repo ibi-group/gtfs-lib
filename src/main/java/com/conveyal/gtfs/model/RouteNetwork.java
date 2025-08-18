@@ -7,6 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Iterator;
 
+/**
+ * This is only included to read the values from file. No route networks are saved directly to the database. Instead,
+ * they are merged with the appropriate route (and then saved to the database).
+ */
 public class RouteNetwork extends Entity {
 
     private static final long serialVersionUID = -4739475958736362940L;
@@ -18,6 +22,7 @@ public class RouteNetwork extends Entity {
     public static final String NETWORK_ID_NAME = "network_id";
     public static final String ROUTE_ID_NAME = "route_id";
     public static final String ROUTE_NETWORK_FILE_NAME = "route_networks.txt";
+    public static final int ROUTE_NETWORK_NUMBER_OF_HEADERS = 2;
 
     @Override
     public String getId () {

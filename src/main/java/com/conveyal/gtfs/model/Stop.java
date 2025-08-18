@@ -100,9 +100,6 @@ public class Stop extends Entity {
         String.join(",", CSV_FIELDS)
     );
 
-    // "§" (section sign, U+00A7)
-    private static final String STOP_AREAS_SEPARATOR = "§";
-
     @Override
     public String getId () {
         return stop_id;
@@ -247,7 +244,7 @@ public class Stop extends Entity {
      */
     private static String getStopAreaIds(Map<String, Set<String>> stopAreasByStopId, String stopId) {
         return Optional.ofNullable(stopAreasByStopId.get(stopId))
-            .map(areas -> String.join(STOP_AREAS_SEPARATOR, areas))
+            .map(areas -> String.join(SEPARATOR, areas))
             .orElse("");
     }
 
@@ -309,7 +306,7 @@ public class Stop extends Entity {
             .stream()
             .filter(stop -> stop.stop_area_ids != null)
             .forEach(stop -> {
-                String[] areaIds = stop.stop_area_ids.split(STOP_AREAS_SEPARATOR);
+                String[] areaIds = stop.stop_area_ids.split(SEPARATOR);
                 for (String areaId : areaIds) {
                     csvContent.append(createRow(areaId, stop.stop_id));
                 }

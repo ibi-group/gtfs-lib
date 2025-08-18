@@ -37,9 +37,47 @@ public class Route extends Entity { // implements Entity.Factory<Route>
     public int continuous_pickup = INT_MISSING;
     public int continuous_drop_off = INT_MISSING;
     public String network_id;
+    public String route_network_ids;
+
+    public static final String ROUTE_ID_FIELD = "route_id";
+    public static final String AGENCY_ID_FIELD = "agency_id";
+    public static final String ROUTE_SHORT_NAME_FIELD = "route_short_name";
+    public static final String ROUTE_LONG_NAME_FIELD = "route_long_name";
+    public static final String ROUTE_DESC_FIELD = "route_desc";
+    public static final String ROUTE_TYPE_FIELD = "route_type";
+    public static final String ROUTE_URL_FIELD = "route_url";
+    public static final String ROUTE_COLOR_FIELD = "route_color";
+    public static final String ROUTE_SORT_ORDER_FIELD = "route_sort_order";
+    public static final String ROUTE_TEXT_COLOR_FIELD = "route_text_color";
+    public static final String ROUTE_BRANDING_URL_FIELD = "route_branding_url";
+    public static final String CONTINUOUS_PICKUP_FIELD = "continuous_pickup";
+    public static final String CONTINUOUS_DROP_OFF_FIELD = "continuous_drop_off";
+    public static final String NETWORK_ID_FIELD = "network_id";
+    public static final String ROUTE_NETWORK_IDS_FIELD = "route_network_ids";
 
     public static final String TABLE_NAME = "routes";
-
+    private static final String[] CSV_HEADER_FOR_WRITE = new String[] {
+        ROUTE_ID_FIELD,
+        AGENCY_ID_FIELD,
+        ROUTE_SHORT_NAME_FIELD,
+        ROUTE_LONG_NAME_FIELD,
+        ROUTE_DESC_FIELD,
+        ROUTE_TYPE_FIELD,
+        ROUTE_URL_FIELD,
+        ROUTE_COLOR_FIELD,
+        ROUTE_SORT_ORDER_FIELD,
+        ROUTE_TEXT_COLOR_FIELD,
+        ROUTE_BRANDING_URL_FIELD,
+        CONTINUOUS_PICKUP_FIELD,
+        CONTINUOUS_DROP_OFF_FIELD,
+        NETWORK_ID_FIELD
+    };
+    private static final String CSV_HEADER_FOR_MERGE = String.format(
+        "%s,%s%s",
+        String.join(",", CSV_HEADER_FOR_WRITE),
+        ROUTE_NETWORK_IDS_FIELD,
+        System.lineSeparator()
+    );
     @Override
     public String getId () {
         return route_id;

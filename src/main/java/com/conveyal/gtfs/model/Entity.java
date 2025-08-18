@@ -66,6 +66,9 @@ public abstract class Entity implements Serializable {
     /* The feed from which this entity was loaded. TODO is this really necessary in every entity? */
     transient GTFSFeed feed;
 
+    // "§" (section sign, U+00A7)
+    public static final String SEPARATOR = "§";
+
     /**
      * This method should be overridden by each Entity subtype to return the proper key field for that subtype.
      * @return a key that according to the GTFS spec should uniquely identify this entity, either alone or together
