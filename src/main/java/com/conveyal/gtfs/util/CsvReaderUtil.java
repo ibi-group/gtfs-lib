@@ -88,7 +88,7 @@ public class CsvReaderUtil {
     ) throws IOException {
         CsvReader csvReader;
         if (tableFileName.equals(STOPS_FILE_NAME)) {
-            csvReader = processStops(zipFile, entry, errors);
+            csvReader = getCsvReaderFromStopsFile(zipFile, entry, errors);
         } else {
             csvReader = getCsvReaderFromFile(zipFile, entry);
         }
@@ -98,7 +98,7 @@ public class CsvReaderUtil {
     /**
      * If the feed contains stop areas extract and merge with stops. If not, just return stops.
      */
-    private static CsvReader processStops(
+    private static CsvReader getCsvReaderFromStopsFile(
         ZipFile zipFile,
         ZipEntry stopsEntry,
         List<String> errors
@@ -114,7 +114,7 @@ public class CsvReaderUtil {
                 Map<String, Set<String>> stopAreas = Stop.groupStopAreaIds(stopAreasReader, errors);
                 if (!stopAreas.isEmpty()) {
                     // Merge stop areas into stops.
-                    return Stop.mergeStopAreasIntoStops(stopsReader, stopAreas);
+                    return Stop.getCsvReaderForStopsWithStopAreas(stopsReader, stopAreas);
                 }
             }
         }

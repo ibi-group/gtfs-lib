@@ -283,7 +283,7 @@ public abstract class Entity implements Serializable {
          *
          * @param zip the zip file from which to read a table
          */
-        public void loadTable(ZipFile zip) throws IOException {
+        public void loadTable(ZipFile zip) throws IOException{
             String fileName = tableName + ".txt";
             ZipEntry entry = zip.getEntry(fileName);
             if (entry == null) {
@@ -302,20 +302,26 @@ public abstract class Entity implements Serializable {
             }
             LOG.info("Loading GTFS table {} from {}", tableName, entry);
             List<String> errors = new ArrayList<>();
-            this.reader = CsvReaderUtil.getCsvReaderAccordingToFileName(tableName, zip, entry, errors);
-            boolean hasHeaders = reader.readHeaders();
-            if (!hasHeaders) {
-                feed.errors.add(new EmptyTableError(tableName));
-            }
-            while (reader.readRecord()) {
-                // reader.getCurrentRecord() is zero-based and does not include the header line, keep our own row count
-                if (++row % 500000 == 0) {
-                    LOG.info("Record number {}", human(row));
+            try {
+                reader = CsvReaderUtil.getCsvReaderAccordingToFileName(tableName, zip, entry, errors);
+                boolean hasHeaders = reader.readHeaders();
+                if (!hasHeaders) {
+                    feed.errors.add(new EmptyTableError(tableName));
                 }
-                loadOneRow(); // Call subclass method to produce an entity from the current row.
-            }
-            if (row == 0) {
-                feed.errors.add(new EmptyTableError(tableName));
+                while (reader.readRecord()) {
+                    // reader.getCurrentRecord() is zero-based and does not include the header line, keep our own row count
+                    if (++row % 500000 == 0) {
+                        LOG.info("Record number {}", human(row));
+                    }
+                    loadOneRow(); // Call subclass method to produce an entity from the current row.
+                }
+                if (row == 0) {
+                    feed.errors.add(new EmptyTableError(tableName));
+                }
+            } finally {
+                if (reader != null) {
+                    reader.close();
+                }
             }
         }
 

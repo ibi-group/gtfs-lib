@@ -400,7 +400,6 @@ public class JdbcGtfsLoader {
             int lineNumber = ((int) csvReader.getCurrentRecord()) + 2;
             if (lineNumber % 500_000 == 0) LOG.info("Processed {}", human(lineNumber));
             if (csvReader.getColumnCount() != fields.length) {
-                System.out.println(Arrays.toString(csvReader.getHeaders()));
                 String badValues = String.format("expected=%d; found=%d", fields.length, csvReader.getColumnCount());
                 errorStorage.storeError(NewGTFSError.forLine(table, lineNumber, WRONG_NUMBER_OF_FIELDS, badValues));
                 continue;
