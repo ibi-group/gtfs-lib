@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringReader;
 import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -74,7 +73,7 @@ public class Stop extends Entity {
     public static final String AREA_ID_FIELD = "area_id";
     public static final String STOP_AREAS_FILE_NAME = "stop_areas.txt";
     public static final int STOP_AREAS_NUMBER_OF_HEADERS = 2;
-    private static final String[] CSV_FIELDS_FOR_MERGE = new String[] {
+    private static final String[] CSV_FIELDS = new String[] {
         STOP_ID_FIELD,
         STOP_CODE_FIELD,
         STOP_NAME_FIELD,
@@ -91,8 +90,13 @@ public class Stop extends Entity {
     };
     private static final String CSV_HEADER_FOR_MERGE = String.format(
         "%s,%s%n",
-        String.join(",", CSV_FIELDS_FOR_MERGE),
+        String.join(",", CSV_FIELDS),
         STOP_AREA_IDS_FIELD
+    );
+
+    private static final String CSV_HEADER_FOR_EXPORT = String.format(
+        "%s",
+        String.join(",", CSV_FIELDS)
     );
 
     // "§" (section sign, U+00A7)
@@ -172,7 +176,7 @@ public class Stop extends Entity {
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(CSV_FIELDS_FOR_MERGE);
+            writer.writeRecord(CSV_FIELDS);
         }
 
         @Override
@@ -229,7 +233,7 @@ public class Stop extends Entity {
             }
             return (rows.isEmpty())
                 ? stopsReader
-                : produceCsvPayload(rows);
+                : produceCsvPayload(rows, CSV_HEADER_FOR_MERGE);
         } catch (Exception e) {
             LOG.error("Error while merging stops", e);
             // Any issues, return the original stops reader (minus stop areas).
@@ -250,23 +254,11 @@ public class Stop extends Entity {
      * Create a CSV row of original stop fields plus the stop area ids.
      */
     private static String createRow(CsvReader stopsReader, String stopAreaIds) throws IOException {
-        String[] fields = new String[CSV_FIELDS_FOR_MERGE.length];
-        for (int i = 0; i < CSV_FIELDS_FOR_MERGE.length; i++) {
-            fields[i] = stopsReader.get(CSV_FIELDS_FOR_MERGE[i]);
+        String[] fields = new String[CSV_FIELDS.length];
+        for (int i = 0; i < CSV_FIELDS.length; i++) {
+            fields[i] = stopsReader.get(CSV_FIELDS[i]);
         }
         return String.join(",", fields) + "," + stopAreaIds;
-    }
-
-
-    /**
-     * Convert the multiple stops (with stop areas) back into CSV, with header and return a {@link CsvReader}
-     * representation.
-     */
-    private static CsvReader produceCsvPayload(List<String> rows) {
-        StringBuilder csvContent = new StringBuilder();
-        csvContent.append(CSV_HEADER_FOR_MERGE);
-        rows.forEach(row -> csvContent.append(row).append(System.lineSeparator()));
-        return new CsvReader(new StringReader(csvContent.toString()));
     }
 
     /**
@@ -304,6 +296,19 @@ public class Stop extends Entity {
     }
 
     /**
+     * Write stops to zip file.
+     */
+    public static void writeStopsToFile(ZipOutputStream zipOutputStream, List<Stop> stops) throws IOException {
+        // Create entry for table.
+        zipOutputStream.putNextEntry(new ZipEntry(STOPS_FILE_NAME));
+        // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
+        PrintWriter p = new PrintWriter(zipOutputStream);
+        p.print(packStops(stops));
+        p.flush();
+        zipOutputStream.closeEntry();
+    }
+
+    /**
      * Expand all stop area ids into a single row for each area id. This is to conform with the GTFS Fares v2 standard.
      */
     public static String packStopAreas(List<Stop> stops) {
@@ -321,10 +326,60 @@ public class Stop extends Entity {
     }
 
     /**
-     * Create a row from the column values provided.
+     * Expand all stops into a single row.
      */
-    private static String createRow(String... columnValues) {
-        return String.join(",", columnValues) + System.lineSeparator();
+    public static String packStops(List<Stop> stops) {
+        StringBuilder csvContent = new StringBuilder(createRow(CSV_HEADER_FOR_EXPORT));
+        stops.forEach(stop -> csvContent.append(createRow(
+            computeCsvValue(stop.stop_id),
+            computeCsvValue(stop.stop_code),
+            computeCsvValue(stop.stop_name),
+            computeCsvValue(stop.stop_desc),
+            computeCsvValue(stop.stop_lat),
+            computeCsvValue(stop.stop_lon),
+            computeCsvValue(stop.zone_id),
+            computeCsvValue(stop.stop_url),
+            computeCsvValue(stop.location_type),
+            computeCsvValue(stop.parent_station),
+            computeCsvValue(stop.stop_timezone),
+            computeCsvValue(stop.wheelchair_boarding),
+            computeCsvValue(stop.platform_code)
+        )));
+        return csvContent.toString();
+    }
+
+    /**
+     * Export stops, minus stop areas.
+     */
+    public static TableLoadResult exportStops(
+        DataSource dataSource,
+        String feedIdToExport,
+        ZipOutputStream zipOutputStream
+    ) {
+        long startTime = System.currentTimeMillis();
+        TableLoadResult tableLoadResult = new TableLoadResult();
+
+        try {
+            final TableReader<Stop> stopIterator = new JDBCTableReader<>(
+                Table.STOPS,
+                dataSource,
+                feedIdToExport + ".",
+                EntityPopulator.STOP
+            );
+
+            List<Stop> stops = new ArrayList<>();
+            stopIterator.forEach(stops::add);
+            writeStopsToFile(zipOutputStream, stops);
+
+            long duration = System.currentTimeMillis() - startTime;
+            LOG.info("Copied {} {} in {} ms.", tableLoadResult.rowCount, STOPS_FILE_NAME, duration);
+
+        } catch (IOException e) {
+            tableLoadResult.fatalException = e.toString();
+            LOG.error("Exception while exporting {}", STOPS_FILE_NAME, e);
+        }
+
+        return tableLoadResult;
     }
 
     /**

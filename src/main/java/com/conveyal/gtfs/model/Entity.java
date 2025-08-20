@@ -26,6 +26,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -510,5 +511,39 @@ public abstract class Entity implements Serializable {
             .stream(fields)
             .map(id -> id == null ? "empty" : id.toString())
             .collect(Collectors.joining("_"));
+    }
+
+    /**
+     * Convert multiple rows of data back into CSV, with header and return a {@link CsvReader}
+     * representation.
+     */
+    protected static CsvReader produceCsvPayload(List<String> rows, String header) {
+        StringBuilder csvContent = new StringBuilder();
+        csvContent.append(header);
+        rows.forEach(row -> csvContent.append(row).append(System.lineSeparator()));
+        return new CsvReader(new StringReader(csvContent.toString()));
+    }
+
+    /**
+     * Create a row from the column values provided.
+     */
+    protected static String createRow(String... columnValues) {
+        return String.join(",", columnValues) + System.lineSeparator();
+    }
+
+    protected static String computeCsvValue(String value) {
+        return value != null ? value : "";
+    }
+
+    protected static String computeCsvValue(URL value) {
+        return value != null ? value.toString() : "";
+    }
+
+    protected static String computeCsvValue(int value) {
+        return value != INT_MISSING ? String.valueOf(value) : "";
+    }
+
+    protected static String computeCsvValue(double value) {
+        return value != DOUBLE_MISSING ? String.valueOf(value) : "";
     }
 }

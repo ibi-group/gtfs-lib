@@ -11,10 +11,6 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
@@ -176,6 +172,7 @@ public class GTFSFaresV2Test {
                 .of(STOP_AREAS_FILE_NAME, ROUTE_NETWORK_FILE_NAME)
                 .forEach(fileName -> Assert.assertNotNull(gtfsZipFile.getEntry(fileName)));
         } catch (IOException e) {
+            Assert.assertShouldNeverHappen();
             LOG.error("An error occurred while attempting to test exporting of mandatory files.", e);
         } finally {
             TestUtils.dropDB(testDBName);
