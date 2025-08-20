@@ -284,7 +284,7 @@ public abstract class Entity implements Serializable {
          *
          * @param zip the zip file from which to read a table
          */
-        public void loadTable(ZipFile zip) throws IOException{
+        public void loadTable(ZipFile zip) throws IOException {
             String fileName = tableName + ".txt";
             ZipEntry entry = zip.getEntry(fileName);
             if (entry == null) {
