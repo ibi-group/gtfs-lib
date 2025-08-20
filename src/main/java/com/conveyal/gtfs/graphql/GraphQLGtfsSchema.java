@@ -291,6 +291,7 @@ public class GraphQLGtfsSchema {
         // FIXME ^^
         .field(RowCountFetcher.field("trip_count", "trips", "route_id"))
         .field(RowCountFetcher.field("pattern_count", "patterns", "route_id"))
+        .field(MapFetcher.field("route_network_ids"))
         .field(newFieldDefinition()
             .name("stops")
             .description("GTFS stop entities that the route serves")

@@ -229,7 +229,8 @@ public class Table {
         new ShortField("status", EDITOR, 2),
         new ShortField("continuous_pickup", OPTIONAL,3),
         new ShortField("continuous_drop_off", OPTIONAL,3),
-        new StringField("network_id",  OPTIONAL)
+        new StringField("network_id",  OPTIONAL),
+        new StringField("route_network_ids",  OPTIONAL)
     ).addPrimaryKey()
     .addPrimaryKeyNames("route_id");
 
@@ -376,15 +377,6 @@ public class Table {
     )
     .restrictDelete()
     .addPrimaryKeyNames(Network.NETWORK_ID_NAME);
-
-    public static final Table ROUTE_NETWORKS = new Table(RouteNetwork.TABLE_NAME, RouteNetwork.class, OPTIONAL,
-        new StringField(RouteNetwork.ROUTE_ID_NAME, REQUIRED).isReferenceTo(ROUTES),
-        new StringField(RouteNetwork.NETWORK_ID_NAME, REQUIRED).isReferenceTo(NETWORKS)
-    )
-    // Although within the context of this table the route id is unique, the unique value e.g. route_id:1 has already
-    // been flagged as unique when the route table is loaded!
-    .keyFieldIsNotUnique()
-    .addPrimaryKeyNames(RouteNetwork.ROUTE_ID_NAME);
 
     // GTFS reference: https://developers.google.com/transit/gtfs/reference#fare_rulestxt
     public static final Table FARE_RULES = new Table("fare_rules", FareRule.class, OPTIONAL,
@@ -545,7 +537,6 @@ public class Table {
         FARE_TRANSFER_RULES,
         FEED_INFO,
         ROUTES,
-        ROUTE_NETWORKS,
         PATTERNS,
         SHAPES,
         STOPS,

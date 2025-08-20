@@ -2,14 +2,43 @@ package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.error.NoAgencyInFeedError;
+import com.conveyal.gtfs.loader.EntityPopulator;
+import com.conveyal.gtfs.loader.JDBCTableReader;
+import com.conveyal.gtfs.loader.Table;
+import com.conveyal.gtfs.loader.TableLoadResult;
+import com.conveyal.gtfs.loader.TableReader;
+import com.csvreader.CsvReader;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
-public class Route extends Entity { // implements Entity.Factory<Route>
+import static com.conveyal.gtfs.model.RouteNetwork.ROUTE_NETWORK_FILE_NAME;
+import static com.conveyal.gtfs.util.CsvReaderUtil.hasExpectedNumberOfColumns;
+
+public class Route extends Entity {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Route.class);
 
     private static final long serialVersionUID = -819444896818029068L;
 
@@ -56,7 +85,7 @@ public class Route extends Entity { // implements Entity.Factory<Route>
     public static final String ROUTE_NETWORK_IDS_FIELD = "route_network_ids";
 
     public static final String TABLE_NAME = "routes";
-    private static final String[] CSV_HEADER_FOR_WRITE = new String[] {
+    private static final String[] CSV_FIELDS_FOR_MERGE = new String[] {
         ROUTE_ID_FIELD,
         AGENCY_ID_FIELD,
         ROUTE_SHORT_NAME_FIELD,
@@ -74,7 +103,7 @@ public class Route extends Entity { // implements Entity.Factory<Route>
     };
     private static final String CSV_HEADER_FOR_MERGE = String.format(
         "%s,%s%s",
-        String.join(",", CSV_HEADER_FOR_WRITE),
+        String.join(",", CSV_FIELDS_FOR_MERGE),
         ROUTE_NETWORK_IDS_FIELD,
         System.lineSeparator()
     );
@@ -110,6 +139,8 @@ public class Route extends Entity { // implements Entity.Factory<Route>
         setIntParameter(statement, oneBasedIndex++, continuous_pickup);
         setIntParameter(statement, oneBasedIndex++, continuous_drop_off);
         statement.setString(oneBasedIndex, network_id);
+        statement.setString(oneBasedIndex, route_network_ids);
+
     }
 
     public static class Loader extends Entity.Loader<Route> {
@@ -153,6 +184,7 @@ public class Route extends Entity { // implements Entity.Factory<Route>
             r.continuous_pickup = getIntField("continuous_pickup", false, 0, 3, INT_MISSING);
             r.continuous_drop_off = getIntField("continuous_drop_off", false, 0, 3, INT_MISSING);
             r.network_id = getStringField("network_id", false);
+            r.route_network_ids = getStringField(ROUTE_NETWORK_IDS_FIELD, false);
             r.feed = feed;
             r.feed_id = feed.feedId;
             // Attempting to put a null key or value will cause an NPE in BTreeMap
@@ -209,4 +241,177 @@ public class Route extends Entity { // implements Entity.Factory<Route>
             return feed.routes.values().iterator();
         }   	
     }
+
+    /**
+     * Merge route networks into routes when loading from file.
+     */
+    public static void getCsvReaderForRoutesWithRouteNetworks(Map<String, Route> routes, Map<String, RouteNetwork> routeNetworks) {
+        Map<String, Set<String>> routeNetworksByRouteId = new HashMap<>();
+
+        routeNetworks.values().forEach(routeNetwork ->
+            routeNetworksByRouteId
+                .computeIfAbsent(routeNetwork.route_id, id -> new HashSet<>())
+                .add(routeNetwork.network_id)
+        );
+
+        routes.values().forEach(route -> route.route_network_ids = getRouteNetworkIds(routeNetworksByRouteId, route.route_id));
+    }
+
+    /**
+     * Merge route networks into routes when loading into DB.
+     */
+    public static CsvReader getCsvReaderForRoutesWithRouteNetworks(
+        CsvReader routesReader,
+        Map<String, Set<String>> routeNetworksByRouteId
+    ) {
+        List<String> rows = new ArrayList<>();
+        try {
+            while (routesReader.readRecord()) {
+                String routeId = routesReader.get(ROUTE_ID_FIELD);
+                rows.add(createRow(routesReader, getRouteNetworkIds(routeNetworksByRouteId, routeId)));
+            }
+            return (rows.isEmpty())
+                ? routesReader
+                : produceCsvPayload(rows);
+        } catch (Exception e) {
+            LOG.error("Error while merging routes", e);
+            // Any issues, return the original routes reader (minus route networks).
+            return routesReader;
+        }
+    }
+
+    /**
+     * Get all route networks matching provided route id.
+     */
+    public static String getRouteNetworkIds(Map<String, Set<String>> routeNetworksByRouteId, String routeId) {
+        return Optional.ofNullable(routeNetworksByRouteId.get(routeId))
+            .map(routeNetworkIds -> String.join(SEPARATOR, routeNetworkIds))
+            .orElse("");
+    }
+
+    /**
+     * Create a CSV row of original route fields plus the route networks ids.
+     */
+    private static String createRow(CsvReader routesReader, String routeNetworkIds) throws IOException {
+        String[] fields = new String[CSV_FIELDS_FOR_MERGE.length];
+        for (int i = 0; i < CSV_FIELDS_FOR_MERGE.length; i++) {
+            fields[i] = routesReader.get(CSV_FIELDS_FOR_MERGE[i]);
+        }
+        return String.join(",", fields) + "," + routeNetworkIds;
+    }
+
+
+    /**
+     * Convert the multiple routes (with route networks) back into CSV, with header and return a {@link CsvReader}
+     * representation.
+     */
+    private static CsvReader produceCsvPayload(List<String> rows) {
+        StringBuilder csvContent = new StringBuilder();
+        csvContent.append(CSV_HEADER_FOR_MERGE);
+        rows.forEach(row -> csvContent.append(row).append(System.lineSeparator()));
+        return new CsvReader(new StringReader(csvContent.toString()));
+    }
+
+    /**
+     * Extract the route networks from file and group by route id. This is to allow for easier CRUD by the DT UI.
+     */
+    public static Map<String, Set<String>> groupRouteNetworkIds(CsvReader csvReader, List<String> errors) {
+        Map<String, Set<String>> routeNetworksGroupedByRouteId = new HashMap<>();
+
+        try {
+            while (csvReader.readRecord()) {
+                if (!hasExpectedNumberOfColumns(csvReader, errors, 2)) {
+                    continue;
+                }
+                String routeNetworkId = csvReader.get(RouteNetwork.NETWORK_ID_FIELD);
+                String routeId = csvReader.get(RouteNetwork.ROUTE_ID_FIELD);
+                routeNetworksGroupedByRouteId.computeIfAbsent(routeId, k -> new HashSet<>()).add(routeNetworkId);
+            }
+            return routeNetworksGroupedByRouteId;
+        } catch (IOException e) {
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Expand the route network ids and write to zip file.
+     */
+    public static void writeRouteNetworksToFile(ZipOutputStream zipOutputStream, List<Route> routes) throws IOException {
+        // Create entry for table.
+        zipOutputStream.putNextEntry(new ZipEntry(ROUTE_NETWORK_FILE_NAME));
+        // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
+        PrintWriter p = new PrintWriter(zipOutputStream);
+        p.print(packRouteNetworks(routes));
+        p.flush();
+        zipOutputStream.closeEntry();
+    }
+
+    /**
+     * Expand all route network ids into a single row for each route id. This is to conform with the GTFS Fares v2 standard.
+     */
+    public static String packRouteNetworks(List<Route> routes) {
+        StringBuilder csvContent = new StringBuilder(createRow(RouteNetwork.ROUTE_ID_FIELD, RouteNetwork.NETWORK_ID_FIELD));
+        routes
+            .stream()
+            .filter(route -> route.route_network_ids != null)
+            .forEach(route -> {
+                String[] routeNetworkIds = route.route_network_ids.split(SEPARATOR);
+                for (String routeNetworkId : routeNetworkIds) {
+                    csvContent.append(createRow(routeNetworkId, route.route_id));
+                }
+            });
+        return csvContent.toString();
+    }
+
+    /**
+     * Create a row from the column values provided.
+     */
+    private static String createRow(String... columnValues) {
+        return String.join(",", columnValues) + System.lineSeparator();
+    }
+
+    /**
+     * Export route networks.
+     */
+    public static TableLoadResult exportRouteNetworks(
+        DataSource dataSource,
+        String feedIdToExport,
+        ZipOutputStream zipOutputStream
+    ) {
+        long startTime = System.currentTimeMillis();
+        TableLoadResult tableLoadResult = new TableLoadResult();
+
+        try {
+            final TableReader<Route> routeIterator = new JDBCTableReader<>(
+                Table.ROUTES,
+                dataSource,
+                feedIdToExport + ".",
+                EntityPopulator.ROUTE
+            );
+
+            List<Route> routesWithRouteNetworks = StreamSupport
+                .stream(routeIterator.spliterator(), false)
+                .filter(route -> !StringUtils.isBlank(route.route_network_ids))
+                .collect(Collectors.toList());
+
+            // Only export if data is available.
+            if (routesWithRouteNetworks.isEmpty()) {
+                LOG.warn("No route networks exported as none have been defined!");
+                return tableLoadResult;
+            }
+
+            tableLoadResult.rowCount = routesWithRouteNetworks.size();
+            writeRouteNetworksToFile(zipOutputStream, routesWithRouteNetworks);
+
+            long duration = System.currentTimeMillis() - startTime;
+            LOG.info("Copied {} {} in {} ms.", tableLoadResult.rowCount, ROUTE_NETWORK_FILE_NAME, duration);
+
+        } catch (IOException e) {
+            tableLoadResult.fatalException = e.toString();
+            LOG.error("Exception while exporting {}", ROUTE_NETWORK_FILE_NAME, e);
+        }
+
+        return tableLoadResult;
+    }
+
 }

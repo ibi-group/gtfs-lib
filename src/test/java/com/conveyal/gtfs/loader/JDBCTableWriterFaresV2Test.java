@@ -104,11 +104,6 @@ public class JDBCTableWriterFaresV2Test {
                 getEntityFromFile("fare_transfer_rules_updated.json")
             ),
             Arguments.of(
-                Table.ROUTE_NETWORKS,
-                getEntityFromFile("route_networks.json"),
-                getEntityFromFile("route_networks_updated.json")
-            ),
-            Arguments.of(
                 Table.NETWORKS,
                 getEntityFromFile("networks.json"),
                 getEntityFromFile("networks_updated.json")

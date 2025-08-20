@@ -180,7 +180,11 @@ public class GTFSFeed implements Cloneable, Closeable {
         fares = null; // free memory
 
         new Pattern.Loader(this).loadTable(zip);
+        new RouteNetwork.Loader(this).loadTable(zip);
         new Route.Loader(this).loadTable(zip);
+        if (!route_networks.isEmpty()) {
+            Route.getCsvReaderForRoutesWithRouteNetworks(routes, route_networks);
+        }
         new ShapePoint.Loader(this).loadTable(zip);
         new StopArea.Loader(this).loadTable(zip);
         new Stop.Loader(this).loadTable(zip);
@@ -196,7 +200,6 @@ public class GTFSFeed implements Cloneable, Closeable {
         new Area.Loader(this).loadTable(zip);
         new TimeFrame.Loader(this).loadTable(zip);
         new Network.Loader(this).loadTable(zip);
-        new RouteNetwork.Loader(this).loadTable(zip);
         new FareMedia.Loader(this).loadTable(zip);
         new FareProduct.Loader(this).loadTable(zip);
         new FareLegRule.Loader(this).loadTable(zip);
@@ -237,6 +240,10 @@ public class GTFSFeed implements Cloneable, Closeable {
             new FareRule.Writer(this).writeTable(zip);
             new Frequency.Writer(this).writeTable(zip);
             new Route.Writer(this).writeTable(zip);
+            if (!routes.isEmpty()) {
+                // Export route networks.
+                Route.writeRouteNetworksToFile(zip, new ArrayList<>(routes.values()));
+            }
             new Stop.Writer(this).writeTable(zip);
             if (!stops.isEmpty()) {
                 // Export stop areas.

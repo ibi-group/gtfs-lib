@@ -24,7 +24,6 @@ public class GraphQLGtfsFaresV2Schema {
     private static final String AREA_TYPE_NAME = "area";
     private static final String TIME_FRAME_TYPE_NAME = "time_frame";
     private static final String NETWORK_TYPE_NAME = "network";
-    private static final String ROUTE_NETWORK_TYPE_NAME = "route_network";
     private static final String FARE_MEDIA_TYPE_NAME = "fare_media";
     private static final String FARE_PRODUCT_TYPE_NAME = "fare_product";
     private static final String FARE_LEG_RULE_TYPE_NAME = "fare_leg_rule";
@@ -53,13 +52,6 @@ public class GraphQLGtfsFaresV2Schema {
         .field(MapFetcher.field("id", GraphQLInt))
         .field(MapFetcher.field(Network.NETWORK_ID_NAME))
         .field(MapFetcher.field(Network.NETWORK_NAME_NAME))
-        .build();
-
-    public static final GraphQLObjectType routeNetworkType = newObject().name(ROUTE_NETWORK_TYPE_NAME)
-        .description("A GTFS route network object")
-        .field(MapFetcher.field("id", GraphQLInt))
-        .field(MapFetcher.field(RouteNetwork.NETWORK_ID_NAME))
-        .field(MapFetcher.field(RouteNetwork.ROUTE_ID_NAME))
         .build();
 
     public static final GraphQLObjectType fareMediaType = newObject().name(FARE_MEDIA_TYPE_NAME)
@@ -113,7 +105,6 @@ public class GraphQLGtfsFaresV2Schema {
             createFieldDefinition(FARE_PRODUCT_TYPE_NAME, fareProductType, FareProduct.TABLE_NAME),
             createFieldDefinition(FARE_TRANSFER_RULE_TYPE_NAME, fareTransferRuleType, FareTransferRule.TABLE_NAME),
             createFieldDefinition(NETWORK_TYPE_NAME, networkType, Network.TABLE_NAME),
-            createFieldDefinition(ROUTE_NETWORK_TYPE_NAME, routeNetworkType, RouteNetwork.TABLE_NAME),
             createFieldDefinition(TIME_FRAME_TYPE_NAME, timeFrameType, TimeFrame.TABLE_NAME)
         );
     }
