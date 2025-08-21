@@ -244,12 +244,12 @@ public class GTFSFeed implements Cloneable, Closeable {
             new Route.Writer(this).writeTable(zip);
             if (!routes.isEmpty()) {
                 // Export route networks.
-                Route.writeEntityToFile(zip, new ArrayList<>(routes.values()), ROUTE_NETWORK_FILE_NAME);
+                Entity.writeEntityToFile(zip, new ArrayList<>(routes.values()), ROUTE_NETWORK_FILE_NAME);
             }
             new Stop.Writer(this).writeTable(zip);
             if (!stops.isEmpty()) {
                 // Export stop areas.
-                Stop.writeEntityToFile(zip, new ArrayList<>(stops.values()), Stop.STOP_AREAS_FILE_NAME);
+                Entity.writeEntityToFile(zip, new ArrayList<>(stops.values()), Stop.STOP_AREAS_FILE_NAME);
             }
             new ShapePoint.Writer(this).writeTable(zip);
             new Transfer.Writer(this).writeTable(zip);

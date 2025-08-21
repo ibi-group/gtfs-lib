@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -25,11 +24,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static com.conveyal.gtfs.util.CsvReaderUtil.hasExpectedNumberOfColumns;
@@ -213,7 +210,7 @@ public class Stop extends Entity {
                 .add(stopArea.area_id)
         );
 
-        stops.values().forEach(stop -> stop.stop_area_ids = getStopAreaIds(stopAreasByStopId, stop.stop_id));
+        stops.values().forEach(stop -> stop.stop_area_ids = getChildIdsMatchingParentId(stopAreasByStopId, stop.stop_id));
     }
 
     /**
@@ -227,7 +224,7 @@ public class Stop extends Entity {
         try {
             while (stopsReader.readRecord()) {
                 String stopId = stopsReader.get(STOP_ID_FIELD);
-                rows.add(createRow(stopsReader, getStopAreaIds(stopAreasByStopId, stopId)));
+                rows.add(createRow(stopsReader, getChildIdsMatchingParentId(stopAreasByStopId, stopId), CSV_FIELDS));
             }
             return (rows.isEmpty())
                 ? stopsReader
@@ -237,26 +234,6 @@ public class Stop extends Entity {
             // Any issues, return the original stops reader (minus stop areas).
             return stopsReader;
         }
-    }
-
-    /**
-     * Get all stop areas matching provided stop id.
-     */
-    public static String getStopAreaIds(Map<String, Set<String>> stopAreasByStopId, String stopId) {
-        return Optional.ofNullable(stopAreasByStopId.get(stopId))
-            .map(areas -> String.join(SEPARATOR, areas))
-            .orElse("");
-    }
-
-    /**
-     * Create a CSV row of original stop fields plus the stop area ids.
-     */
-    private static String createRow(CsvReader stopsReader, String stopAreaIds) throws IOException {
-        String[] fields = new String[CSV_FIELDS.length];
-        for (int i = 0; i < CSV_FIELDS.length; i++) {
-            fields[i] = stopsReader.get(CSV_FIELDS[i]);
-        }
-        return String.format("%s,%s%n", String.join(",", fields), stopAreaIds);
     }
 
     /**
@@ -278,23 +255,6 @@ public class Stop extends Entity {
         } catch (IOException e) {
             return Collections.emptyMap();
         }
-    }
-
-    /**
-     * Write stops or stop areas to zip file.
-     */
-    public static void writeEntityToFile(ZipOutputStream zipOutputStream, List<Stop> stops, String fileName) throws IOException {
-        // Create entry for table.
-        zipOutputStream.putNextEntry(new ZipEntry(fileName));
-        // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
-        PrintWriter p = new PrintWriter(zipOutputStream);
-        if (fileName.equals(STOPS_FILE_NAME)) {
-            p.print(packStops(stops));
-        } else {
-            p.print(packStopAreas(stops));
-        }
-        p.flush();
-        zipOutputStream.closeEntry();
     }
 
     /**

@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.net.MalformedURLException;
@@ -42,12 +43,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static com.conveyal.gtfs.model.Route.ROUTE_FILE_NAME;
+import static com.conveyal.gtfs.model.Route.packRouteNetworks;
+import static com.conveyal.gtfs.model.Route.packRoutes;
+import static com.conveyal.gtfs.model.RouteNetwork.ROUTE_NETWORK_FILE_NAME;
+import static com.conveyal.gtfs.model.Stop.STOPS_FILE_NAME;
+import static com.conveyal.gtfs.model.Stop.STOP_AREAS_FILE_NAME;
+import static com.conveyal.gtfs.model.Stop.packStopAreas;
+import static com.conveyal.gtfs.model.Stop.packStops;
 import static com.conveyal.gtfs.util.CsvReaderUtil.getEntryFromZipFile;
 
 /**
@@ -534,6 +544,17 @@ public abstract class Entity implements Serializable {
         return String.join(",", columnValues) + System.lineSeparator();
     }
 
+    /**
+     * Create a CSV row from original fields plus grouped (stop areas or route network) ids.
+     */
+    protected static String createRow(CsvReader stopsReader, String ids, String[] csvFields) throws IOException {
+        String[] fields = new String[csvFields.length];
+        for (int i = 0; i < csvFields.length; i++) {
+            fields[i] = stopsReader.get(csvFields[i]);
+        }
+        return String.format("%s,%s%n", String.join(",", fields), ids);
+    }
+
     protected static String computeCsvValue(String value) {
         return value != null ? value : "";
     }
@@ -548,5 +569,40 @@ public abstract class Entity implements Serializable {
 
     protected static String computeCsvValue(double value) {
         return value != DOUBLE_MISSING ? String.valueOf(value) : "";
+    }
+
+    /**
+     * Write routes or route networks to zip file.
+     */
+    public static <T> void writeEntityToFile(ZipOutputStream zipOutputStream, List<T> entities, String fileName) throws IOException {
+        // Create entry for table.
+        zipOutputStream.putNextEntry(new ZipEntry(fileName));
+        // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
+        PrintWriter p = new PrintWriter(zipOutputStream);
+        switch (fileName) {
+            case STOPS_FILE_NAME:
+                p.print(packStops((List<Stop>) entities));
+                break;
+            case STOP_AREAS_FILE_NAME:
+                p.print(packStopAreas((List<Stop>) entities));
+                break;
+            case ROUTE_FILE_NAME:
+                p.print(packRoutes((List<Route>) entities));
+                break;
+            case ROUTE_NETWORK_FILE_NAME:
+                p.print(packRouteNetworks((List<Route>) entities));
+                break;
+        }
+        p.flush();
+        zipOutputStream.closeEntry();
+    }
+
+    /**
+     * Get all child ids matching provided parent id.
+     */
+    protected static String getChildIdsMatchingParentId(Map<String, Set<String>> groupedChildIds, String parentId) {
+        return Optional.ofNullable(groupedChildIds.get(parentId))
+            .map(id -> String.join(SEPARATOR, id))
+            .orElse("");
     }
 }

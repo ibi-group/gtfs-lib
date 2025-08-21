@@ -8,13 +8,13 @@ import com.conveyal.gtfs.loader.Table;
 import com.conveyal.gtfs.loader.TableLoadResult;
 import com.conveyal.gtfs.loader.TableReader;
 import com.csvreader.CsvReader;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -25,11 +25,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static com.conveyal.gtfs.model.RouteNetwork.ROUTE_NETWORK_FILE_NAME;
@@ -248,7 +246,7 @@ public class Route extends Entity {
                 .add(routeNetwork.network_id)
         );
 
-        routes.values().forEach(route -> route.route_network_ids = getRouteNetworkIds(routeNetworksByRouteId, route.route_id));
+        routes.values().forEach(route -> route.route_network_ids = getChildIdsMatchingParentId(routeNetworksByRouteId, route.route_id));
     }
 
     /**
@@ -262,7 +260,7 @@ public class Route extends Entity {
         try {
             while (routesReader.readRecord()) {
                 String routeId = routesReader.get(ROUTE_ID_FIELD);
-                rows.add(createRow(routesReader, getRouteNetworkIds(routeNetworksByRouteId, routeId)));
+                rows.add(createRow(routesReader, getChildIdsMatchingParentId(routeNetworksByRouteId, routeId), CSV_FIELDS));
             }
             return (rows.isEmpty())
                 ? routesReader
@@ -272,15 +270,6 @@ public class Route extends Entity {
             // Any issues, return the original routes reader (minus route networks).
             return routesReader;
         }
-    }
-
-    /**
-     * Get all route networks matching provided route id.
-     */
-    public static String getRouteNetworkIds(Map<String, Set<String>> routeNetworksByRouteId, String routeId) {
-        return Optional.ofNullable(routeNetworksByRouteId.get(routeId))
-            .map(routeNetworkIds -> String.join(SEPARATOR, routeNetworkIds))
-            .orElse("");
     }
 
     /**
@@ -351,8 +340,7 @@ public class Route extends Entity {
                 EntityPopulator.ROUTE
             );
 
-            List<Route> routes = new ArrayList<>();
-            routeIterator.forEach(routes::add);
+            List<Route> routes = Lists.newArrayList(routeIterator);
             writeEntityToFile(zipOutputStream, routes, ROUTE_FILE_NAME);
 
             long duration = System.currentTimeMillis() - startTime;
@@ -364,23 +352,6 @@ public class Route extends Entity {
         }
 
         return tableLoadResult;
-    }
-
-    /**
-     * Write routes or route networks to zip file.
-     */
-    public static void writeEntityToFile(ZipOutputStream zipOutputStream, List<Route> routes, String fileName) throws IOException {
-        // Create entry for table.
-        zipOutputStream.putNextEntry(new ZipEntry(fileName));
-        // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
-        PrintWriter p = new PrintWriter(zipOutputStream);
-        if (fileName.equalsIgnoreCase(ROUTE_FILE_NAME)) {
-            p.print(packRoutes(routes));
-        } else {
-            p.print(packRouteNetworks(routes));
-        }
-        p.flush();
-        zipOutputStream.closeEntry();
     }
 
     /**
