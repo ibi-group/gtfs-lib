@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringReader;
 import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -84,8 +83,11 @@ public class Route extends Entity {
     public static final String NETWORK_ID_FIELD = "network_id";
     public static final String ROUTE_NETWORK_IDS_FIELD = "route_network_ids";
 
+    public static final String ROUTE_FILE_NAME = "routes.txt";
+
     public static final String TABLE_NAME = "routes";
-    private static final String[] CSV_FIELDS_FOR_MERGE = new String[] {
+
+    private static final String[] CSV_FIELDS = new String[] {
         ROUTE_ID_FIELD,
         AGENCY_ID_FIELD,
         ROUTE_SHORT_NAME_FIELD,
@@ -101,12 +103,18 @@ public class Route extends Entity {
         CONTINUOUS_DROP_OFF_FIELD,
         NETWORK_ID_FIELD
     };
+
     private static final String CSV_HEADER_FOR_MERGE = String.format(
-        "%s,%s%s",
-        String.join(",", CSV_FIELDS_FOR_MERGE),
-        ROUTE_NETWORK_IDS_FIELD,
-        System.lineSeparator()
+        "%s,%s%n",
+        String.join(",", CSV_FIELDS),
+        ROUTE_NETWORK_IDS_FIELD
     );
+
+    private static final String CSV_HEADER_FOR_EXPORT = String.format(
+        "%s",
+        String.join(",", CSV_FIELDS)
+    );
+
     @Override
     public String getId () {
         return route_id;
@@ -138,7 +146,7 @@ public class Route extends Entity {
         setIntParameter(statement, oneBasedIndex++, 0);
         setIntParameter(statement, oneBasedIndex++, continuous_pickup);
         setIntParameter(statement, oneBasedIndex++, continuous_drop_off);
-        statement.setString(oneBasedIndex, network_id);
+        statement.setString(oneBasedIndex++, network_id);
         statement.setString(oneBasedIndex, route_network_ids);
 
     }
@@ -272,7 +280,7 @@ public class Route extends Entity {
             }
             return (rows.isEmpty())
                 ? routesReader
-                : produceCsvPayload(rows);
+                : produceCsvPayload(rows, CSV_HEADER_FOR_MERGE);
         } catch (Exception e) {
             LOG.error("Error while merging routes", e);
             // Any issues, return the original routes reader (minus route networks).
@@ -293,23 +301,11 @@ public class Route extends Entity {
      * Create a CSV row of original route fields plus the route networks ids.
      */
     private static String createRow(CsvReader routesReader, String routeNetworkIds) throws IOException {
-        String[] fields = new String[CSV_FIELDS_FOR_MERGE.length];
-        for (int i = 0; i < CSV_FIELDS_FOR_MERGE.length; i++) {
-            fields[i] = routesReader.get(CSV_FIELDS_FOR_MERGE[i]);
+        String[] fields = new String[CSV_FIELDS.length];
+        for (int i = 0; i < CSV_FIELDS.length; i++) {
+            fields[i] = routesReader.get(CSV_FIELDS[i]);
         }
         return String.join(",", fields) + "," + routeNetworkIds;
-    }
-
-
-    /**
-     * Convert the multiple routes (with route networks) back into CSV, with header and return a {@link CsvReader}
-     * representation.
-     */
-    private static CsvReader produceCsvPayload(List<String> rows) {
-        StringBuilder csvContent = new StringBuilder();
-        csvContent.append(CSV_HEADER_FOR_MERGE);
-        rows.forEach(row -> csvContent.append(row).append(System.lineSeparator()));
-        return new CsvReader(new StringReader(csvContent.toString()));
     }
 
     /**
@@ -364,10 +360,74 @@ public class Route extends Entity {
     }
 
     /**
-     * Create a row from the column values provided.
+     * Export routes, minus route networks.
      */
-    private static String createRow(String... columnValues) {
-        return String.join(",", columnValues) + System.lineSeparator();
+    public static TableLoadResult exportRoutes(
+        DataSource dataSource,
+        String feedIdToExport,
+        ZipOutputStream zipOutputStream
+    ) {
+        long startTime = System.currentTimeMillis();
+        TableLoadResult tableLoadResult = new TableLoadResult();
+
+        try {
+            final TableReader<Route> routeIterator = new JDBCTableReader<>(
+                Table.ROUTES,
+                dataSource,
+                feedIdToExport + ".",
+                EntityPopulator.ROUTE
+            );
+
+            List<Route> routes = new ArrayList<>();
+            routeIterator.forEach(routes::add);
+            writeRoutesToFile(zipOutputStream, routes);
+
+            long duration = System.currentTimeMillis() - startTime;
+            LOG.info("Copied {} {} in {} ms.", tableLoadResult.rowCount, ROUTE_FILE_NAME, duration);
+
+        } catch (IOException e) {
+            tableLoadResult.fatalException = e.toString();
+            LOG.error("Exception while exporting {}", ROUTE_FILE_NAME, e);
+        }
+
+        return tableLoadResult;
+    }
+
+    /**
+     * Write routes to zip file.
+     */
+    public static void writeRoutesToFile(ZipOutputStream zipOutputStream, List<Route> routes) throws IOException {
+        // Create entry for table.
+        zipOutputStream.putNextEntry(new ZipEntry(ROUTE_FILE_NAME));
+        // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
+        PrintWriter p = new PrintWriter(zipOutputStream);
+        p.print(packRoutes(routes));
+        p.flush();
+        zipOutputStream.closeEntry();
+    }
+
+    /**
+     * Expand all stops into a single row.
+     */
+    public static String packRoutes(List<Route> routes) {
+        StringBuilder csvContent = new StringBuilder(createRow(CSV_HEADER_FOR_EXPORT));
+        routes.forEach(route -> csvContent.append(createRow(
+            computeCsvValue(route.route_id),
+            computeCsvValue(route.agency_id),
+            computeCsvValue(route.route_short_name),
+            computeCsvValue(route.route_long_name),
+            computeCsvValue(route.route_desc),
+            computeCsvValue(route.route_type),
+            computeCsvValue(route.route_url),
+            computeCsvValue(route.route_color),
+            computeCsvValue(route.route_sort_order),
+            computeCsvValue(route.route_text_color),
+            computeCsvValue(route.route_branding_url),
+            computeCsvValue(route.continuous_pickup),
+            computeCsvValue(route.continuous_drop_off),
+            computeCsvValue(route.network_id)
+        )));
+        return csvContent.toString();
     }
 
     /**

@@ -266,7 +266,7 @@ public class JdbcGtfsExporter {
                     )
                 );
             } else {
-                result.routes = export(Table.ROUTES, connection);
+                result.routes = Route.exportRoutes(dataSource, feedIdToExport, zipOutputStream);
             }
 
             // Only write shapes for "approved" routes using COPY TO with results of select query

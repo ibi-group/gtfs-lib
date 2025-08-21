@@ -29,10 +29,6 @@ public class RouteNetwork extends Entity {
         return route_id;
     }
 
-    /**
-     * Sets the parameters for a prepared statement following the parameter order defined in
-     * {@link com.conveyal.gtfs.loader.Table#ROUTE_NETWORKS}. JDBC prepared statement parameters use a one-based index.
-     */
     @Override
     public void setStatementParameters(PreparedStatement statement, boolean setDefaultId) throws SQLException {
         int oneBasedIndex = 1;
