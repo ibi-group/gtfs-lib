@@ -91,7 +91,7 @@ public class CsvReaderUtil {
         CsvReader csvReader;
         if (tableFileName.equals(STOPS_FILE_NAME)) {
             csvReader = getCsvReaderFromStopsFile(zipFile, entry, errors);
-        } else if (tableFileName.equals(RouteNetwork.ROUTE_NETWORK_FILE_NAME)) {
+        } else if (tableFileName.equals(Route.ROUTE_FILE_NAME)) {
             csvReader = getCsvReaderFromRoutesFile(zipFile, entry, errors);
         } else {
             csvReader = getCsvReaderFromFile(zipFile, entry);

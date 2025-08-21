@@ -41,6 +41,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static com.conveyal.gtfs.model.RouteNetwork.ROUTE_NETWORK_FILE_NAME;
+
 /**
  * All entities must be from a single feed namespace.
  * Composed of several GTFSTables.
@@ -242,7 +244,7 @@ public class GTFSFeed implements Cloneable, Closeable {
             new Route.Writer(this).writeTable(zip);
             if (!routes.isEmpty()) {
                 // Export route networks.
-                Route.writeRouteNetworksToFile(zip, new ArrayList<>(routes.values()));
+                Route.writeEntityToFile(zip, new ArrayList<>(routes.values()), ROUTE_NETWORK_FILE_NAME);
             }
             new Stop.Writer(this).writeTable(zip);
             if (!stops.isEmpty()) {
@@ -259,7 +261,6 @@ public class GTFSFeed implements Cloneable, Closeable {
             new Area.Writer(this).writeTable(zip);
             new TimeFrame.Writer(this).writeTable(zip);
             new Network.Writer(this).writeTable(zip);
-            new RouteNetwork.Writer(this).writeTable(zip);
             new FareMedia.Writer(this).writeTable(zip);
             new FareProduct.Writer(this).writeTable(zip);
             new FareLegRule.Writer(this).writeTable(zip);

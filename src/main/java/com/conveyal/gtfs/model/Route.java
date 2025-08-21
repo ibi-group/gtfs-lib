@@ -166,7 +166,7 @@ public class Route extends Entity {
         public void loadOneRow() throws IOException {
             Route r = new Route();
             r.id = row + 1; // offset line number by 1 to account for 0-based row index
-            r.route_id = getStringField("route_id", true);
+            r.route_id = getStringField(ROUTE_ID_FIELD, true);
             Agency agency = getRefField("agency_id", false, feed.agency);
 
             if (agency == null) {
@@ -180,18 +180,18 @@ public class Route extends Entity {
                 r.agency_id = agency.agency_id;
             }
 
-            r.route_short_name = getStringField("route_short_name", false); // one or the other required, needs a special validator
-            r.route_long_name = getStringField("route_long_name", false);
-            r.route_desc = getStringField("route_desc", false);
-            r.route_type = getIntField("route_type", true, 0, 7);
-            r.route_sort_order = getIntField("route_sort_order", false, 0, Integer.MAX_VALUE);
-            r.route_url = getUrlField("route_url", false);
-            r.route_color = getStringField("route_color", false);
-            r.route_text_color = getStringField("route_text_color", false);
-            r.route_branding_url = getUrlField("route_branding_url", false);
-            r.continuous_pickup = getIntField("continuous_pickup", false, 0, 3, INT_MISSING);
-            r.continuous_drop_off = getIntField("continuous_drop_off", false, 0, 3, INT_MISSING);
-            r.network_id = getStringField("network_id", false);
+            r.route_short_name = getStringField(ROUTE_SHORT_NAME_FIELD, false); // one or the other required, needs a special validator
+            r.route_long_name = getStringField(ROUTE_LONG_NAME_FIELD, false);
+            r.route_desc = getStringField(ROUTE_DESC_FIELD, false);
+            r.route_type = getIntField(ROUTE_TYPE_FIELD, true, 0, 7);
+            r.route_sort_order = getIntField(ROUTE_SORT_ORDER_FIELD, false, 0, Integer.MAX_VALUE);
+            r.route_url = getUrlField(ROUTE_URL_FIELD, false);
+            r.route_color = getStringField(ROUTE_COLOR_FIELD, false);
+            r.route_text_color = getStringField(ROUTE_TEXT_COLOR_FIELD, false);
+            r.route_branding_url = getUrlField(ROUTE_BRANDING_URL_FIELD, false);
+            r.continuous_pickup = getIntField(CONTINUOUS_PICKUP_FIELD, false, 0, 3, INT_MISSING);
+            r.continuous_drop_off = getIntField(CONTINUOUS_DROP_OFF_FIELD, false, 0, 3, INT_MISSING);
+            r.network_id = getStringField(NETWORK_ID_FIELD, false);
             r.route_network_ids = getStringField(ROUTE_NETWORK_IDS_FIELD, false);
             r.feed = feed;
             r.feed_id = feed.feedId;
@@ -208,21 +208,7 @@ public class Route extends Entity {
 
         @Override
         public void writeHeaders() throws IOException {
-            writeStringField("agency_id");
-            writeStringField("route_id");
-            writeStringField("route_short_name");
-            writeStringField("route_long_name");
-            writeStringField("route_desc");
-            writeStringField("route_type");
-            writeStringField("route_url");
-            writeStringField("route_color");
-            writeStringField("route_text_color");
-            writeStringField("route_branding_url");
-            writeStringField("route_sort_order");
-            writeStringField("continuous_pickup");
-            writeStringField("continuous_drop_off");
-            writeStringField("network_id");
-            endRecord();
+            writer.writeRecord(CSV_FIELDS);
         }
 
         @Override
@@ -330,19 +316,6 @@ public class Route extends Entity {
     }
 
     /**
-     * Expand the route network ids and write to zip file.
-     */
-    public static void writeRouteNetworksToFile(ZipOutputStream zipOutputStream, List<Route> routes) throws IOException {
-        // Create entry for table.
-        zipOutputStream.putNextEntry(new ZipEntry(ROUTE_NETWORK_FILE_NAME));
-        // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
-        PrintWriter p = new PrintWriter(zipOutputStream);
-        p.print(packRouteNetworks(routes));
-        p.flush();
-        zipOutputStream.closeEntry();
-    }
-
-    /**
      * Expand all route network ids into a single row for each route id. This is to conform with the GTFS Fares v2 standard.
      */
     public static String packRouteNetworks(List<Route> routes) {
@@ -380,7 +353,7 @@ public class Route extends Entity {
 
             List<Route> routes = new ArrayList<>();
             routeIterator.forEach(routes::add);
-            writeRoutesToFile(zipOutputStream, routes);
+            writeEntityToFile(zipOutputStream, routes, ROUTE_FILE_NAME);
 
             long duration = System.currentTimeMillis() - startTime;
             LOG.info("Copied {} {} in {} ms.", tableLoadResult.rowCount, ROUTE_FILE_NAME, duration);
@@ -394,14 +367,18 @@ public class Route extends Entity {
     }
 
     /**
-     * Write routes to zip file.
+     * Write routes or route networks to zip file.
      */
-    public static void writeRoutesToFile(ZipOutputStream zipOutputStream, List<Route> routes) throws IOException {
+    public static void writeEntityToFile(ZipOutputStream zipOutputStream, List<Route> routes, String fileName) throws IOException {
         // Create entry for table.
-        zipOutputStream.putNextEntry(new ZipEntry(ROUTE_FILE_NAME));
+        zipOutputStream.putNextEntry(new ZipEntry(fileName));
         // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
         PrintWriter p = new PrintWriter(zipOutputStream);
-        p.print(packRoutes(routes));
+        if (fileName.equalsIgnoreCase(ROUTE_FILE_NAME)) {
+            p.print(packRoutes(routes));
+        } else {
+            p.print(packRouteNetworks(routes));
+        }
         p.flush();
         zipOutputStream.closeEntry();
     }
@@ -461,7 +438,7 @@ public class Route extends Entity {
             }
 
             tableLoadResult.rowCount = routesWithRouteNetworks.size();
-            writeRouteNetworksToFile(zipOutputStream, routesWithRouteNetworks);
+            writeEntityToFile(zipOutputStream, routesWithRouteNetworks, ROUTE_NETWORK_FILE_NAME);
 
             long duration = System.currentTimeMillis() - startTime;
             LOG.info("Copied {} {} in {} ms.", tableLoadResult.rowCount, ROUTE_NETWORK_FILE_NAME, duration);
@@ -473,5 +450,4 @@ public class Route extends Entity {
 
         return tableLoadResult;
     }
-
 }
