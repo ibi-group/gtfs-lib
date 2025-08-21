@@ -14,32 +14,32 @@ import com.conveyal.gtfs.error.TableInSubdirectoryError;
 import com.conveyal.gtfs.error.TimeParseError;
 import com.conveyal.gtfs.error.URLParseError;
 import com.conveyal.gtfs.loader.DateField;
+import com.conveyal.gtfs.util.CsvReaderUtil;
 import com.conveyal.gtfs.util.Deduplicator;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
-import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.Paths;
 import java.sql.JDBCType;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +47,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import static com.conveyal.gtfs.util.CsvReaderUtil.getEntryFromZipFile;
 
 /**
  * An abstract base class that represents a row in a GTFS table, e.g. a Stop, Trip, or Agency.
@@ -277,7 +279,7 @@ public abstract class Entity implements Serializable {
         protected abstract void loadOneRow() throws IOException;
 
         /**
-         * The main entry point into an Entity.Loader. Interprets each row of a CSV file within a zip file as a sinle
+         * The main entry point into an Entity.Loader. Interprets each row of a CSV file within a zip file as a single
          * GTFS entity, and loads them into a table.
          *
          * @param zip the zip file from which to read a table
@@ -286,44 +288,41 @@ public abstract class Entity implements Serializable {
             String fileName = tableName + ".txt";
             ZipEntry entry = zip.getEntry(fileName);
             if (entry == null) {
-                Enumeration<? extends ZipEntry> entries = zip.entries();
-                // check if table is contained within sub-directory
-                while (entries.hasMoreElements()) {
-                    ZipEntry e = entries.nextElement();
-                    if (Paths.get(e.getName()).getFileName().toString().equals(fileName)) {
-                        entry = e;
-                        feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(fileName, "")));
-                    }
-                }
-                /* This GTFS table did not exist in the zip. */
-                if (this.isRequired()) {
-                    feed.errors.add(new MissingTableError(tableName));
+                entry = getEntryFromZipFile(zip, fileName);
+                if (entry != null) {
+                    feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(fileName, "")));
                 } else {
-                    LOG.info("Table {} was missing but it is not required.", tableName);
+                    /* This GTFS table did not exist in the zip. */
+                    if (this.isRequired()) {
+                        feed.errors.add(new MissingTableError(tableName));
+                    } else {
+                        LOG.info("Table {} was missing but it is not required.", tableName);
+                    }
+                    return;
                 }
-
-                if (entry == null) return;
             }
             LOG.info("Loading GTFS table {} from {}", tableName, entry);
-            InputStream zis = zip.getInputStream(entry);
-            // skip any byte order mark that may be present. Files must be UTF-8,
-            // but the GTFS spec says that "files that include the UTF byte order mark are acceptable"
-            InputStream bis = new BOMInputStream(zis);
-            CsvReader reader = new CsvReader(bis, ',', Charset.forName("UTF8"));
-            this.reader = reader;
-            boolean hasHeaders = reader.readHeaders();
-            if (!hasHeaders) {
-                feed.errors.add(new EmptyTableError(tableName));
-            }
-            while (reader.readRecord()) {
-                // reader.getCurrentRecord() is zero-based and does not include the header line, keep our own row count
-                if (++row % 500000 == 0) {
-                    LOG.info("Record number {}", human(row));
+            List<String> errors = new ArrayList<>();
+            try {
+                reader = CsvReaderUtil.getCsvReaderAccordingToFileName(tableName, zip, entry, errors);
+                boolean hasHeaders = reader.readHeaders();
+                if (!hasHeaders) {
+                    feed.errors.add(new EmptyTableError(tableName));
                 }
-                loadOneRow(); // Call subclass method to produce an entity from the current row.
-            }
-            if (row == 0) {
-                feed.errors.add(new EmptyTableError(tableName));
+                while (reader.readRecord()) {
+                    // reader.getCurrentRecord() is zero-based and does not include the header line, keep our own row count
+                    if (++row % 500000 == 0) {
+                        LOG.info("Record number {}", human(row));
+                    }
+                    loadOneRow(); // Call subclass method to produce an entity from the current row.
+                }
+                if (row == 0) {
+                    feed.errors.add(new EmptyTableError(tableName));
+                }
+            } finally {
+                if (reader != null) {
+                    reader.close();
+                }
             }
         }
 
@@ -512,5 +511,39 @@ public abstract class Entity implements Serializable {
             .stream(fields)
             .map(id -> id == null ? "empty" : id.toString())
             .collect(Collectors.joining("_"));
+    }
+
+    /**
+     * Convert multiple rows of data back into CSV, with header and return a {@link CsvReader}
+     * representation.
+     */
+    protected static CsvReader produceCsvPayload(List<String> rows, String header) {
+        StringBuilder csvContent = new StringBuilder();
+        csvContent.append(header);
+        rows.forEach(csvContent::append);
+        return new CsvReader(new StringReader(csvContent.toString()));
+    }
+
+    /**
+     * Create a row from the column values provided.
+     */
+    protected static String createRow(String... columnValues) {
+        return String.join(",", columnValues) + System.lineSeparator();
+    }
+
+    protected static String computeCsvValue(String value) {
+        return value != null ? value : "";
+    }
+
+    protected static String computeCsvValue(URL value) {
+        return value != null ? value.toString() : "";
+    }
+
+    protected static String computeCsvValue(int value) {
+        return value != INT_MISSING ? String.valueOf(value) : "";
+    }
+
+    protected static String computeCsvValue(double value) {
+        return value != DOUBLE_MISSING ? String.valueOf(value) : "";
     }
 }

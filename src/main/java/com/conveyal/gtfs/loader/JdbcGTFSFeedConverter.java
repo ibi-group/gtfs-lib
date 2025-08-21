@@ -125,7 +125,6 @@ public class JdbcGTFSFeedConverter {
 
             // Fares v2.
             copyEntityToSql(gtfsFeed.areas.values(), Table.AREAS);
-            copyEntityToSql(gtfsFeed.stop_areas.values(), Table.STOP_AREAS);
             copyEntityToSql(gtfsFeed.fare_medias.values(), Table.FARE_MEDIAS);
             copyEntityToSql(gtfsFeed.fare_products.values(), Table.FARE_PRODUCTS);
             copyEntityToSql(gtfsFeed.time_frames.values(), Table.TIME_FRAMES);

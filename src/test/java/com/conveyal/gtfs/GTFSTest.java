@@ -6,7 +6,6 @@ import com.conveyal.gtfs.loader.FeedLoadResult;
 import com.conveyal.gtfs.loader.JdbcGtfsExporter;
 import com.conveyal.gtfs.loader.SnapshotResult;
 import com.conveyal.gtfs.loader.Table;
-import com.conveyal.gtfs.loader.TableLoadResult;
 import com.conveyal.gtfs.storage.ErrorExpectation;
 import com.conveyal.gtfs.storage.ExpectedFieldType;
 import com.conveyal.gtfs.storage.PersistenceExpectation;
@@ -42,17 +41,15 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.conveyal.gtfs.TestUtils.getResourceFileName;
+import static com.conveyal.gtfs.TestUtils.exportGtfs;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -334,7 +331,6 @@ public class GTFSTest {
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
-            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.FEED_TRAVEL_TIMES_ROUNDED),
             new ErrorExpectation(NewGTFSErrorType.DATE_NO_SERVICE)
         );
@@ -409,13 +405,6 @@ public class GTFSTest {
             new RecordExpectation[]{
                 new RecordExpectation("network_id", "1"),
                 new RecordExpectation("route_id", "1")
-            }
-        ),
-        new PersistenceExpectation(
-            "stop_areas",
-            new RecordExpectation[]{
-                new RecordExpectation("stop_id", "4u6g"),
-                new RecordExpectation("area_id", "area_route_426_downtown")
             }
         ),
         new PersistenceExpectation(
@@ -990,15 +979,6 @@ public class GTFSTest {
     private void assertThatSnapshotIsErrorFree(SnapshotResult snapshotResult) {
         assertThatLoadIsErrorFree(snapshotResult);
         assertThat(snapshotResult.scheduleExceptions.fatalException, is(nullValue()));
-    }
-
-    /**
-     * Helper function to export a GTFS from the database to a temporary zip file.
-     */
-    private File exportGtfs(String namespace, DataSource dataSource, boolean fromEditor, boolean publishProprietaryFiles) throws IOException {
-        File tempFile = File.createTempFile("snapshot", ".zip");
-        GTFS.export(namespace, tempFile.getAbsolutePath(), dataSource, fromEditor, publishProprietaryFiles);
-        return tempFile;
     }
 
     private class ValuePair {

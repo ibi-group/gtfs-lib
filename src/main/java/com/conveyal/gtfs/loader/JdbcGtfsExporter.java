@@ -5,6 +5,7 @@ import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.CalendarDate;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.Service;
+import com.conveyal.gtfs.model.Stop;
 import com.google.common.collect.Lists;
 import org.apache.commons.dbutils.DbUtils;
 import org.postgresql.copy.CopyManager;
@@ -297,7 +298,8 @@ public class JdbcGtfsExporter {
             } else {
                 result.shapes = export(Table.SHAPES, connection);
             }
-            result.stops = export(Table.STOPS, connection);
+            result.stops = Stop.exportStops(dataSource, feedIdToExport, zipOutputStream);
+            result.stopAreas = Stop.exportStopAreas(dataSource, feedIdToExport, zipOutputStream);
             // Only write stop times for "approved" routes using COPY TO with results of select query
             if (fromEditor) {
                 // Generate filter SQL for trips if exporting a feed/schema that represents an editor snapshot.
@@ -345,7 +347,6 @@ public class JdbcGtfsExporter {
             }
 
             result.areas = export(Table.AREAS, connection);
-            result.stopAreas = export(Table.STOP_AREAS, connection);
             result.fareMedias = export(Table.FARE_MEDIAS, connection);
             result.fareProducts = export(Table.FARE_PRODUCTS, connection);
             result.timeFrames = export(Table.TIME_FRAMES, connection);

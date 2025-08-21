@@ -350,6 +350,7 @@ public class GraphQLGtfsSchema {
         .field(MapFetcher.field("platform_code"))
         .field(MapFetcher.field("location_type", GraphQLInt))
         .field(MapFetcher.field("wheelchair_boarding", GraphQLInt))
+        .field(MapFetcher.field("stop_area_ids"))
         // Returns all stops that reference parent stop's stop_id
         .field(newFieldDefinition()
             .name("child_stops")

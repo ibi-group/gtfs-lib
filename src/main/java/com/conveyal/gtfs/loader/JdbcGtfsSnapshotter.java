@@ -117,7 +117,6 @@ public class JdbcGtfsSnapshotter {
             result.translations = copy(Table.TRANSLATIONS, true);
             // Fares v2.
             result.areas = copy(Table.AREAS, true);
-            result.stopAreas = copy(Table.STOP_AREAS, true);
             result.fareMedias = copy(Table.FARE_MEDIAS, true);
             result.fareProducts = copy(Table.FARE_PRODUCTS, true);
             result.timeFrames = copy(Table.TIME_FRAMES, true);

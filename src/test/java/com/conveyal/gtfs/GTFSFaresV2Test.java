@@ -1,27 +1,36 @@
 package com.conveyal.gtfs;
 
 import com.conveyal.gtfs.loader.FeedLoadResult;
+import graphql.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
+import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
 import static com.conveyal.gtfs.GTFS.load;
 import static com.conveyal.gtfs.GTFS.makeSnapshot;
 import static com.conveyal.gtfs.GTFS.validate;
 import static com.conveyal.gtfs.TestUtils.checkFileTestCases;
+import static com.conveyal.gtfs.model.RouteNetwork.ROUTE_NETWORK_FILE_NAME;
+import static com.conveyal.gtfs.model.Stop.STOP_AREAS_FILE_NAME;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GTFSFaresV2Test {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GTFSFaresV2Test.class);
 
     private static String faresZipFileName;
     public static String faresDBName;
     private static DataSource faresDataSource;
     private static String faresNamespace;
+    private static final String JDBC_URL = "jdbc:postgresql://localhost";
 
     @BeforeAll
     public static void setUpClass() throws IOException {
@@ -29,7 +38,7 @@ public class GTFSFaresV2Test {
         faresZipFileName = TestUtils.zipFolderFiles(folderName, true);
         // create a new database
         faresDBName = TestUtils.generateNewDB();
-        String dbConnectionUrl = String.format("jdbc:postgresql://localhost/%s", faresDBName);
+        String dbConnectionUrl = String.format("%s/%s", JDBC_URL, faresDBName);
         faresDataSource = TestUtils.createTestDataSource(dbConnectionUrl);
         // load feed into db
         FeedLoadResult feedLoadResult = load(faresZipFileName, faresDataSource);
@@ -143,5 +152,31 @@ public class GTFSFaresV2Test {
             )
         };
         checkFileTestCases(zip, fileTestCases);
+    }
+
+    /**
+     * Confirm that the export contains the fares v2 files which have been merged into parent entities and then
+     * extracted for writing to file.
+     */
+    @Test
+    void canExportFaresV2Files() throws IOException {
+        String testDBName = TestUtils.generateNewDB();
+        String zipFileName = TestUtils.zipFolderFiles("fake-agency-with-fares-v2", true);
+        DataSource dataSource = TestUtils.createTestDataSource(String.join("/", JDBC_URL, testDBName));
+        FeedLoadResult loadResult = GTFS.load(zipFileName, dataSource);
+        String namespace = loadResult.uniqueIdentifier;
+        File tempFile = TestUtils.exportGtfs(namespace, dataSource, false, true);
+        try (ZipFile gtfsZipFile = new ZipFile(tempFile.getAbsolutePath())) {
+            tempFile = TestUtils.exportGtfs(namespace, dataSource, false, true);
+            Stream
+                .of(STOP_AREAS_FILE_NAME, ROUTE_NETWORK_FILE_NAME)
+                .forEach(fileName -> Assert.assertNotNull(gtfsZipFile.getEntry(fileName)));
+        } catch (IOException e) {
+            Assert.assertShouldNeverHappen();
+            LOG.error("An error occurred while attempting to test exporting of mandatory files.", e);
+        } finally {
+            TestUtils.dropDB(testDBName);
+            tempFile.deleteOnExit();
+        }
     }
 }

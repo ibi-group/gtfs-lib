@@ -31,22 +31,15 @@ import com.conveyal.gtfs.model.RouteNetwork;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.ShapePoint;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopArea;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.TimeFrame;
 import com.conveyal.gtfs.model.Transfer;
 import com.conveyal.gtfs.model.Translation;
 import com.conveyal.gtfs.model.Trip;
 import com.conveyal.gtfs.storage.StorageException;
-import com.csvreader.CsvReader;
-import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -56,18 +49,14 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.DUPLICATE_HEADER;
-import static com.conveyal.gtfs.error.NewGTFSErrorType.TABLE_IN_SUBDIRECTORY;
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.sanitize;
 import static com.conveyal.gtfs.loader.Requirement.EDITOR;
 import static com.conveyal.gtfs.loader.Requirement.EXTENSION;
@@ -294,7 +283,8 @@ public class Table {
         new StringField("parent_station", OPTIONAL).requireConditions(),
         new StringField("stop_timezone", OPTIONAL),
         new ShortField("wheelchair_boarding", OPTIONAL, 2),
-        new StringField("platform_code", OPTIONAL)
+        new StringField("platform_code", OPTIONAL),
+        new StringField("stop_area_ids", OPTIONAL)
     ).restrictDelete()
     .addPrimaryKey()
     .addPrimaryKeyNames("stop_id");
@@ -305,13 +295,6 @@ public class Table {
     )
     .restrictDelete()
     .addPrimaryKeyNames(Area.AREA_ID_NAME);
-
-    public static final Table STOP_AREAS = new Table(StopArea.TABLE_NAME, StopArea.class, OPTIONAL,
-        new StringField(StopArea.AREA_ID_NAME, REQUIRED).isReferenceTo(AREAS),
-        new StringField(StopArea.STOP_ID_NAME, REQUIRED).isReferenceTo(STOPS)
-    )
-    .keyFieldIsNotUnique()
-    .addPrimaryKeyNames(StopArea.AREA_ID_NAME, StopArea.STOP_ID_NAME);
 
     public static final Table FARE_MEDIAS = new Table(FareMedia.TABLE_NAME, FareMedia.class, OPTIONAL,
         new StringField(FareMedia.FARE_MEDIA_ID_NAME, REQUIRED),
@@ -567,7 +550,6 @@ public class Table {
         SHAPES,
         STOPS,
         AREAS,
-        STOP_AREAS,
         FARE_RULES,
         PATTERN_STOP,
         TRANSFERS,
@@ -768,46 +750,6 @@ public class Table {
         return (tableName.equals("patterns"))
             ? String.format("%s%s%s", PROPRIETARY_FILE_PREFIX, tableName, fileExtension)
             : String.format("%s%s", tableName, fileExtension);
-    }
-
-    /**
-     * In GTFS feeds, all files are supposed to be in the root of the zip file, but feed producers often put them
-     * in a subdirectory. This function will search subdirectories if the entry is not found in the root.
-     * It records an error if the entry is in a subdirectory (as long as errorStorage is not null).
-     * It then creates a CSV reader for that table if it's found.
-     */
-    public CsvReader getCsvReader(ZipFile zipFile, SQLErrorStorage sqlErrorStorage) {
-        final String tableFileName = getTableFileNameWithExtension(this.name);
-        ZipEntry entry = zipFile.getEntry(tableFileName);
-        if (entry == null) {
-            // Table was not found, check if it is in a subdirectory.
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry e = entries.nextElement();
-                if (Paths.get(e.getName()).getFileName().toString().equals(tableFileName)) {
-                    entry = e;
-                    if (sqlErrorStorage != null) sqlErrorStorage.storeError(NewGTFSError.forTable(this, TABLE_IN_SUBDIRECTORY));
-                    break;
-                }
-            }
-        }
-        if (entry == null) return null;
-        try {
-            InputStream zipInputStream = zipFile.getInputStream(entry);
-            // Skip any byte order mark that may be present. Files must be UTF-8,
-            // but the GTFS spec says that "files that include the UTF byte order mark are acceptable".
-            InputStream bomInputStream = new BOMInputStream(zipInputStream);
-            CsvReader csvReader = new CsvReader(bomInputStream, ',', Charset.forName("UTF8"));
-            // Don't skip empty records (this is set to true by default on CsvReader. We want to check for empty records
-            // during table load, so that they are logged as validation issues (WRONG_NUMBER_OF_FIELDS).
-            csvReader.setSkipEmptyRecords(false);
-            csvReader.readHeaders();
-            return csvReader;
-        } catch (IOException e) {
-            LOG.error("Exception while opening zip entry: {}", e);
-            e.printStackTrace();
-            return null;
-        }
     }
 
     /**

@@ -119,11 +119,6 @@ public class JDBCTableWriterFaresV2Test {
                 getEntityFromFile("areas_updated.json")
             ),
             Arguments.of(
-                Table.STOP_AREAS,
-                getEntityFromFile("stop_areas.json"),
-                getEntityFromFile("stop_areas_updated.json")
-            ),
-            Arguments.of(
                 Table.TIME_FRAMES,
                 getEntityFromFile("time_frames.json"),
                 getEntityFromFile("time_frames_updated.json")
