@@ -520,7 +520,7 @@ public abstract class Entity implements Serializable {
     protected static CsvReader produceCsvPayload(List<String> rows, String header) {
         StringBuilder csvContent = new StringBuilder();
         csvContent.append(header);
-        rows.forEach(row -> csvContent.append(row).append(System.lineSeparator()));
+        rows.forEach(csvContent::append);
         return new CsvReader(new StringReader(csvContent.toString()));
     }
 

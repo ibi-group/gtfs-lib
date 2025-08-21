@@ -240,7 +240,7 @@ public class GTFSFeed implements Cloneable, Closeable {
             new Stop.Writer(this).writeTable(zip);
             if (!stops.isEmpty()) {
                 // Export stop areas.
-                Stop.writeStopAreasToFile(zip, new ArrayList<>(stops.values()));
+                Stop.writeEntityToFile(zip, new ArrayList<>(stops.values()), Stop.STOP_AREAS_FILE_NAME);
             }
             new ShapePoint.Writer(this).writeTable(zip);
             new Transfer.Writer(this).writeTable(zip);

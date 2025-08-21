@@ -7,6 +7,7 @@ import com.conveyal.gtfs.loader.Table;
 import com.conveyal.gtfs.loader.TableLoadResult;
 import com.conveyal.gtfs.loader.TableReader;
 import com.csvreader.CsvReader;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -258,7 +259,7 @@ public class Stop extends Entity {
         for (int i = 0; i < CSV_FIELDS.length; i++) {
             fields[i] = stopsReader.get(CSV_FIELDS[i]);
         }
-        return String.join(",", fields) + "," + stopAreaIds;
+        return String.format("%s,%s%n", String.join(",", fields), stopAreaIds);
     }
 
     /**
@@ -283,27 +284,18 @@ public class Stop extends Entity {
     }
 
     /**
-     * Expand the stop area ids and write to zip file.
+     * Write stops or stop areas to zip file.
      */
-    public static void writeStopAreasToFile(ZipOutputStream zipOutputStream, List<Stop> stops) throws IOException {
+    public static void writeEntityToFile(ZipOutputStream zipOutputStream, List<Stop> stops, String fileName) throws IOException {
         // Create entry for table.
-        zipOutputStream.putNextEntry(new ZipEntry(STOP_AREAS_FILE_NAME));
+        zipOutputStream.putNextEntry(new ZipEntry(fileName));
         // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
         PrintWriter p = new PrintWriter(zipOutputStream);
-        p.print(packStopAreas(stops));
-        p.flush();
-        zipOutputStream.closeEntry();
-    }
-
-    /**
-     * Write stops to zip file.
-     */
-    public static void writeStopsToFile(ZipOutputStream zipOutputStream, List<Stop> stops) throws IOException {
-        // Create entry for table.
-        zipOutputStream.putNextEntry(new ZipEntry(STOPS_FILE_NAME));
-        // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
-        PrintWriter p = new PrintWriter(zipOutputStream);
-        p.print(packStops(stops));
+        if (fileName.equals(STOPS_FILE_NAME)) {
+            p.print(packStops(stops));
+        } else {
+            p.print(packStopAreas(stops));
+        }
         p.flush();
         zipOutputStream.closeEntry();
     }
@@ -367,9 +359,8 @@ public class Stop extends Entity {
                 EntityPopulator.STOP
             );
 
-            List<Stop> stops = new ArrayList<>();
-            stopIterator.forEach(stops::add);
-            writeStopsToFile(zipOutputStream, stops);
+            List<Stop> stops = Lists.newArrayList(stopIterator);
+            writeEntityToFile(zipOutputStream, stops, STOPS_FILE_NAME);
 
             long duration = System.currentTimeMillis() - startTime;
             LOG.info("Copied {} {} in {} ms.", tableLoadResult.rowCount, STOPS_FILE_NAME, duration);
@@ -413,7 +404,7 @@ public class Stop extends Entity {
             }
 
             tableLoadResult.rowCount = stopsWithStopAreas.size();
-            writeStopAreasToFile(zipOutputStream, stopsWithStopAreas);
+            writeEntityToFile(zipOutputStream, stopsWithStopAreas, STOP_AREAS_FILE_NAME);
 
             long duration = System.currentTimeMillis() - startTime;
             LOG.info("Copied {} {} in {} ms.", tableLoadResult.rowCount, STOP_AREAS_FILE_NAME, duration);
