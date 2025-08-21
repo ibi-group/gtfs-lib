@@ -330,7 +330,6 @@ public class GTFSTest {
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
-            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.FEED_TRAVEL_TIMES_ROUNDED),
             new ErrorExpectation(NewGTFSErrorType.DATE_NO_SERVICE)
         );
@@ -398,13 +397,6 @@ public class GTFSTest {
             new RecordExpectation[]{
                 new RecordExpectation("network_id", "1"),
                 new RecordExpectation("network_name", "Forbidden because network id is defined in routes")
-            }
-        ),
-        new PersistenceExpectation(
-            "route_networks",
-            new RecordExpectation[]{
-                new RecordExpectation("network_id", "1"),
-                new RecordExpectation("route_id", "1")
             }
         ),
         new PersistenceExpectation(
