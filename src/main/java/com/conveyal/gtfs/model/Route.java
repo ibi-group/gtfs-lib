@@ -273,17 +273,6 @@ public class Route extends Entity {
     }
 
     /**
-     * Create a CSV row of original route fields plus the route networks ids.
-     */
-    private static String createRow(CsvReader routesReader, String routeNetworkIds) throws IOException {
-        String[] fields = new String[CSV_FIELDS.length];
-        for (int i = 0; i < CSV_FIELDS.length; i++) {
-            fields[i] = routesReader.get(CSV_FIELDS[i]);
-        }
-        return String.join(",", fields) + "," + routeNetworkIds;
-    }
-
-    /**
      * Extract the route networks from file and group by route id. This is to allow for easier CRUD by the DT UI.
      */
     public static Map<String, Set<String>> groupRouteNetworkIds(CsvReader csvReader, List<String> errors) {
@@ -350,6 +339,7 @@ public class Route extends Entity {
             );
 
             List<Route> routes = Lists.newArrayList(routeIterator);
+            tableLoadResult.rowCount = routes.size();
             writeEntityToFile(zipOutputStream, routes, ROUTE_FILE_NAME);
 
             long duration = System.currentTimeMillis() - startTime;
