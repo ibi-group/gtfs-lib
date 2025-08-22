@@ -321,13 +321,21 @@ public class Route extends Entity {
         return csvContent.toString();
     }
 
+    public static TableLoadResult exportRoutes(
+        DataSource dataSource,
+        String feedIdToExport,
+        ZipOutputStream zipOutputStream
+    ) {
+        return exportRoutes(dataSource, feedIdToExport, zipOutputStream, null);
+    }
     /**
      * Export routes, minus route networks.
      */
     public static TableLoadResult exportRoutes(
         DataSource dataSource,
         String feedIdToExport,
-        ZipOutputStream zipOutputStream
+        ZipOutputStream zipOutputStream,
+        String whereRouteIsApproved
     ) {
         long startTime = System.currentTimeMillis();
         TableLoadResult tableLoadResult = new TableLoadResult();
@@ -337,7 +345,8 @@ public class Route extends Entity {
                 Table.ROUTES,
                 dataSource,
                 feedIdToExport + ".",
-                EntityPopulator.ROUTE
+                EntityPopulator.ROUTE,
+                whereRouteIsApproved
             );
 
             List<Route> routes = Lists.newArrayList(routeIterator);

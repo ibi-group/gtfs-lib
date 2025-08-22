@@ -257,14 +257,7 @@ public class JdbcGtfsExporter {
             // Only write "approved" routes using COPY TO with results of select query
             if (fromEditor) {
                 // The filter clause for routes is simple. We're just checking that the route is APPROVED.
-                result.routes = export(
-                    Table.ROUTES,
-                    String.join(
-                        " ",
-                        Table.ROUTES.generateSelectSql(feedIdToExport, Requirement.OPTIONAL),
-                        whereRouteIsApproved
-                    )
-                );
+                result.routes = Route.exportRoutes(dataSource, feedIdToExport, zipOutputStream, whereRouteIsApproved);
             } else {
                 result.routes = Route.exportRoutes(dataSource, feedIdToExport, zipOutputStream);
             }
