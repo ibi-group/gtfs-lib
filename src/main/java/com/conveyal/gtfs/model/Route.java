@@ -310,13 +310,6 @@ public class Route extends Entity {
         return csvContent.toString();
     }
 
-    public static TableLoadResult exportRoutes(
-        DataSource dataSource,
-        String feedIdToExport,
-        ZipOutputStream zipOutputStream
-    ) {
-        return exportRoutes(dataSource, feedIdToExport, zipOutputStream, null);
-    }
     /**
      * Export routes, minus route networks.
      */

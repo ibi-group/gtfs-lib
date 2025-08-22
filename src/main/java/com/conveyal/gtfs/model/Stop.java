@@ -317,6 +317,7 @@ public class Stop extends Entity {
             );
 
             List<Stop> stops = Lists.newArrayList(stopIterator);
+            tableLoadResult.rowCount = stops.size();
             writeEntityToFile(zipOutputStream, stops, STOPS_FILE_NAME);
 
             long duration = System.currentTimeMillis() - startTime;
