@@ -19,7 +19,6 @@ import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import java.util.zip.ZipOutputStream;
 
@@ -106,14 +104,6 @@ public class Route extends Entity {
         CONTINUOUS_DROP_OFF_FIELD,
         NETWORK_ID_FIELD
     };
-
-    private static final String CSV_HEADER_FOR_MERGE = String.format(
-        "%s,%s%n",
-        String.join(",", CSV_FIELDS),
-        ROUTE_NETWORK_IDS_FIELD
-    );
-
-    private static final String CSV_HEADER_FOR_EXPORT = String.join(",", CSV_FIELDS);
 
     @Override
     public String getId () {
@@ -266,7 +256,7 @@ public class Route extends Entity {
             }
             return (rows.isEmpty())
                 ? routesReader
-                : produceCsvPayload(rows, CSV_HEADER_FOR_MERGE);
+                : produceCsvPayload(rows, createRow(CSV_FIELDS, ROUTE_NETWORK_IDS_FIELD));
         } catch (Exception e) {
             LOG.error("Error while merging routes", e);
             // Any issues, return the original routes reader (minus route networks).
@@ -352,7 +342,7 @@ public class Route extends Entity {
      * Expand all stops into a single row.
      */
     public static String packRoutes(List<Route> routes) {
-        StringBuilder csvContent = new StringBuilder(createRow(CSV_HEADER_FOR_EXPORT));
+        StringBuilder csvContent = new StringBuilder(createRow(CSV_FIELDS));
         routes.forEach(route -> csvContent.append(createRow(
             computeCsvValue(route.route_id),
             computeCsvValue(route.agency_id),

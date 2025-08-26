@@ -86,16 +86,6 @@ public class Stop extends Entity {
         WHEELCHAIR_BOARDING_FIELD,
         PLATFORM_CODE_FIELD
     };
-    private static final String CSV_HEADER_FOR_MERGE = String.format(
-        "%s,%s%n",
-        String.join(",", CSV_FIELDS),
-        STOP_AREA_IDS_FIELD
-    );
-
-    private static final String CSV_HEADER_FOR_EXPORT = String.format(
-        "%s",
-        String.join(",", CSV_FIELDS)
-    );
 
     @Override
     public String getId () {
@@ -228,7 +218,7 @@ public class Stop extends Entity {
             }
             return (rows.isEmpty())
                 ? stopsReader
-                : produceCsvPayload(rows, CSV_HEADER_FOR_MERGE);
+                : produceCsvPayload(rows, createRow(CSV_FIELDS, STOP_AREA_IDS_FIELD));
         } catch (Exception e) {
             LOG.error("Error while merging stops", e);
             // Any issues, return the original stops reader (minus stop areas).
@@ -278,7 +268,7 @@ public class Stop extends Entity {
      * Expand all stops into a single row.
      */
     public static String packStops(List<Stop> stops) {
-        StringBuilder csvContent = new StringBuilder(createRow(CSV_HEADER_FOR_EXPORT));
+        StringBuilder csvContent = new StringBuilder(createRow(CSV_FIELDS));
         stops.forEach(stop -> csvContent.append(createRow(
             computeCsvValue(stop.stop_id),
             computeCsvValue(stop.stop_code),
