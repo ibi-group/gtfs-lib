@@ -5,7 +5,6 @@ import com.conveyal.gtfs.GTFSFeed;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Iterator;
 
 /**
  * This is only included to read the values from file. No stop areas are saved to the database. Instead, they are merged
@@ -61,31 +60,6 @@ public class StopArea extends Entity {
              */
             getRefField(AREA_ID_NAME, true, feed.areas);
             getRefField(STOP_ID_NAME, true, feed.stops);
-
-        }
-
-    }
-
-    public static class Writer extends Entity.Writer<StopArea> {
-        public Writer(GTFSFeed feed) {
-            super(feed, TABLE_NAME);
-        }
-
-        @Override
-        public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {AREA_ID_NAME, STOP_ID_NAME});
-        }
-
-        @Override
-        public void writeOneRow(StopArea stopArea) throws IOException {
-            writeStringField(stopArea.area_id);
-            writeStringField(stopArea.stop_id);
-            endRecord();
-        }
-
-        @Override
-        public Iterator<StopArea> iterator() {
-            return this.feed.stop_areas.values().iterator();
         }
     }
 }

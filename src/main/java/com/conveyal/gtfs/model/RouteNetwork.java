@@ -5,7 +5,6 @@ import com.conveyal.gtfs.GTFSFeed;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Iterator;
 
 /**
  * This is only included to read the values from file. No route networks are saved directly to the database. Instead,
@@ -60,31 +59,6 @@ public class RouteNetwork extends Entity {
             getRefField(NETWORK_ID_FIELD, true, feed.networks);
             getRefField(ROUTE_ID_FIELD, true, feed.routes);
         }
-
     }
-
-    public static class Writer extends Entity.Writer<RouteNetwork> {
-        public Writer(GTFSFeed feed) {
-            super(feed, TABLE_NAME);
-        }
-
-        @Override
-        public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {NETWORK_ID_FIELD, ROUTE_ID_FIELD});
-        }
-
-        @Override
-        public void writeOneRow(RouteNetwork routeNetwork) throws IOException {
-            writeStringField(routeNetwork.network_id);
-            writeStringField(routeNetwork.route_id);
-            endRecord();
-        }
-
-        @Override
-        public Iterator<RouteNetwork> iterator() {
-            return this.feed.route_networks.values().iterator();
-        }
-    }
-
 }
 

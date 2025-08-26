@@ -201,7 +201,7 @@ public class Stop extends Entity {
     /**
      * Merge stop areas into stops when loading from file.
      */
-    public static void getCsvReaderForStopsWithStopAreas(Map<String, Stop> stops, Map<String, StopArea> stopAreas) {
+    public static void mergeStopAreas(Map<String, Stop> stops, Map<String, StopArea> stopAreas) {
         Map<String, Set<String>> stopAreasByStopId = new HashMap<>();
 
         stopAreas.values().forEach(stopArea ->

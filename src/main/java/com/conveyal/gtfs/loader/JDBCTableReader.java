@@ -49,9 +49,7 @@ public class JDBCTableReader<T extends Entity> implements TableReader<T> {
         // We do this in the constructor to avoid rebuilding the mapping every time we fetch a single entity from the table.
         // No entry value defaults to zero, and SQL columns are 1-based.
         columnForName = new TObjectIntHashMap<>();
-        selectClause = whereClause != null
-            ? String.format("select * from %s %s", qualifiedTableName, whereClause)
-            : "select * from " + qualifiedTableName;
+        selectClause = String.format("select * from %s %s", qualifiedTableName, whereClause != null ? whereClause : "");
         // Try-with-resources will automatically close the connection when the try block exits.
         try (Connection connection = dataSource.getConnection()) {
             LOG.info("Connected to {}", qualifiedTableName);

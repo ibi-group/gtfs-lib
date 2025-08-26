@@ -185,13 +185,13 @@ public class GTFSFeed implements Cloneable, Closeable {
         new RouteNetwork.Loader(this).loadTable(zip);
         new Route.Loader(this).loadTable(zip);
         if (!route_networks.isEmpty()) {
-            Route.getCsvReaderForRoutesWithRouteNetworks(routes, route_networks);
+            Route.mergeRouteNetworks(routes, route_networks);
         }
         new ShapePoint.Loader(this).loadTable(zip);
         new StopArea.Loader(this).loadTable(zip);
         new Stop.Loader(this).loadTable(zip);
         if (!stop_areas.isEmpty()) {
-            Stop.getCsvReaderForStopsWithStopAreas(stops, stop_areas);
+            Stop.mergeStopAreas(stops, stop_areas);
         }
         new Transfer.Loader(this).loadTable(zip);
         new Trip.Loader(this).loadTable(zip);

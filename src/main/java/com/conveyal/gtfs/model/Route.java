@@ -19,6 +19,7 @@ import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import java.util.zip.ZipOutputStream;
 
@@ -62,6 +64,9 @@ public class Route extends Entity {
     public String feed_id;
     public int continuous_pickup = INT_MISSING;
     public int continuous_drop_off = INT_MISSING;
+
+    /** Used to directly link a route to a network. Multiple routes can have the same network id. This is forbidden if
+     * route network ids are defined. */
     public String network_id;
     public String route_network_ids;
 
@@ -102,16 +107,13 @@ public class Route extends Entity {
         NETWORK_ID_FIELD
     };
 
-    private static final String CSV_HEADER_FOR_MERGE = String.format(
-        "%s,%s%n",
-        String.join(",", CSV_FIELDS),
-        ROUTE_NETWORK_IDS_FIELD
-    );
+    private static final String CSV_HEADER_FOR_MERGE =
+        Stream.concat(
+            Arrays.stream(CSV_FIELDS),
+            Stream.of(ROUTE_NETWORK_IDS_FIELD)
+        ).collect(Collectors.joining(",")) + System.lineSeparator();
 
-    private static final String CSV_HEADER_FOR_EXPORT = String.format(
-        "%s",
-        String.join(",", CSV_FIELDS)
-    );
+    private static final String CSV_HEADER_FOR_EXPORT = String.join(",", CSV_FIELDS);
 
     @Override
     public String getId () {
@@ -237,7 +239,7 @@ public class Route extends Entity {
     /**
      * Merge route networks into routes when loading from file.
      */
-    public static void getCsvReaderForRoutesWithRouteNetworks(Map<String, Route> routes, Map<String, RouteNetwork> routeNetworks) {
+    public static void mergeRouteNetworks(Map<String, Route> routes, Map<String, RouteNetwork> routeNetworks) {
         Map<String, Set<String>> routeNetworksByRouteId = new HashMap<>();
 
         routeNetworks.values().forEach(routeNetwork ->
@@ -297,7 +299,7 @@ public class Route extends Entity {
      * Expand all route network ids into a single row for each route id. This is to conform with the GTFS Fares v2 standard.
      */
     public static String packRouteNetworks(List<Route> routes) {
-        StringBuilder csvContent = new StringBuilder(createRow(RouteNetwork.ROUTE_ID_FIELD, RouteNetwork.NETWORK_ID_FIELD));
+        StringBuilder csvContent = new StringBuilder(createRow(RouteNetwork.NETWORK_ID_FIELD, RouteNetwork.ROUTE_ID_FIELD));
         routes
             .stream()
             .filter(route -> route.route_network_ids != null)
