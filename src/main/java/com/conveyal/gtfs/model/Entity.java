@@ -547,10 +547,10 @@ public abstract class Entity implements Serializable {
     /**
      * Create a CSV row from original fields plus grouped (stop areas or route network) ids.
      */
-    protected static String createRow(CsvReader stopsReader, String ids, String[] csvFields) throws IOException {
+    protected static String createRow(CsvReader csvReader, String ids, String[] csvFields) throws IOException {
         String[] fields = new String[csvFields.length];
         for (int i = 0; i < csvFields.length; i++) {
-            fields[i] = stopsReader.get(csvFields[i]);
+            fields[i] = csvReader.get(csvFields[i]);
         }
         return String.format("%s,%s%n", String.join(",", fields), ids);
     }
