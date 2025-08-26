@@ -107,11 +107,11 @@ public class Route extends Entity {
         NETWORK_ID_FIELD
     };
 
-    private static final String CSV_HEADER_FOR_MERGE =
-        Stream.concat(
-            Arrays.stream(CSV_FIELDS),
-            Stream.of(ROUTE_NETWORK_IDS_FIELD)
-        ).collect(Collectors.joining(",")) + System.lineSeparator();
+    private static final String CSV_HEADER_FOR_MERGE = String.format(
+        "%s,%s%n",
+        String.join(",", CSV_FIELDS),
+        ROUTE_NETWORK_IDS_FIELD
+    );
 
     private static final String CSV_HEADER_FOR_EXPORT = String.join(",", CSV_FIELDS);
 
