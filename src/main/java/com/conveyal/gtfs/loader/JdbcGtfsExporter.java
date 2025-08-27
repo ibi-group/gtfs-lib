@@ -3,6 +3,7 @@ package com.conveyal.gtfs.loader;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.CalendarDate;
+import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.Service;
 import com.conveyal.gtfs.model.Stop;
@@ -254,19 +255,8 @@ public class JdbcGtfsExporter {
             }
 
             // Only write "approved" routes using COPY TO with results of select query
-            if (fromEditor) {
-                // The filter clause for routes is simple. We're just checking that the route is APPROVED.
-                result.routes = export(
-                    Table.ROUTES,
-                    String.join(
-                        " ",
-                        Table.ROUTES.generateSelectSql(feedIdToExport, Requirement.OPTIONAL),
-                        whereRouteIsApproved
-                    )
-                );
-            } else {
-                result.routes = export(Table.ROUTES, connection);
-            }
+            // The filter clause for routes is simple. We're just checking that the route is APPROVED.
+            result.routes = Route.exportRoutes(dataSource, feedIdToExport, zipOutputStream, fromEditor ? whereRouteIsApproved : null);
 
             // Only write shapes for "approved" routes using COPY TO with results of select query
             if (fromEditor) {
@@ -353,7 +343,7 @@ public class JdbcGtfsExporter {
             result.fareLegRules = export(Table.FARE_LEG_RULES, connection);
             result.fareTransferRules = export(Table.FARE_TRANSFER_RULES, connection);
             result.networks = export(Table.NETWORKS, connection);
-            result.routeNetworks = export(Table.ROUTE_NETWORKS, connection);
+            result.routeNetworks = Route.exportRouteNetworks(dataSource, feedIdToExport, zipOutputStream);
 
             exportProprietaryFiles(result);
 

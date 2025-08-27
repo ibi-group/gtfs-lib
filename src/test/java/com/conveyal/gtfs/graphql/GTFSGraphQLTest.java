@@ -306,13 +306,6 @@ public class GTFSGraphQLTest {
     }
 
     @Test
-    void canFetchRouteNetworks() {
-        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
-            MatcherAssert.assertThat(queryFaresV2GraphQL("feedRouteNetworks.txt"), matchesSnapshot());
-        });
-    }
-
-    @Test
     void canFetchRoutesAndFilterTripsByDateAndTime() {
         Map<String, Object> variables = new HashMap<>();
         variables.put("namespace", testNamespace);

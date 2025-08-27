@@ -3,6 +3,8 @@ package com.conveyal.gtfs.util;
 import com.conveyal.gtfs.error.NewGTFSError;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.loader.Table;
+import com.conveyal.gtfs.model.Route;
+import com.conveyal.gtfs.model.RouteNetwork;
 import com.conveyal.gtfs.model.Stop;
 import com.csvreader.CsvReader;
 import org.apache.commons.io.input.BOMInputStream;
@@ -89,6 +91,8 @@ public class CsvReaderUtil {
         CsvReader csvReader;
         if (tableFileName.equals(STOPS_FILE_NAME)) {
             csvReader = getCsvReaderFromStopsFile(zipFile, entry, errors);
+        } else if (tableFileName.equals(Route.ROUTE_FILE_NAME)) {
+            csvReader = getCsvReaderFromRoutesFile(zipFile, entry, errors);
         } else {
             csvReader = getCsvReaderFromFile(zipFile, entry);
         }
@@ -120,6 +124,33 @@ public class CsvReaderUtil {
         }
         // No stop areas, provide just stops as defined in the feed.
         return stopsReader;
+    }
+
+    /**
+     * If the feed contains route networks extract and merge with routes. If not, just return routes.
+     */
+    private static CsvReader getCsvReaderFromRoutesFile(
+        ZipFile zipFile,
+        ZipEntry routesEntry,
+        List<String> errors
+    ) throws IOException {
+        ZipEntry routeNetworksEntry = getEntryFromZipFile(zipFile, RouteNetwork.ROUTE_NETWORK_FILE_NAME);
+        CsvReader routesReader = getCsvReaderFromFile(zipFile, routesEntry);
+        if (routeNetworksEntry != null) {
+            routesReader.setSkipEmptyRecords(false);
+            routesReader.readHeaders();
+            // Route networks present in zip file.
+            CsvReader routeNetworksReader = getCsvReaderForFile(zipFile, routeNetworksEntry, errors, RouteNetwork.ROUTE_NETWORK_NUMBER_OF_HEADERS);
+            if (routeNetworksReader != null) {
+                Map<String, Set<String>> routeNetworks = Route.groupRouteNetworkIds(routeNetworksReader, errors);
+                if (!routeNetworks.isEmpty()) {
+                    // Merge route networks into routes.
+                    return Route.getCsvReaderForRoutesWithRouteNetworks(routesReader, routeNetworks);
+                }
+            }
+        }
+        // No route networks, provide just routes as defined in the feed.
+        return routesReader;
     }
 
     /**

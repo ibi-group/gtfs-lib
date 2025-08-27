@@ -163,18 +163,19 @@ public interface EntityPopulator<T> {
 
     EntityPopulator<Route> ROUTE = (result, columnForName) -> {
         Route route               = new Route();
-        route.route_id            = getStringIfPresent(result, "route_id",            columnForName);
-        route.agency_id           = getStringIfPresent(result, "agency_id",           columnForName);
-        route.route_short_name    = getStringIfPresent(result, "route_short_name",    columnForName);
-        route.route_long_name     = getStringIfPresent(result, "route_long_name",     columnForName);
-        route.route_desc          = getStringIfPresent(result, "route_desc",          columnForName);
-        route.route_type          = getIntIfPresent   (result, "route_type",          columnForName);
-        route.route_color         = getStringIfPresent(result, "route_color",         columnForName);
-        route.route_text_color    = getStringIfPresent(result, "route_text_color",    columnForName);
-        route.route_url           = getUrlIfPresent   (result, "route_url",           columnForName);
-        route.route_branding_url  = getUrlIfPresent   (result, "route_branding_url",  columnForName);
-        route.continuous_pickup   = getIntIfPresent   (result, "continuous_pickup",   columnForName);
-        route.continuous_drop_off = getIntIfPresent   (result, "continuous_drop_off", columnForName);
+        route.route_id            = getStringIfPresent(result, Route.ROUTE_ID_FIELD, columnForName);
+        route.agency_id           = getStringIfPresent(result, Route.AGENCY_ID_FIELD, columnForName);
+        route.route_short_name    = getStringIfPresent(result, Route.ROUTE_SHORT_NAME_FIELD, columnForName);
+        route.route_long_name     = getStringIfPresent(result, Route.ROUTE_LONG_NAME_FIELD, columnForName);
+        route.route_desc          = getStringIfPresent(result, Route.ROUTE_DESC_FIELD, columnForName);
+        route.route_type          = getIntIfPresent(result, Route.ROUTE_TYPE_FIELD, columnForName);
+        route.route_color         = getStringIfPresent(result, Route.ROUTE_COLOR_FIELD, columnForName);
+        route.route_text_color    = getStringIfPresent(result, Route.ROUTE_TEXT_COLOR_FIELD, columnForName);
+        route.route_url           = getUrlIfPresent(result, Route.ROUTE_URL_FIELD, columnForName);
+        route.route_branding_url  = getUrlIfPresent(result, Route.ROUTE_BRANDING_URL_FIELD, columnForName);
+        route.continuous_pickup   = getIntIfPresent(result, Route.CONTINUOUS_PICKUP_FIELD, columnForName);
+        route.continuous_drop_off = getIntIfPresent(result, Route.CONTINUOUS_DROP_OFF_FIELD, columnForName);
+        route.route_network_ids   = getStringIfPresent(result, Route.ROUTE_NETWORK_IDS_FIELD, columnForName);
         return route;
     };
 
@@ -302,13 +303,6 @@ public interface EntityPopulator<T> {
         network.network_id = getStringIfPresent(result, Network.NETWORK_ID_NAME, columnForName);
         network.network_name = getStringIfPresent(result, Network.NETWORK_NAME_NAME, columnForName);
         return network;
-    };
-
-    EntityPopulator<RouteNetwork> ROUTE_NETWORK = (result, columnForName) -> {
-        RouteNetwork routeNetwork = new RouteNetwork();
-        routeNetwork.network_id = getStringIfPresent(result, RouteNetwork.NETWORK_ID_NAME, columnForName);
-        routeNetwork.route_id = getStringIfPresent(result, RouteNetwork.ROUTE_ID_NAME, columnForName);
-        return routeNetwork;
     };
 
     // The reason we're passing in the columnForName map is that resultSet.getX(columnName) throws an exception

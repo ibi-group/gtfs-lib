@@ -41,6 +41,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static com.conveyal.gtfs.model.RouteNetwork.ROUTE_NETWORK_FILE_NAME;
+
 /**
  * All entities must be from a single feed namespace.
  * Composed of several GTFSTables.
@@ -180,12 +182,16 @@ public class GTFSFeed implements Cloneable, Closeable {
         fares = null; // free memory
 
         new Pattern.Loader(this).loadTable(zip);
+        new RouteNetwork.Loader(this).loadTable(zip);
         new Route.Loader(this).loadTable(zip);
+        if (!route_networks.isEmpty()) {
+            Route.mergeRouteNetworks(routes, route_networks);
+        }
         new ShapePoint.Loader(this).loadTable(zip);
         new StopArea.Loader(this).loadTable(zip);
         new Stop.Loader(this).loadTable(zip);
         if (!stop_areas.isEmpty()) {
-            Stop.getCsvReaderForStopsWithStopAreas(stops, stop_areas);
+            Stop.mergeStopAreas(stops, stop_areas);
         }
         new Transfer.Loader(this).loadTable(zip);
         new Trip.Loader(this).loadTable(zip);
@@ -196,7 +202,6 @@ public class GTFSFeed implements Cloneable, Closeable {
         new Area.Loader(this).loadTable(zip);
         new TimeFrame.Loader(this).loadTable(zip);
         new Network.Loader(this).loadTable(zip);
-        new RouteNetwork.Loader(this).loadTable(zip);
         new FareMedia.Loader(this).loadTable(zip);
         new FareProduct.Loader(this).loadTable(zip);
         new FareLegRule.Loader(this).loadTable(zip);
@@ -237,10 +242,14 @@ public class GTFSFeed implements Cloneable, Closeable {
             new FareRule.Writer(this).writeTable(zip);
             new Frequency.Writer(this).writeTable(zip);
             new Route.Writer(this).writeTable(zip);
+            if (!routes.isEmpty()) {
+                // Export route networks.
+                Entity.writeEntityToFile(zip, new ArrayList<>(routes.values()), ROUTE_NETWORK_FILE_NAME);
+            }
             new Stop.Writer(this).writeTable(zip);
             if (!stops.isEmpty()) {
                 // Export stop areas.
-                Stop.writeEntityToFile(zip, new ArrayList<>(stops.values()), Stop.STOP_AREAS_FILE_NAME);
+                Entity.writeEntityToFile(zip, new ArrayList<>(stops.values()), Stop.STOP_AREAS_FILE_NAME);
             }
             new ShapePoint.Writer(this).writeTable(zip);
             new Transfer.Writer(this).writeTable(zip);
@@ -252,7 +261,6 @@ public class GTFSFeed implements Cloneable, Closeable {
             new Area.Writer(this).writeTable(zip);
             new TimeFrame.Writer(this).writeTable(zip);
             new Network.Writer(this).writeTable(zip);
-            new RouteNetwork.Writer(this).writeTable(zip);
             new FareMedia.Writer(this).writeTable(zip);
             new FareProduct.Writer(this).writeTable(zip);
             new FareLegRule.Writer(this).writeTable(zip);

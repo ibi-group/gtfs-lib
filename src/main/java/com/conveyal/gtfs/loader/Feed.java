@@ -47,7 +47,6 @@ public class Feed {
     public final TableReader<FareLegRule> fareLegRules;
     public final TableReader<FareTransferRule> fareTransferRules;
     public final TableReader<Network> networks;
-    public final TableReader<RouteNetwork> routeNetworks;
 
     /**
      * Create a feed that reads tables over a JDBC connection. The connection should already be set to the right
@@ -76,7 +75,6 @@ public class Feed {
         fareLegRules = new JDBCTableReader(Table.FARE_LEG_RULES, dataSource, databaseSchemaPrefix, EntityPopulator.FARE_LEG_RULE);
         fareTransferRules = new JDBCTableReader(Table.FARE_TRANSFER_RULES, dataSource, databaseSchemaPrefix, EntityPopulator.FARE_TRANSFER_RULE);
         networks = new JDBCTableReader(Table.NETWORKS, dataSource, databaseSchemaPrefix, EntityPopulator.NETWORK);
-        routeNetworks = new JDBCTableReader(Table.ROUTE_NETWORKS, dataSource, databaseSchemaPrefix, EntityPopulator.ROUTE_NETWORK);
     }
 
     /**

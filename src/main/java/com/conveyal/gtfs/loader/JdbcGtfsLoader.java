@@ -163,7 +163,6 @@ public class JdbcGtfsLoader {
             result.fareMedias = load(Table.FARE_MEDIAS);
             result.fareProducts = load(Table.FARE_PRODUCTS);
             result.networks = load(Table.NETWORKS);
-            result.routeNetworks = load(Table.ROUTE_NETWORKS); // refs networks.
             result.areas = load(Table.AREAS);
             result.fareLegRules = load(Table.FARE_LEG_RULES); // ref areas
             result.fareTransferRules = load(Table.FARE_TRANSFER_RULES);

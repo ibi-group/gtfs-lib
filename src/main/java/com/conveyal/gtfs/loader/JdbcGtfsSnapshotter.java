@@ -123,7 +123,6 @@ public class JdbcGtfsSnapshotter {
             result.fareLegRules = copy(Table.FARE_LEG_RULES, true);
             result.fareTransferRules = copy(Table.FARE_TRANSFER_RULES, true);
             result.networks = copy(Table.NETWORKS, true);
-            result.routeNetworks = copy(Table.ROUTE_NETWORKS, true);
 
             result.completionTime = System.currentTimeMillis();
             result.loadTimeMillis = result.completionTime - startTime;
