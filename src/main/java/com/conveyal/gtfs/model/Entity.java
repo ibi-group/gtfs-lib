@@ -545,6 +545,13 @@ public abstract class Entity implements Serializable {
     }
 
     /**
+     * Create a CSV row by combining an array of values plus another one.
+     */
+    protected static String createRow(String[] values, String extraValue) {
+        return String.format("%s,%s%n", String.join(",", values), extraValue);
+    }
+
+    /**
      * Create a CSV row from original fields plus grouped (stop areas or route network) ids.
      */
     protected static String createRow(CsvReader csvReader, String ids, String[] csvFields) throws IOException {
@@ -552,7 +559,7 @@ public abstract class Entity implements Serializable {
         for (int i = 0; i < csvFields.length; i++) {
             fields[i] = csvReader.get(csvFields[i]);
         }
-        return String.format("%s,%s%n", String.join(",", fields), ids);
+        return createRow(fields, ids);
     }
 
     protected static String computeCsvValue(String value) {
