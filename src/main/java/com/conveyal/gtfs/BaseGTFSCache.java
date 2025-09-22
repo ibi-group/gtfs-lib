@@ -203,22 +203,17 @@ public abstract class BaseGTFSCache<T> {
         }
 
         if (bucket != null) {
-            try {
-                LOG.info("Attempting to download cached GTFS MapDB from S3: {}/{}.db", bucket, key);
+            LOG.info("Attempting to download cached GTFS MapDB from S3: {}/{}.db", bucket, key);
+            try (
                 S3Object db = s3.getObject(bucket, key + ".db");
+                S3Object dbp = s3.getObject(bucket, key + ".db.p");
                 InputStream is = db.getObjectContent();
                 FileOutputStream fos = new FileOutputStream(dbFile);
-                ByteStreams.copy(is, fos);
-                is.close();
-                fos.close();
-
-                S3Object dbp = s3.getObject(bucket, key + ".db.p");
                 InputStream isp = dbp.getObjectContent();
                 FileOutputStream fosp = new FileOutputStream(new File(cacheDir, id + ".db.p"));
+            ) {
+                ByteStreams.copy(is, fos);
                 ByteStreams.copy(isp, fosp);
-                isp.close();
-                fosp.close();
-
                 LOG.info("Returning processed GTFS from S3");
                 feed = new GTFSFeed(dbFile.getAbsolutePath());
                 if (feed != null) {
@@ -240,13 +235,12 @@ public abstract class BaseGTFSCache<T> {
 
         if (!feedFile.exists() && bucket != null) {
             LOG.info("Feed not found locally, downloading from S3.");
-            try {
+            try (
                 S3Object gtfs = s3.getObject(bucket, key + ".zip");
                 InputStream is = gtfs.getObjectContent();
                 FileOutputStream fos = new FileOutputStream(feedFile);
+            ) {
                 ByteStreams.copy(is, fos);
-                is.close();
-                fos.close();
             } catch (Exception e) {
                 LOG.error("Could not download feed at s3://{}/{}.", bucket, key);
                 throw new RuntimeException(e);

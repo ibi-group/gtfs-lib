@@ -668,6 +668,7 @@ public class Table {
         }
         if (entry == null) return null;
         try {
+            // Stream will be closed when the csvReader is closed.
             InputStream zipInputStream = zipFile.getInputStream(entry);
             // Skip any byte order mark that may be present. Files must be UTF-8,
             // but the GTFS spec says that "files that include the UTF byte order mark are acceptable".

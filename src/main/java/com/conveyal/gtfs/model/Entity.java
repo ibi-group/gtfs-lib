@@ -301,25 +301,28 @@ public abstract class Entity implements Serializable {
                 if (entry == null) return;
             }
             LOG.info("Loading GTFS table {} from {}", tableName, entry);
-            InputStream zis = zip.getInputStream(entry);
-            // skip any byte order mark that may be present. Files must be UTF-8,
-            // but the GTFS spec says that "files that include the UTF byte order mark are acceptable"
-            InputStream bis = new BOMInputStream(zis);
-            CsvReader reader = new CsvReader(bis, ',', Charset.forName("UTF8"));
-            this.reader = reader;
-            boolean hasHeaders = reader.readHeaders();
-            if (!hasHeaders) {
-                feed.errors.add(new EmptyTableError(tableName));
-            }
-            while (reader.readRecord()) {
-                // reader.getCurrentRecord() is zero-based and does not include the header line, keep our own row count
-                if (++row % 500000 == 0) {
-                    LOG.info("Record number {}", human(row));
+            try (
+                InputStream zis = zip.getInputStream(entry);
+                // skip any byte order mark that may be present. Files must be UTF-8,
+                // but the GTFS spec says that "files that include the UTF byte order mark are acceptable"
+                InputStream bis = new BOMInputStream(zis);
+            ) {
+                CsvReader reader = new CsvReader(bis, ',', Charset.forName("UTF8"));
+                this.reader = reader;
+                boolean hasHeaders = reader.readHeaders();
+                if (!hasHeaders) {
+                    feed.errors.add(new EmptyTableError(tableName));
                 }
-                loadOneRow(); // Call subclass method to produce an entity from the current row.
-            }
-            if (row == 0) {
-                feed.errors.add(new EmptyTableError(tableName));
+                while (reader.readRecord()) {
+                    // reader.getCurrentRecord() is zero-based and does not include the header line, keep our own row count
+                    if (++row % 500000 == 0) {
+                        LOG.info("Record number {}", human(row));
+                    }
+                    loadOneRow(); // Call subclass method to produce an entity from the current row.
+                }
+                if (row == 0) {
+                    feed.errors.add(new EmptyTableError(tableName));
+                }
             }
         }
 

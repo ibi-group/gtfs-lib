@@ -157,33 +157,36 @@ public class GTFSFeedTest {
             assertThat(entry, notNullValue());
 
             // create csv reader for file
-            InputStream zis = zip.getInputStream(entry);
-            InputStream bis = new BOMInputStream(zis);
-            CsvReader reader = new CsvReader(bis, ',', Charset.forName("UTF8"));
+            try (
+                InputStream zis = zip.getInputStream(entry);
+                InputStream bis = new BOMInputStream(zis);
+            ) {
+                CsvReader reader = new CsvReader(bis, ',', Charset.forName("UTF8"));
 
-            // make sure the file has headers
-            boolean hasHeaders = reader.readHeaders();
-            assertThat(hasHeaders, is(true));
+                // make sure the file has headers
+                boolean hasHeaders = reader.readHeaders();
+                assertThat(hasHeaders, is(true));
 
-            // make sure that the a record matching the expected row exists in this table
-            boolean recordFound = false;
-            while (reader.readRecord() && !recordFound) {
-                boolean allExpectationsMetForThisRecord = true;
-                for (DataExpectation dataExpectation : fileTestCase.expectedColumnData) {
-                    if(!reader.get(dataExpectation.columnName).equals(dataExpectation.expectedValue)) {
-                        allExpectationsMetForThisRecord = false;
-                        break;
+                // make sure that the a record matching the expected row exists in this table
+                boolean recordFound = false;
+                while (reader.readRecord() && !recordFound) {
+                    boolean allExpectationsMetForThisRecord = true;
+                    for (DataExpectation dataExpectation : fileTestCase.expectedColumnData) {
+                        if (!reader.get(dataExpectation.columnName).equals(dataExpectation.expectedValue)) {
+                            allExpectationsMetForThisRecord = false;
+                            break;
+                        }
+                    }
+                    if (allExpectationsMetForThisRecord) {
+                        recordFound = true;
                     }
                 }
-                if (allExpectationsMetForThisRecord) {
-                    recordFound = true;
-                }
+                assertThat(
+                    String.format("Data Expectation record not found in %s", fileTestCase.filename),
+                    recordFound,
+                    is(true)
+                );
             }
-            assertThat(
-                String.format("Data Expectation record not found in %s", fileTestCase.filename),
-                recordFound,
-                is(true)
-            );
         }
     }
 
