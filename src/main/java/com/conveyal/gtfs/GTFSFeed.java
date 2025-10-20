@@ -194,11 +194,11 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     public void toFile (String file) {
-        try {
-            File out = new File(file);
+        File out = new File(file);
+        try (
             OutputStream os = new FileOutputStream(out);
             ZipOutputStream zip = new ZipOutputStream(os);
-
+        ) {
             // write everything
             // TODO: shapes
 
@@ -218,9 +218,6 @@ public class GTFSFeed implements Cloneable, Closeable {
             new Trip.Writer(this).writeTable(zip);
             new StopTime.Writer(this).writeTable(zip);
             new Pattern.Writer(this).writeTable(zip);
-
-            zip.close();
-
             LOG.info("GTFS file written");
         } catch (Exception e) {
             LOG.error("Error saving GTFS: {}", e.getMessage());

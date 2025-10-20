@@ -129,9 +129,9 @@ public class TestUtils {
     }
 
     private static void compressZipfile(String sourceDir, String outputFile, boolean nestDirectory) throws IOException {
-        ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(outputFile));
-        compressDirectoryToZipfile(sourceDir, sourceDir, zipFile, nestDirectory);
-        IOUtils.closeQuietly(zipFile);
+        try (ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(outputFile))) {
+            compressDirectoryToZipfile(sourceDir, sourceDir, zipFile, nestDirectory);
+        }
     }
 
     /**
