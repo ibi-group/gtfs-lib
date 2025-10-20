@@ -1199,57 +1199,60 @@ public class GTFSTest {
             }
 
             // prepare to read the file
-            InputStream zipInputStream = gtfsZipfile.getInputStream(entry);
-            // Skip any byte order mark that may be present. Files must be UTF-8,
-            // but the GTFS spec says that "files that include the UTF byte order mark are acceptable".
-            InputStream bomInputStream = new BOMInputStream(zipInputStream);
-            CsvReader csvReader = new CsvReader(bomInputStream, ',', Charset.forName("UTF8"));
-            csvReader.readHeaders();
+            try (
+                InputStream zipInputStream = gtfsZipfile.getInputStream(entry);
+                // Skip any byte order mark that may be present. Files must be UTF-8,
+                // but the GTFS spec says that "files that include the UTF byte order mark are acceptable".
+                InputStream bomInputStream = new BOMInputStream(zipInputStream);
+            ) {
+                CsvReader csvReader = new CsvReader(bomInputStream, ',', Charset.forName("UTF8"));
+                csvReader.readHeaders();
 
-            boolean foundRecord = false;
-            int numRecordsSearched = 0;
+                boolean foundRecord = false;
+                int numRecordsSearched = 0;
 
-            // read each record
-            while (csvReader.readRecord() && !foundRecord) {
-                numRecordsSearched++;
-                LOG.info(String.format("record %d in csv file", numRecordsSearched));
-                boolean allFieldsMatch = true;
+                // read each record
+                while (csvReader.readRecord() && !foundRecord) {
+                    numRecordsSearched++;
+                    LOG.info(String.format("record %d in csv file", numRecordsSearched));
+                    boolean allFieldsMatch = true;
 
-                // iterate through all rows in record to determine if it's the one we're looking for
-                for (RecordExpectation recordExpectation: persistenceExpectation.recordExpectations) {
-                    String val = csvReader.get(recordExpectation.fieldName);
-                    String expectation = recordExpectation.getStringifiedExpectation(fromEditor);
-                    LOG.info(String.format(
-                        "%s: %s (Expectation: %s)",
-                        recordExpectation.fieldName,
-                        val,
-                        expectation
-                    ));
-                    if (val.isEmpty() && expectation == null) {
-                        // First check that the csv value is an empty string and that the expectation is null. Null
-                        // exported from the database to a csv should round trip into an empty string, so this meets the
-                        // expectation.
-                        break;
-                    } else if (!val.equals(expectation)) {
-                        // sometimes there are slight differences in decimal precision in various fields
-                        // check if the decimal delta is acceptable
-                        if (equalsWithNumericDelta(val, recordExpectation)) continue;
-                        allFieldsMatch = false;
-                        break;
+                    // iterate through all rows in record to determine if it's the one we're looking for
+                    for (RecordExpectation recordExpectation : persistenceExpectation.recordExpectations) {
+                        String val = csvReader.get(recordExpectation.fieldName);
+                        String expectation = recordExpectation.getStringifiedExpectation(fromEditor);
+                        LOG.info(String.format(
+                            "%s: %s (Expectation: %s)",
+                            recordExpectation.fieldName,
+                            val,
+                            expectation
+                        ));
+                        if (val.isEmpty() && expectation == null) {
+                            // First check that the csv value is an empty string and that the expectation is null. Null
+                            // exported from the database to a csv should round trip into an empty string, so this meets the
+                            // expectation.
+                            break;
+                        } else if (!val.equals(expectation)) {
+                            // sometimes there are slight differences in decimal precision in various fields
+                            // check if the decimal delta is acceptable
+                            if (equalsWithNumericDelta(val, recordExpectation)) continue;
+                            allFieldsMatch = false;
+                            break;
+                        }
+                    }
+                    // all fields match expectations!  We have found the record.
+                    if (allFieldsMatch) {
+                        LOG.info("CSV record satisfies expectations.");
+                        foundRecord = true;
                     }
                 }
-                // all fields match expectations!  We have found the record.
-                if (allFieldsMatch) {
-                    LOG.info("CSV record satisfies expectations.");
-                    foundRecord = true;
-                }
+                assertThatCSVPersistenceExpectationRecordWasFound(
+                    persistenceExpectation,
+                    tableFileName,
+                    numRecordsSearched,
+                    foundRecord
+                );
             }
-            assertThatCSVPersistenceExpectationRecordWasFound(
-                persistenceExpectation,
-                tableFileName,
-                numRecordsSearched,
-                foundRecord
-            );
         }
     }
 

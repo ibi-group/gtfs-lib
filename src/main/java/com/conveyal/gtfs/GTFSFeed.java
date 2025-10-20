@@ -210,11 +210,11 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     public void toFile (String file) {
-        try {
-            File out = new File(file);
+        File out = new File(file);
+        try (
             OutputStream os = new FileOutputStream(out);
             ZipOutputStream zip = new ZipOutputStream(os);
-
+        ) {
             // write everything
             // TODO: shapes
 

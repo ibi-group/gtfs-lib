@@ -313,24 +313,28 @@ public abstract class Entity implements Serializable {
             }
             LOG.info("Loading GTFS table {} from {}", tableName, entry);
             List<String> errors = new ArrayList<>();
-            this.reader = CsvReaderUtil.getCsvReaderAccordingToFileName(tableFileName, tableName, zip, entry, errors);
-            if (!errors.isEmpty()) {
-                // Error processing locations, location groups or location group stops.
-                errors.forEach(error -> feed.errors.add(new LocationParseError(tableName, error)));
-            }
-            boolean hasHeaders = reader.readHeaders();
-            if (!hasHeaders) {
-                feed.errors.add(new EmptyTableError(tableName));
-            }
-            while (reader.readRecord()) {
-                // reader.getCurrentRecord() is zero-based and does not include the header line, keep our own row count
-                if (++row % 500000 == 0) {
-                    LOG.info("Record number {}", human(row));
+            try {
+                this.reader = CsvReaderUtil.getCsvReaderAccordingToFileName(tableFileName, tableName, zip, entry, errors);
+                if (!errors.isEmpty()) {
+                    // Error processing locations, location groups or location group stops.
+                    errors.forEach(error -> feed.errors.add(new LocationParseError(tableName, error)));
                 }
-                loadOneRow(); // Call subclass method to produce an entity from the current row.
-            }
-            if (row == 0) {
-                feed.errors.add(new EmptyTableError(tableName));
+                boolean hasHeaders = reader.readHeaders();
+                if (!hasHeaders) {
+                    feed.errors.add(new EmptyTableError(tableName));
+                }
+                while (reader.readRecord()) {
+                    // reader.getCurrentRecord() is zero-based and does not include the header line, keep our own row count
+                    if (++row % 500000 == 0) {
+                        LOG.info("Record number {}", human(row));
+                    }
+                    loadOneRow(); // Call subclass method to produce an entity from the current row.
+                }
+                if (row == 0) {
+                    feed.errors.add(new EmptyTableError(tableName));
+                }
+            } finally {
+                reader.close();
             }
         }
 

@@ -374,6 +374,13 @@ public class JdbcGtfsExporter {
             result.fatalException = ex.toString();
         } finally {
             if (connection != null) DbUtils.closeQuietly(connection);
+            if (zipOutputStream != null) {
+                try {
+                    zipOutputStream.close();
+                } catch (IOException ioe) {
+                    LOG.error("Exception while closing zip stream: {}", ioe.toString());
+                }
+            }
         }
         return result;
     }
