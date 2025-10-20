@@ -242,8 +242,9 @@ public class JdbcGtfsLoader {
                 feedVersion = csvReader.get("feed_version");
             } catch (IOException e) {
                 LOG.error("Exception while inspecting feed_info: {}", e);
+            } finally {
+                csvReader.close();
             }
-            csvReader.close();
         }
 
         try {
@@ -337,166 +338,169 @@ public class JdbcGtfsLoader {
             if (table.isRequired()) errorStorage.storeError(NewGTFSError.forTable(table, MISSING_TABLE));
             return 0;
         }
-        LOG.info("Loading GTFS table {}", table.name);
-        // Use the Postgres text load format if we're connected to that DBMS.
-        boolean postgresText = (connection.getMetaData().getDatabaseProductName().equals("PostgreSQL"));
+        try {
+            LOG.info("Loading GTFS table {}", table.name);
+            // Use the Postgres text load format if we're connected to that DBMS.
+            boolean postgresText = (connection.getMetaData().getDatabaseProductName().equals("PostgreSQL"));
 
-        // TODO Strip out line returns, tabs in field contents.
-        // By default the CSV reader trims leading and trailing whitespace in fields.
-        // Build up a list of fields in the same order they appear in this GTFS CSV file.
-        Field[] fields = table.getFieldsFromFieldHeaders(csvReader.getHeaders(), errorStorage);
-        int keyFieldIndex = table.getKeyFieldIndex(fields);
-        // Create separate fields array with filtered list that does not include null values (for duplicate headers or
-        // ID field). This is solely used to construct the table and array of values to load.
-        Field[] cleanFields = Arrays.stream(fields).filter(Objects::nonNull).toArray(Field[]::new);
-        if (cleanFields.length == 0) {
-            // Do not create the table if there are no valid fields.
-            errorStorage.storeError(NewGTFSError.forTable(table, TABLE_MISSING_COLUMN_HEADERS));
-            return 0;
-        }
-        // Replace the GTFS spec Table with one representing the SQL table we will populate, with reordered columns.
-        // FIXME this is confusing, we only create a new table object so we can call a couple of methods on it, all of which just need a list of fields.
-        Table targetTable = new Table(tablePrefix + table.name, table.entityClass, table.required, cleanFields);
-
-        // NOTE H2 doesn't seem to work with schemas (or create schema doesn't work).
-        // With bulk loads it takes 140 seconds to load the data and additional 120 seconds just to index the stop times.
-        // SQLite also doesn't support schemas, but you can attach additional database files with schema-like naming.
-        // We'll just literally prepend feed identifiers to table names when supplied.
-        // Some databases require the table to exist before a statement can be prepared.
-        if (table.name.equals("patterns")) {
-            // When creating the patterns table the id field must be flagged as serial and not bigint. This then allows
-            // the addition of new patterns in PatternBuilder#processPatternAndPatternStops.
-            targetTable.createSqlTable(connection, true);
-        } else {
-            targetTable.createSqlTable(connection);
-        }
-
-        // TODO are we loading with or without a header row in our Postgres text file?
-        if (postgresText) {
-            // No need to output headers to temp text file, our SQL table column order exactly matches our text file.
-            tempTextFile = File.createTempFile(targetTable.name, "text");
-            tempTextFileStream = new PrintStream(new BufferedOutputStream(new FileOutputStream(tempTextFile)));
-            LOG.info("Loading via temporary text file at " + tempTextFile.getAbsolutePath());
-        } else {
-            insertStatement = connection.prepareStatement(targetTable.generateInsertSql());
-            LOG.info(insertStatement.toString()); // Logs the SQL for the prepared statement
-        }
-
-        // When outputting text, accumulate transformed strings to allow skipping rows when errors are encountered.
-        // One extra position in the array for the CSV line number.
-        String[] transformedStrings = new String[cleanFields.length + 1];
-        boolean tableHasConditionalRequirements = table.hasConditionalRequirements();
-        // Iterate over each record and prepare the record for storage in the table either through batch insert
-        // statements or postgres text copy operation.
-        while (csvReader.readRecord()) {
-            // The CSV reader's current record is zero-based and does not include the header line.
-            // Convert to a CSV file line number that will make more sense to people reading error messages.
-            if (csvReader.getCurrentRecord() + 2 > Integer.MAX_VALUE) {
-                errorStorage.storeError(NewGTFSError.forTable(table, TABLE_TOO_LONG));
-                break;
+            // TODO Strip out line returns, tabs in field contents.
+            // By default the CSV reader trims leading and trailing whitespace in fields.
+            // Build up a list of fields in the same order they appear in this GTFS CSV file.
+            Field[] fields = table.getFieldsFromFieldHeaders(csvReader.getHeaders(), errorStorage);
+            int keyFieldIndex = table.getKeyFieldIndex(fields);
+            // Create separate fields array with filtered list that does not include null values (for duplicate headers or
+            // ID field). This is solely used to construct the table and array of values to load.
+            Field[] cleanFields = Arrays.stream(fields).filter(Objects::nonNull).toArray(Field[]::new);
+            if (cleanFields.length == 0) {
+                // Do not create the table if there are no valid fields.
+                errorStorage.storeError(NewGTFSError.forTable(table, TABLE_MISSING_COLUMN_HEADERS));
+                return 0;
             }
-            // Line 1 is considered the header row, so the first actual row of data will be line 2.
-            int lineNumber = ((int) csvReader.getCurrentRecord()) + 2;
-            if (lineNumber % 500_000 == 0) LOG.info("Processed {}", human(lineNumber));
-            if (csvReader.getColumnCount() != fields.length) {
-                String badValues = String.format("expected=%d; found=%d", fields.length, csvReader.getColumnCount());
-                errorStorage.storeError(NewGTFSError.forLine(table, lineNumber, WRONG_NUMBER_OF_FIELDS, badValues));
-                continue;
-            }
-            // Store value of key field for use in checking duplicate IDs
-            // FIXME: If the key field is missing (keyFieldIndex is still -1) from a loaded table, this will crash.
-            String keyValue = csvReader.get(keyFieldIndex);
-            // The first field holds the line number of the CSV file. Prepared statement parameters are one-based.
-            if (postgresText) transformedStrings[0] = Integer.toString(lineNumber);
-            else insertStatement.setInt(1, lineNumber);
-            // Maintain a separate columnIndex from for loop because some fields may be null and not included in the set
-            // of fields for this table.
-            int columnIndex = 0;
-            for (int f = 0; f < fields.length; f++) {
-                Field field = fields[f];
-                // If the field is null, it represents a duplicate header or ID field and must be skipped to maintain
-                // table integrity.
-                if (field == null) continue;
-                // CSV reader get on an empty field will be an empty string literal.
-                String string = csvReader.get(f);
-                // Use spec table to check that references are valid and IDs are unique.
-                Set<NewGTFSError> errors = referenceTracker
-                    .checkReferencesAndUniqueness(keyValue, lineNumber, field, string, table);
-                // Check for special case with calendar_dates where added service should not trigger ref. integrity
-                // error.
-                if (
-                    table.name.equals("calendar_dates") &&
-                        "service_id".equals(field.name) &&
-                        "1".equals(csvReader.get(Field.getFieldIndex(fields, "exception_type")))
+            // Replace the GTFS spec Table with one representing the SQL table we will populate, with reordered columns.
+            // FIXME this is confusing, we only create a new table object so we can call a couple of methods on it, all of which just need a list of fields.
+            Table targetTable = new Table(tablePrefix + table.name, table.entityClass, table.required, cleanFields);
 
-                ) {
-                    for (NewGTFSError error : errors) {
-                        if (NewGTFSErrorType.REFERENTIAL_INTEGRITY.equals(error.errorType)) {
-                            // Do not record bad service_id reference errors for calendar date entries that add service
-                            // (exception type=1) because a corresponding service_id in calendars.txt is not required in
-                            // this case.
-                            LOG.info(
-                                "A calendar_dates.txt entry added service (exception_type=1) for service_id={}, which does not have (or necessarily need) a corresponding entry in calendars.txt.",
-                                keyValue
-                            );
-                        } else {
-                            errorStorage.storeError(error);
+            // NOTE H2 doesn't seem to work with schemas (or create schema doesn't work).
+            // With bulk loads it takes 140 seconds to load the data and additional 120 seconds just to index the stop times.
+            // SQLite also doesn't support schemas, but you can attach additional database files with schema-like naming.
+            // We'll just literally prepend feed identifiers to table names when supplied.
+            // Some databases require the table to exist before a statement can be prepared.
+            if (table.name.equals("patterns")) {
+                // When creating the patterns table the id field must be flagged as serial and not bigint. This then allows
+                // the addition of new patterns in PatternBuilder#processPatternAndPatternStops.
+                targetTable.createSqlTable(connection, true);
+            } else {
+                targetTable.createSqlTable(connection);
+            }
+
+            // TODO are we loading with or without a header row in our Postgres text file?
+            if (postgresText) {
+                // No need to output headers to temp text file, our SQL table column order exactly matches our text file.
+                tempTextFile = File.createTempFile(targetTable.name, "text");
+                tempTextFileStream = new PrintStream(new BufferedOutputStream(new FileOutputStream(tempTextFile)));
+                LOG.info("Loading via temporary text file at " + tempTextFile.getAbsolutePath());
+            } else {
+                insertStatement = connection.prepareStatement(targetTable.generateInsertSql());
+                LOG.info(insertStatement.toString()); // Logs the SQL for the prepared statement
+            }
+
+            // When outputting text, accumulate transformed strings to allow skipping rows when errors are encountered.
+            // One extra position in the array for the CSV line number.
+            String[] transformedStrings = new String[cleanFields.length + 1];
+            boolean tableHasConditionalRequirements = table.hasConditionalRequirements();
+            // Iterate over each record and prepare the record for storage in the table either through batch insert
+            // statements or postgres text copy operation.
+            while (csvReader.readRecord()) {
+                // The CSV reader's current record is zero-based and does not include the header line.
+                // Convert to a CSV file line number that will make more sense to people reading error messages.
+                if (csvReader.getCurrentRecord() + 2 > Integer.MAX_VALUE) {
+                    errorStorage.storeError(NewGTFSError.forTable(table, TABLE_TOO_LONG));
+                    break;
+                }
+                // Line 1 is considered the header row, so the first actual row of data will be line 2.
+                int lineNumber = ((int) csvReader.getCurrentRecord()) + 2;
+                if (lineNumber % 500_000 == 0) LOG.info("Processed {}", human(lineNumber));
+                if (csvReader.getColumnCount() != fields.length) {
+                    String badValues = String.format("expected=%d; found=%d", fields.length, csvReader.getColumnCount());
+                    errorStorage.storeError(NewGTFSError.forLine(table, lineNumber, WRONG_NUMBER_OF_FIELDS, badValues));
+                    continue;
+                }
+                // Store value of key field for use in checking duplicate IDs
+                // FIXME: If the key field is missing (keyFieldIndex is still -1) from a loaded table, this will crash.
+                String keyValue = csvReader.get(keyFieldIndex);
+                // The first field holds the line number of the CSV file. Prepared statement parameters are one-based.
+                if (postgresText) transformedStrings[0] = Integer.toString(lineNumber);
+                else insertStatement.setInt(1, lineNumber);
+                // Maintain a separate columnIndex from for loop because some fields may be null and not included in the set
+                // of fields for this table.
+                int columnIndex = 0;
+                for (int f = 0; f < fields.length; f++) {
+                    Field field = fields[f];
+                    // If the field is null, it represents a duplicate header or ID field and must be skipped to maintain
+                    // table integrity.
+                    if (field == null) continue;
+                    // CSV reader get on an empty field will be an empty string literal.
+                    String string = csvReader.get(f);
+                    // Use spec table to check that references are valid and IDs are unique.
+                    Set<NewGTFSError> errors = referenceTracker
+                        .checkReferencesAndUniqueness(keyValue, lineNumber, field, string, table);
+                    // Check for special case with calendar_dates where added service should not trigger ref. integrity
+                    // error.
+                    if (
+                        table.name.equals("calendar_dates") &&
+                            "service_id".equals(field.name) &&
+                            "1".equals(csvReader.get(Field.getFieldIndex(fields, "exception_type")))
+
+                    ) {
+                        for (NewGTFSError error : errors) {
+                            if (NewGTFSErrorType.REFERENTIAL_INTEGRITY.equals(error.errorType)) {
+                                // Do not record bad service_id reference errors for calendar date entries that add service
+                                // (exception type=1) because a corresponding service_id in calendars.txt is not required in
+                                // this case.
+                                LOG.info(
+                                    "A calendar_dates.txt entry added service (exception_type=1) for service_id={}, which does not have (or necessarily need) a corresponding entry in calendars.txt.",
+                                    keyValue
+                                );
+                            } else {
+                                errorStorage.storeError(error);
+                            }
                         }
                     }
+                    // In all other cases (i.e., outside of the calendar_dates special case), store the reference errors found.
+                    else {
+                        errorStorage.storeErrors(errors);
+                    }
+                    // Add value for entry into table
+                    setValueForField(table, columnIndex, lineNumber, field, string, postgresText, transformedStrings);
+                    // Increment column index.
+                    columnIndex += 1;
                 }
-                // In all other cases (i.e., outside of the calendar_dates special case), store the reference errors found.
-                else {
-                    errorStorage.storeErrors(errors);
+                if (tableHasConditionalRequirements) {
+                    LineContext lineContext = new LineContext(table, fields, transformedStrings, lineNumber);
+                    errorStorage.storeErrors(
+                        referenceTracker.checkConditionallyRequiredFields(lineContext)
+                    );
                 }
-                // Add value for entry into table
-                setValueForField(table, columnIndex, lineNumber, field, string, postgresText, transformedStrings);
-                // Increment column index.
-                columnIndex += 1;
+                if (postgresText) {
+                    // Print a new line in the standard postgres text format:
+                    // https://www.postgresql.org/docs/9.1/static/sql-copy.html#AEN64380
+                    tempTextFileStream.println(String.join("\t", transformedStrings));
+                } else {
+                    insertStatement.addBatch();
+                    if (lineNumber % INSERT_BATCH_SIZE == 0) insertStatement.executeBatch();
+                }
             }
-            if (tableHasConditionalRequirements) {
-                LineContext lineContext = new LineContext(table, fields, transformedStrings, lineNumber);
-                errorStorage.storeErrors(
-                    referenceTracker.checkConditionallyRequiredFields(lineContext)
-                );
-            }
+            // Record number is zero based but includes the header record, which we don't want to count.
+            // But if we are working with Postgres text file (without a header row) we have to add 1
+            // Iteration over all rows has finished, so We are now one record past the end of the file.
+            int numberOfRecordsLoaded = (int) csvReader.getCurrentRecord();
             if (postgresText) {
-                // Print a new line in the standard postgres text format:
-                // https://www.postgresql.org/docs/9.1/static/sql-copy.html#AEN64380
-                tempTextFileStream.println(String.join("\t", transformedStrings));
-            } else {
-                insertStatement.addBatch();
-                if (lineNumber % INSERT_BATCH_SIZE == 0) insertStatement.executeBatch();
+                numberOfRecordsLoaded = numberOfRecordsLoaded + 1;
             }
-        }
-        // Record number is zero based but includes the header record, which we don't want to count.
-        // But if we are working with Postgres text file (without a header row) we have to add 1
-        // Iteration over all rows has finished, so We are now one record past the end of the file.
-        int numberOfRecordsLoaded = (int) csvReader.getCurrentRecord();
-        if (postgresText) {
-            numberOfRecordsLoaded = numberOfRecordsLoaded + 1;
-        }
-        if (table.isRequired() && numberOfRecordsLoaded == 0) {
-            errorStorage.storeError(NewGTFSError.forTable(table, REQUIRED_TABLE_EMPTY));
-        }
-        csvReader.close();
+            if (table.isRequired() && numberOfRecordsLoaded == 0) {
+                errorStorage.storeError(NewGTFSError.forTable(table, REQUIRED_TABLE_EMPTY));
+            }
 
-        // Finalize loading the table, either by copying the pre-validated text file into the database (for Postgres)
-        // or inserting any remaining rows (for all others).
-        if (postgresText) {
-            LOG.info("Loading into database table {} from temporary text file...", targetTable.name);
-            tempTextFileStream.close();
-            copyFromFile(connection, tempTextFile, targetTable.name);
-        } else {
-            insertStatement.executeBatch();
-        }
-        // Create indexes using spec table. Target table must not be used because fields could be in the wrong order
-        // (and the order is currently important to determining the index fields).
-        table.createIndexes(connection, tablePrefix);
+            // Finalize loading the table, either by copying the pre-validated text file into the database (for Postgres)
+            // or inserting any remaining rows (for all others).
+            if (postgresText) {
+                LOG.info("Loading into database table {} from temporary text file...", targetTable.name);
+                tempTextFileStream.close();
+                copyFromFile(connection, tempTextFile, targetTable.name);
+            } else {
+                insertStatement.executeBatch();
+            }
+            // Create indexes using spec table. Target table must not be used because fields could be in the wrong order
+            // (and the order is currently important to determining the index fields).
+            table.createIndexes(connection, tablePrefix);
 
-        LOG.info("Committing transaction...");
-        connection.commit();
-        LOG.info("Done.");
-        return numberOfRecordsLoaded;
+            LOG.info("Committing transaction...");
+            connection.commit();
+            LOG.info("Done.");
+            return numberOfRecordsLoaded;
+        } finally {
+            csvReader.close();
+        }
     }
 
     /**

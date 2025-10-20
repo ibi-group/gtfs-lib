@@ -318,6 +318,7 @@ public abstract class Entity implements Serializable {
             List<String> errors = new ArrayList<>();
             try {
                 reader = CsvReaderUtil.getCsvReaderAccordingToFileName(tableName, zip, entry, errors);
+
                 boolean hasHeaders = reader.readHeaders();
                 if (!hasHeaders) {
                     feed.errors.add(new EmptyTableError(tableName));

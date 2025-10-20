@@ -224,11 +224,11 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     public void toFile (String file) {
-        try {
-            File out = new File(file);
+        File out = new File(file);
+        try (
             OutputStream os = new FileOutputStream(out);
             ZipOutputStream zip = new ZipOutputStream(os);
-
+        ) {
             // write everything
             // TODO: shapes
 
@@ -265,8 +265,6 @@ public class GTFSFeed implements Cloneable, Closeable {
             new FareProduct.Writer(this).writeTable(zip);
             new FareLegRule.Writer(this).writeTable(zip);
             new FareTransferRule.Writer(this).writeTable(zip);
-
-            zip.close();
 
             LOG.info("GTFS file written");
         } catch (Exception e) {
