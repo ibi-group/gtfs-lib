@@ -63,7 +63,7 @@ jobs:
           # See https://github.com/conveyal/gtfs-lib/issues/193.
           #
       # The git commands get the commit hash of the HEAD commit and the commit just before HEAD.
-    # Install node 14+ for running maven-semantic-release.
+    # Install node for running maven-semantic-release.
     - name: Use Node.js 22.X
       uses: actions/setup-node@v1
       with:
