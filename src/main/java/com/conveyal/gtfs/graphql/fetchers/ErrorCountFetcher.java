@@ -5,7 +5,6 @@ import com.conveyal.gtfs.graphql.GTFSGraphQL;
 import com.conveyal.gtfs.validator.model.Priority;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
-import org.apache.commons.dbutils.DbUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,30 +34,33 @@ public class ErrorCountFetcher implements DataFetcher {
 
     @Override
     public Object get(DataFetchingEnvironment environment) {
-        List<ErrorCount> errorCounts = new ArrayList();
         Map<String, Object> parentFeedMap = environment.getSource();
         String namespace = (String) parentFeedMap.get("namespace");
-        Connection connection = null;
-        try {
-            connection = GTFSGraphQL.getConnection();
+        return getErrorCounts(namespace);
+    }
+
+    /**
+     * Extract the error counts for the provided namespace.
+     */
+    public List<ErrorCount> getErrorCounts(String namespace) {
+        List<ErrorCount> errorCounts = new ArrayList<>();
+        try (Connection connection = GTFSGraphQL.getConnection()) {
             Statement statement = connection.createStatement();
             String sql = String.format(
-                // this order_by is only needed to make sure that the testing snapshots are consistently in the same
-                // order during every test
                 "select error_type, count(*) from %s.errors group by error_type order by error_type",
                 namespace
             );
-            LOG.info("SQL: {}", sql);
             if (statement.execute(sql)) {
                 ResultSet resultSet = statement.getResultSet();
                 while (resultSet.next()) {
-                    errorCounts.add(new ErrorCount(NewGTFSErrorType.valueOf(resultSet.getString(1)), resultSet.getInt(2)));
+                    errorCounts.add(new ErrorCount(
+                        NewGTFSErrorType.valueOf(resultSet.getString(1)),
+                        resultSet.getInt(2))
+                    );
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
-            DbUtils.closeQuietly(connection);
+            LOG.error("Unable to get error counts for namespace {}.", namespace, e);
         }
         return errorCounts;
     }
@@ -68,6 +70,10 @@ public class ErrorCountFetcher implements DataFetcher {
         public int count;
         public String message;
         public Priority priority;
+
+        public ErrorCount() {
+            // Empty constructor for serialization.
+        }
 
         public ErrorCount(NewGTFSErrorType errorType, int count) {
             this.type = errorType;
