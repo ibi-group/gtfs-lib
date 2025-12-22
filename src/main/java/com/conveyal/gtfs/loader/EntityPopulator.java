@@ -175,6 +175,7 @@ public interface EntityPopulator<T> {
         route.route_branding_url  = getUrlIfPresent(result, Route.ROUTE_BRANDING_URL_FIELD, columnForName);
         route.continuous_pickup   = getIntIfPresent(result, Route.CONTINUOUS_PICKUP_FIELD, columnForName);
         route.continuous_drop_off = getIntIfPresent(result, Route.CONTINUOUS_DROP_OFF_FIELD, columnForName);
+        route.network_id          = getStringIfPresent(result, Route.NETWORK_ID_FIELD, columnForName);
         route.route_network_ids   = getStringIfPresent(result, Route.ROUTE_NETWORK_IDS_FIELD, columnForName);
         return route;
     };

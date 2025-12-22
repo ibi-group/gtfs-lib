@@ -88,7 +88,11 @@ public class Route extends Entity {
 
     public static final String TABLE_NAME = "routes";
 
-    private static final String[] CSV_FIELDS = new String[] {
+    /**
+     * Specification route headers. This deliberately omits route_network_ids which is explicitly handled separately if
+     * route networks have been defined.
+     */
+    private static final String[] SPEC_ROUTE_CSV_HEADERS = new String[] {
         ROUTE_ID_FIELD,
         AGENCY_ID_FIELD,
         ROUTE_SHORT_NAME_FIELD,
@@ -137,6 +141,7 @@ public class Route extends Entity {
         setIntParameter(statement, oneBasedIndex++, continuous_pickup);
         setIntParameter(statement, oneBasedIndex++, continuous_drop_off);
         statement.setString(oneBasedIndex++, network_id);
+        // Not strictly part of Routes, but must match the hardcoded definition in Table.ROUTES.
         statement.setString(oneBasedIndex, route_network_ids);
 
     }
@@ -198,7 +203,7 @@ public class Route extends Entity {
 
         @Override
         public void writeHeaders() throws IOException {
-            writer.writeRecord(CSV_FIELDS);
+            writer.writeRecord(SPEC_ROUTE_CSV_HEADERS);
         }
 
         @Override
@@ -252,11 +257,11 @@ public class Route extends Entity {
         try {
             while (routesReader.readRecord()) {
                 String routeId = routesReader.get(ROUTE_ID_FIELD);
-                rows.add(createRow(routesReader, getChildIdsMatchingParentId(routeNetworksByRouteId, routeId), CSV_FIELDS));
+                rows.add(createRow(routesReader, getChildIdsMatchingParentId(routeNetworksByRouteId, routeId), SPEC_ROUTE_CSV_HEADERS));
             }
             return (rows.isEmpty())
                 ? routesReader
-                : produceCsvPayload(rows, createRow(CSV_FIELDS, ROUTE_NETWORK_IDS_FIELD));
+                : produceCsvPayload(rows, createRow(SPEC_ROUTE_CSV_HEADERS, ROUTE_NETWORK_IDS_FIELD));
         } catch (Exception e) {
             LOG.error("Error while merging routes", e);
             // Any issues, return the original routes reader (minus route networks).
@@ -339,10 +344,10 @@ public class Route extends Entity {
     }
 
     /**
-     * Expand all stops into a single row.
+     * Expand each route into a single row.
      */
     public static String packRoutes(List<Route> routes) {
-        StringBuilder csvContent = new StringBuilder(createRow(CSV_FIELDS));
+        StringBuilder csvContent = new StringBuilder(createRow(SPEC_ROUTE_CSV_HEADERS));
         routes.forEach(route -> csvContent.append(createRow(
             computeCsvValue(route.route_id),
             computeCsvValue(route.agency_id),
