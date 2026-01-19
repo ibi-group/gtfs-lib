@@ -330,6 +330,8 @@ public class GTFSTest {
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
+            new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.FEED_TRAVEL_TIMES_ROUNDED),
             new ErrorExpectation(NewGTFSErrorType.DATE_NO_SERVICE)
         );

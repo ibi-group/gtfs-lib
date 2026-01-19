@@ -121,8 +121,10 @@ public class JdbcGtfsSnapshotter {
             result.fareProducts = copy(Table.FARE_PRODUCTS, true);
             result.timeFrames = copy(Table.TIME_FRAMES, true);
             result.fareLegRules = copy(Table.FARE_LEG_RULES, true);
+            result.fareLegJoinRules = copy(Table.FARE_LEG_JOIN_RULES, true);
             result.fareTransferRules = copy(Table.FARE_TRANSFER_RULES, true);
             result.networks = copy(Table.NETWORKS, true);
+            result.riderCategories = copy(Table.RIDER_CATEGORIES, true);
 
             result.completionTime = System.currentTimeMillis();
             result.loadTimeMillis = result.completionTime - startTime;

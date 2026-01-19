@@ -99,6 +99,11 @@ public class JDBCTableWriterFaresV2Test {
                 getEntityFromFile("fare_leg_rules_updated.json")
             ),
             Arguments.of(
+                Table.FARE_LEG_JOIN_RULES,
+                getEntityFromFile("fare_leg_join_rules.json"),
+                getEntityFromFile("fare_leg_join_rules_updated.json")
+            ),
+            Arguments.of(
                 Table.FARE_TRANSFER_RULES,
                 getEntityFromFile("fare_transfer_rules.json"),
                 getEntityFromFile("fare_transfer_rules_updated.json")
@@ -117,6 +122,11 @@ public class JDBCTableWriterFaresV2Test {
                 Table.TIME_FRAMES,
                 getEntityFromFile("time_frames.json"),
                 getEntityFromFile("time_frames_updated.json")
+            ),
+            Arguments.of(
+                Table.RIDER_CATEGORIES,
+                getEntityFromFile("rider_categories.json"),
+                getEntityFromFile("rider_categories_updated.json")
             )
         );
     }

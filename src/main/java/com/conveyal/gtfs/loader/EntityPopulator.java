@@ -6,6 +6,7 @@ import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.CalendarDate;
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.FareAttribute;
+import com.conveyal.gtfs.model.FareLegJoinRule;
 import com.conveyal.gtfs.model.FareLegRule;
 import com.conveyal.gtfs.model.FareMedia;
 import com.conveyal.gtfs.model.FareProduct;
@@ -14,8 +15,8 @@ import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.Network;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.PatternStop;
+import com.conveyal.gtfs.model.RiderCategory;
 import com.conveyal.gtfs.model.Route;
-import com.conveyal.gtfs.model.RouteNetwork;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.ShapePoint;
 import com.conveyal.gtfs.model.Stop;
@@ -287,6 +288,15 @@ public interface EntityPopulator<T> {
         return fareLegRule;
     };
 
+    EntityPopulator<FareLegJoinRule> FARE_LEG_JOIN_RULE = (result, columnForName) -> {
+        FareLegJoinRule fareLegJoinRule = new FareLegJoinRule();
+        fareLegJoinRule.from_network_id = getStringIfPresent(result, FareLegJoinRule.FROM_NETWORK_ID_NAME, columnForName);
+        fareLegJoinRule.to_network_id = getStringIfPresent(result, FareLegJoinRule.TO_NETWORK_ID_NAME, columnForName);
+        fareLegJoinRule.from_stop_id = getStringIfPresent(result, FareLegJoinRule.FROM_STOP_ID_NAME, columnForName);
+        fareLegJoinRule.to_stop_id = getStringIfPresent(result, FareLegJoinRule.TO_STOP_ID_NAME, columnForName);
+        return fareLegJoinRule;
+    };
+
     EntityPopulator<FareTransferRule> FARE_TRANSFER_RULE = (result, columnForName) -> {
         FareTransferRule fareTransferRule = new FareTransferRule();
         fareTransferRule.from_leg_group_id = getStringIfPresent(result, FareTransferRule.FROM_LEG_GROUP_ID_NAME, columnForName);
@@ -305,6 +315,16 @@ public interface EntityPopulator<T> {
         network.network_name = getStringIfPresent(result, Network.NETWORK_NAME_NAME, columnForName);
         return network;
     };
+
+    EntityPopulator<RiderCategory> RIDER_CATEGORY = (result, columnForName) -> {
+        RiderCategory riderCategory = new RiderCategory();
+        riderCategory.rider_category_id = getStringIfPresent(result, RiderCategory.RIDER_CATEGORY_ID_NAME, columnForName);
+        riderCategory.rider_category_name = getStringIfPresent(result, RiderCategory.RIDER_CATEGORY_NAME_NAME, columnForName);
+        riderCategory.is_default_fare_category = getIntIfPresent(result, RiderCategory.RIDER_CATEGORY_IS_DEFAULT_FARE_CATEGORY_NAME, columnForName);
+        riderCategory.eligibility_url = getUrlIfPresent(result, RiderCategory.RIDER_CATEGORY_ELIGIBILITY_URL_NAME, columnForName);
+        return riderCategory;
+    };
+
 
     // The reason we're passing in the columnForName map is that resultSet.getX(columnName) throws an exception
     // when the column is not present.

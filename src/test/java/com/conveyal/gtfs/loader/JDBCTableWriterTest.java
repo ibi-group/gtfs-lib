@@ -883,7 +883,7 @@ public class JDBCTableWriterTest {
      * Checks that {@link JdbcTableWriter#normalizeStopTimesForPattern(int, int, boolean)} can interpolate stop times between timepoints.
      */
     @Test
-    private void canInterpolatePatternStopTimes() throws IOException, SQLException, InvalidNamespaceException {
+    void canInterpolatePatternStopTimes() throws IOException, SQLException, InvalidNamespaceException {
         // Parameters are shared with canNormalizePatternStopTimes, but maintained for test flexibility.
         int startTime = 6 * 60 * 60; // 6AM
         int initialTravelTime = 60; // seconds

@@ -280,8 +280,8 @@ public class Route extends Entity {
                 if (!hasExpectedNumberOfColumns(csvReader, errors, 2)) {
                     continue;
                 }
-                String routeNetworkId = csvReader.get(RouteNetwork.NETWORK_ID_FIELD);
-                String routeId = csvReader.get(RouteNetwork.ROUTE_ID_FIELD);
+                String routeNetworkId = csvReader.get(RouteNetwork.NETWORK_ID_NAME);
+                String routeId = csvReader.get(RouteNetwork.ROUTE_ID_NAME);
                 routeNetworksGroupedByRouteId.computeIfAbsent(routeId, k -> new HashSet<>()).add(routeNetworkId);
             }
             return routeNetworksGroupedByRouteId;
@@ -294,7 +294,7 @@ public class Route extends Entity {
      * Expand all route network ids into a single row for each route id. This is to conform with the GTFS Fares v2 standard.
      */
     public static String packRouteNetworks(List<Route> routes) {
-        StringBuilder csvContent = new StringBuilder(createRow(RouteNetwork.NETWORK_ID_FIELD, RouteNetwork.ROUTE_ID_FIELD));
+        StringBuilder csvContent = new StringBuilder(createRow(RouteNetwork.NETWORK_ID_NAME, RouteNetwork.ROUTE_ID_NAME));
         routes
             .stream()
             .filter(route -> route.route_network_ids != null)

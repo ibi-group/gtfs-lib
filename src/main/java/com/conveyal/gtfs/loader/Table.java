@@ -16,6 +16,7 @@ import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.CalendarDate;
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.FareAttribute;
+import com.conveyal.gtfs.model.FareLegJoinRule;
 import com.conveyal.gtfs.model.FareLegRule;
 import com.conveyal.gtfs.model.FareMedia;
 import com.conveyal.gtfs.model.FareProduct;
@@ -26,8 +27,8 @@ import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.Network;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.PatternStop;
+import com.conveyal.gtfs.model.RiderCategory;
 import com.conveyal.gtfs.model.Route;
-import com.conveyal.gtfs.model.RouteNetwork;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.ShapePoint;
 import com.conveyal.gtfs.model.Stop;
@@ -378,6 +379,31 @@ public class Table {
     .restrictDelete()
     .addPrimaryKeyNames(Network.NETWORK_ID_NAME);
 
+    public static final Table RIDER_CATEGORIES = new Table(RiderCategory.TABLE_NAME, RiderCategory.class, OPTIONAL,
+        new StringField(RiderCategory.RIDER_CATEGORY_ID_NAME, REQUIRED),
+        new StringField(RiderCategory.RIDER_CATEGORY_NAME_NAME, REQUIRED),
+        new ShortField(RiderCategory.RIDER_CATEGORY_IS_DEFAULT_FARE_CATEGORY_NAME, REQUIRED, 1),
+        new URLField(RiderCategory.RIDER_CATEGORY_ELIGIBILITY_URL_NAME, OPTIONAL)
+    )
+    .restrictDelete()
+    .addPrimaryKeyNames(RiderCategory.RIDER_CATEGORY_ID_NAME);
+
+    public static final Table FARE_LEG_JOIN_RULES = new Table(FareLegJoinRule.TABLE_NAME, FareLegJoinRule.class, OPTIONAL,
+        new StringField(FareLegJoinRule.FROM_NETWORK_ID_NAME, REQUIRED),
+        new StringField(FareLegJoinRule.TO_NETWORK_ID_NAME, REQUIRED),
+        new StringField(FareLegJoinRule.FROM_STOP_ID_NAME, OPTIONAL),
+        new StringField(FareLegJoinRule.TO_STOP_ID_NAME, OPTIONAL)
+    )
+    .restrictDelete()
+    .addPrimaryKey()
+    .keyFieldIsNotUnique()
+    .addPrimaryKeyNames(
+        FareLegJoinRule.FROM_NETWORK_ID_NAME,
+        FareLegJoinRule.TO_NETWORK_ID_NAME,
+        FareLegJoinRule.FROM_STOP_ID_NAME,
+        FareLegJoinRule.TO_STOP_ID_NAME
+    );
+
     // GTFS reference: https://developers.google.com/transit/gtfs/reference#fare_rulestxt
     public static final Table FARE_RULES = new Table("fare_rules", FareRule.class, OPTIONAL,
         new StringField("fare_id", REQUIRED).isReferenceTo(FARE_ATTRIBUTES),
@@ -541,6 +567,7 @@ public class Table {
         SHAPES,
         STOPS,
         AREAS,
+        RIDER_CATEGORIES,
         FARE_RULES,
         PATTERN_STOP,
         TRANSFERS,

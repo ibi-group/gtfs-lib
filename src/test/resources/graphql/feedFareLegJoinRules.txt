@@ -1,0 +1,11 @@
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_version
+    fare_leg_join_rule {
+      from_network_id
+      to_network_id
+      from_stop_id
+      to_stop_id
+    }
+  }
+}

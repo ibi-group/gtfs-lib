@@ -292,6 +292,13 @@ public class GTFSGraphQLTest {
     }
 
     @Test
+    void canFetchFareLegJoinRules() {
+        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedFareLegJoinRules.txt"), matchesSnapshot());
+        });
+    }
+
+    @Test
     void canFetchTimeFrames() {
         assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
             MatcherAssert.assertThat(queryFaresV2GraphQL("feedTimeFrames.txt"), matchesSnapshot());
@@ -302,6 +309,13 @@ public class GTFSGraphQLTest {
     void canFetchNetworks() {
         assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
             MatcherAssert.assertThat(queryFaresV2GraphQL("feedNetworks.txt"), matchesSnapshot());
+        });
+    }
+
+    @Test
+    void canFetchRiderCategories() {
+        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedRiderCategories.txt"), matchesSnapshot());
         });
     }
 

@@ -165,7 +165,9 @@ public class JdbcGtfsLoader {
             result.networks = load(Table.NETWORKS);
             result.areas = load(Table.AREAS);
             result.fareLegRules = load(Table.FARE_LEG_RULES); // ref areas
+            result.fareLegJoinRules = load(Table.FARE_LEG_JOIN_RULES);
             result.fareTransferRules = load(Table.FARE_TRANSFER_RULES);
+            result.riderCategories = load(Table.RIDER_CATEGORIES);
             result.feedInfo = load(Table.FEED_INFO);
             result.shapes = load(Table.SHAPES);
             result.patterns = load(Table.PATTERNS); // refs shapes and routes.

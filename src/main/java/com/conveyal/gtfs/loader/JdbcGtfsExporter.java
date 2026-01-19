@@ -341,9 +341,11 @@ public class JdbcGtfsExporter {
             result.fareProducts = export(Table.FARE_PRODUCTS, connection);
             result.timeFrames = export(Table.TIME_FRAMES, connection);
             result.fareLegRules = export(Table.FARE_LEG_RULES, connection);
+            result.fareLegJoinRules = export(Table.FARE_LEG_JOIN_RULES, connection);
             result.fareTransferRules = export(Table.FARE_TRANSFER_RULES, connection);
             result.networks = export(Table.NETWORKS, connection);
             result.routeNetworks = Route.exportRouteNetworks(dataSource, feedIdToExport, zipOutputStream);
+            result.riderCategories = export(Table.RIDER_CATEGORIES, connection);
 
             exportProprietaryFiles(result);
 

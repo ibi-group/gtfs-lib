@@ -118,9 +118,11 @@ public class GTFSFeed implements Cloneable, Closeable {
     public final Map<String, FareMedia> fare_medias;
     public final Map<String, TimeFrame> time_frames;
     public final Map<String, FareLegRule> fare_leg_rules;
+    public final Map<String, FareLegJoinRule> fare_leg_join_rules;
     public final Map<String, FareTransferRule> fare_transfer_rules;
     public final Map<String, Network> networks;
     public final Map<String, RouteNetwork> route_networks;
+    public final Map<String, RiderCategory> rider_categories;
 
     /**
      * The order in which we load the tables is important for two reasons.
@@ -205,7 +207,9 @@ public class GTFSFeed implements Cloneable, Closeable {
         new FareMedia.Loader(this).loadTable(zip);
         new FareProduct.Loader(this).loadTable(zip);
         new FareLegRule.Loader(this).loadTable(zip);
+        new FareLegJoinRule.Loader(this).loadTable(zip);
         new FareTransferRule.Loader(this).loadTable(zip);
+        new RiderCategory.Loader(this).loadTable(zip);
 
         LOG.info("{} errors", errors.size());
         for (GTFSError error : errors) {
@@ -264,7 +268,9 @@ public class GTFSFeed implements Cloneable, Closeable {
             new FareMedia.Writer(this).writeTable(zip);
             new FareProduct.Writer(this).writeTable(zip);
             new FareLegRule.Writer(this).writeTable(zip);
+            new FareLegJoinRule.Writer(this).writeTable(zip);
             new FareTransferRule.Writer(this).writeTable(zip);
+            new RiderCategory.Writer(this).writeTable(zip);
 
             LOG.info("GTFS file written");
         } catch (Exception e) {
@@ -655,6 +661,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         agency = db.getTreeMap("agency");
         areas = db.getTreeMap("area");
         fare_leg_rules = db.getTreeMap("fare_leg_rules");
+        fare_leg_join_rules = db.getTreeMap(FareLegJoinRule.TABLE_NAME);
         fare_medias = db.getTreeMap("fare_medias");
         fare_products = db.getTreeMap("fare_products");
         fare_transfer_rules = db.getTreeMap("fare_transfer_rules");
@@ -674,7 +681,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         time_frames = db.getTreeMap("time_frames");
         translations = db.getTreeMap("translations");
         attributions = db.getTreeMap("attributions");
-
+        rider_categories = db.getTreeMap(RiderCategory.TABLE_NAME);
         feedId = db.getAtomicString("feed_id").get();
         checksum = db.getAtomicLong("checksum").get();
 

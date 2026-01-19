@@ -45,9 +45,11 @@ public class FeedLoadResult implements Serializable {
     public TableLoadResult fareProducts;
     public TableLoadResult timeFrames;
     public TableLoadResult fareLegRules;
+    public TableLoadResult fareLegJoinRules;
     public TableLoadResult fareTransferRules;
     public TableLoadResult networks;
     public TableLoadResult routeNetworks;
+    public TableLoadResult riderCategories;
 
     public long loadTimeMillis;
     public long completionTime;
@@ -83,8 +85,10 @@ public class FeedLoadResult implements Serializable {
         fareProducts = new TableLoadResult();
         timeFrames = new TableLoadResult();
         fareLegRules = new TableLoadResult();
+        fareLegJoinRules = new TableLoadResult();
         fareTransferRules = new TableLoadResult();
         networks = new TableLoadResult();
         routeNetworks = new TableLoadResult();
+        riderCategories = new TableLoadResult();
     }
 }
