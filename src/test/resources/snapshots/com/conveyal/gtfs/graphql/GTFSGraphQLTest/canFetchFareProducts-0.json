@@ -7,70 +7,80 @@
         "fare_media_id" : "cash",
         "fare_product_id" : "prod_boat_zone_1",
         "fare_product_name" : "Ferry Zone 1 one-way fare",
-        "id" : 2
+        "id" : 2,
+        "rider_category_id" : "HONORED_CITIZEN"
       }, {
         "amount" : "6.5",
         "currency" : "USD",
         "fare_media_id" : "credit_debit",
         "fare_product_id" : "prod_boat_zone_1",
         "fare_product_name" : "Ferry Zone 1 one-way fare",
-        "id" : 3
+        "id" : 3,
+        "rider_category_id" : null
       }, {
         "amount" : "6.5",
         "currency" : "USD",
         "fare_media_id" : "mticket",
         "fare_product_id" : "prod_boat_zone_1",
         "fare_product_name" : "Ferry Zone 1 one-way fare",
-        "id" : 4
+        "id" : 4,
+        "rider_category_id" : null
       }, {
         "amount" : "2.4",
         "currency" : "USD",
         "fare_media_id" : "cash",
         "fare_product_id" : "prod_boat_zone_1a",
         "fare_product_name" : "Ferry Zone 1A one-way fare",
-        "id" : 5
+        "id" : 5,
+        "rider_category_id" : null
       }, {
         "amount" : "2.4",
         "currency" : "USD",
         "fare_media_id" : "credit_debit",
         "fare_product_id" : "prod_boat_zone_1a",
         "fare_product_name" : "Ferry Zone 1A one-way fare",
-        "id" : 6
+        "id" : 6,
+        "rider_category_id" : null
       }, {
         "amount" : "2.4",
         "currency" : "USD",
         "fare_media_id" : "mticket",
         "fare_product_id" : "prod_boat_zone_1a",
         "fare_product_name" : "Ferry Zone 1A one-way fare",
-        "id" : 7
+        "id" : 7,
+        "rider_category_id" : null
       }, {
         "amount" : "7.0",
         "currency" : "USD",
         "fare_media_id" : "cash",
         "fare_product_id" : "prod_boat_zone_2",
         "fare_product_name" : "Ferry Zone 2 one-way fare",
-        "id" : 8
+        "id" : 8,
+        "rider_category_id" : null
       }, {
         "amount" : "7.0",
         "currency" : "USD",
         "fare_media_id" : "credit_debit",
         "fare_product_id" : "prod_boat_zone_2",
         "fare_product_name" : "Ferry Zone 2 one-way fare",
-        "id" : 9
+        "id" : 9,
+        "rider_category_id" : null
       }, {
         "amount" : "7.0",
         "currency" : "USD",
         "fare_media_id" : "mticket",
         "fare_product_id" : "prod_boat_zone_2",
         "fare_product_name" : "Ferry Zone 2 one-way fare",
-        "id" : 10
+        "id" : 10,
+        "rider_category_id" : null
       }, {
         "amount" : "5.0",
         "currency" : "USD",
         "fare_media_id" : "cash",
         "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
         "fare_product_name" : "CapeFLYER Middleborough/Lakeville one-way fare",
-        "id" : 11
+        "id" : 11,
+        "rider_category_id" : null
       } ],
       "feed_version" : "1.0"
     }

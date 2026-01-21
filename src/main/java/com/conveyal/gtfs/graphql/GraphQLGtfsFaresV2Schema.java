@@ -70,6 +70,7 @@ public class GraphQLGtfsFaresV2Schema {
         .field(MapFetcher.field("id", GraphQLInt))
         .field(MapFetcher.field(FareProduct.FARE_PRODUCT_ID_NAME))
         .field(MapFetcher.field(FareProduct.FARE_PRODUCT_NAME_NAME))
+        .field(MapFetcher.field(FareProduct.RIDER_CATEGORY_ID_NAME))
         .field(MapFetcher.field(FareProduct.FARE_MEDIA_ID_NAME))
         .field(MapFetcher.field(FareProduct.AMOUNT_NAME))
         .field(MapFetcher.field(FareProduct.CURRENCY_NAME))

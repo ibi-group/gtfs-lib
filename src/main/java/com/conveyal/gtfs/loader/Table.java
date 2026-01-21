@@ -309,6 +309,7 @@ public class Table {
     public static final Table FARE_PRODUCTS = new Table(FareProduct.TABLE_NAME, FareProduct.class, OPTIONAL,
         new StringField(FareProduct.FARE_PRODUCT_ID_NAME, REQUIRED),
         new StringField(FareProduct.FARE_PRODUCT_NAME_NAME, OPTIONAL),
+        new StringField(FareProduct.RIDER_CATEGORY_ID_NAME, OPTIONAL),
         new StringField(FareProduct.FARE_MEDIA_ID_NAME, OPTIONAL).isReferenceTo(FARE_MEDIAS),
         new DoubleField(FareProduct.AMOUNT_NAME, REQUIRED, 0.0, Double.MAX_VALUE, 2),
         new StringField(FareProduct.CURRENCY_NAME, REQUIRED)

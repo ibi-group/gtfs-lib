@@ -123,6 +123,7 @@ public class GTFSFaresV2Test {
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation(FareProduct.FARE_PRODUCT_ID_NAME, "prod_boat_zone_1"),
                     new TestUtils.DataExpectation(FareProduct.FARE_PRODUCT_NAME_NAME, "Ferry Zone 1 one-way fare"),
+                    new TestUtils.DataExpectation(FareProduct.RIDER_CATEGORY_ID_NAME, "HONORED_CITIZEN"),
                     new TestUtils.DataExpectation(FareProduct.FARE_MEDIA_ID_NAME, "cash"),
                     new TestUtils.DataExpectation(FareProduct.AMOUNT_NAME, "6.5000000"),
                     new TestUtils.DataExpectation(FareProduct.CURRENCY_NAME, "USD")

@@ -261,6 +261,7 @@ public interface EntityPopulator<T> {
         FareProduct fareProduct = new FareProduct();
         fareProduct.fare_product_id = getStringIfPresent(result, FareProduct.FARE_PRODUCT_ID_NAME, columnForName);
         fareProduct.fare_product_name = getStringIfPresent(result, FareProduct.FARE_PRODUCT_NAME_NAME, columnForName);
+        fareProduct.rider_category_id = getStringIfPresent(result, FareProduct.RIDER_CATEGORY_ID_NAME, columnForName);
         fareProduct.fare_media_id = getStringIfPresent(result, FareProduct.FARE_MEDIA_ID_NAME, columnForName);
         fareProduct.amount = getDoubleIfPresent(result, FareProduct.AMOUNT_NAME, columnForName);
         fareProduct.currency = getStringIfPresent(result, FareProduct.CURRENCY_NAME, columnForName);

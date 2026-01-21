@@ -13,6 +13,7 @@ public class FareProduct extends Entity {
 
     public String fare_product_id;
     public String fare_product_name;
+    public String rider_category_id;
     public String fare_media_id;
     public double amount;
     public String currency;
@@ -21,14 +22,14 @@ public class FareProduct extends Entity {
     public static final String TABLE_NAME = "fare_products";
     public static final String FARE_PRODUCT_ID_NAME = "fare_product_id";
     public static final String FARE_PRODUCT_NAME_NAME = "fare_product_name";
+    public static final String RIDER_CATEGORY_ID_NAME = "rider_category_id";
     public static final String FARE_MEDIA_ID_NAME = "fare_media_id";
     public static final String AMOUNT_NAME = "amount";
     public static final String CURRENCY_NAME = "currency";
 
-
     @Override
     public String getId () {
-        return createPrimaryKey(fare_product_id, fare_media_id);
+        return createPrimaryKey(fare_product_id, rider_category_id, fare_media_id);
     }
 
     /**
@@ -41,6 +42,7 @@ public class FareProduct extends Entity {
         if (!setDefaultId) statement.setInt(oneBasedIndex++, id);
         statement.setString(oneBasedIndex++, fare_product_id);
         statement.setString(oneBasedIndex++, fare_product_name);
+        statement.setString(oneBasedIndex++, rider_category_id);
         statement.setString(oneBasedIndex++, fare_media_id);
         setDoubleParameter(statement, oneBasedIndex++, amount);
         statement.setString(oneBasedIndex, currency);
@@ -63,6 +65,7 @@ public class FareProduct extends Entity {
             fareProduct.id = row + 1; // offset line number by 1 to account for 0-based row index
             fareProduct.fare_product_id = getStringField(FARE_PRODUCT_ID_NAME, true);
             fareProduct.fare_product_name = getStringField(FARE_PRODUCT_NAME_NAME, false);
+            fareProduct.rider_category_id = getStringField(RIDER_CATEGORY_ID_NAME, false);
             fareProduct.fare_media_id = getStringField(FARE_MEDIA_ID_NAME, false);
             fareProduct.amount = getDoubleField(AMOUNT_NAME, true, 0.0, Double.MAX_VALUE);
             fareProduct.currency = getStringField(CURRENCY_NAME, true);
@@ -88,6 +91,7 @@ public class FareProduct extends Entity {
             writer.writeRecord(new String[] {
                 FARE_PRODUCT_ID_NAME,
                 FARE_PRODUCT_NAME_NAME,
+                RIDER_CATEGORY_ID_NAME,
                 FARE_MEDIA_ID_NAME,
                 AMOUNT_NAME, CURRENCY_NAME
             });
@@ -97,6 +101,7 @@ public class FareProduct extends Entity {
         public void writeOneRow(FareProduct fareProduct) throws IOException {
             writeStringField(fareProduct.fare_product_id);
             writeStringField(fareProduct.fare_product_name);
+            writeStringField(fareProduct.rider_category_id);
             writeStringField(fareProduct.fare_media_id);
             writeDoubleField(fareProduct.amount);
             writeStringField(fareProduct.currency);
