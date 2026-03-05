@@ -645,7 +645,13 @@ public class GraphQLGtfsSchema {
             .field(createFieldDefinition(
                 "patterns",
                 patternType,
-                GraphQLUtil.buildArgs(floatArg(MIN_LAT), floatArg(MIN_LON), floatArg(MAX_LAT), floatArg(MAX_LON))
+                GraphQLUtil.buildArgs(
+                    floatArg(MIN_LAT),
+                    floatArg(MIN_LON),
+                    floatArg(MAX_LAT),
+                    floatArg(MAX_LON),
+                    multiStringArg("pattern_id")
+                )
             ))
             .field(newFieldDefinition()
                 .name("shapes_as_polylines")
