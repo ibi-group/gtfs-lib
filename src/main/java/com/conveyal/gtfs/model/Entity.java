@@ -76,8 +76,8 @@ public abstract class Entity implements Serializable {
     /* The feed from which this entity was loaded. TODO is this really necessary in every entity? */
     transient GTFSFeed feed;
 
-    // "§" (section sign, U+00A7)
-    public static final String SEPARATOR = "§";
+    // Record Separator is a non-printable ASCII character that is unlikely to appear in GTFS data.
+    public static final String SEPARATOR = "\u001E";
 
     /**
      * This method should be overridden by each Entity subtype to return the proper key field for that subtype.
