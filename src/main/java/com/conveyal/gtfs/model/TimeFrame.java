@@ -60,12 +60,14 @@ public class TimeFrame extends Entity {
             timeFrame.timeframe_group_id = getStringField(TIME_FRAME_GROUP_ID_NAME, true);
             timeFrame.start_time = getTimeField(START_TIME_NAME, false);
             if (timeFrame.start_time == INT_MISSING) {
-                // An empty value is considered the start of the day (00:00:00).
+                // An empty value is considered the start of the day (00:00:00). The value is expressed in seconds
+                // past midnight, local time.
                 timeFrame.start_time = 0;
             }
             timeFrame.end_time = getTimeField(END_TIME_NAME, false);
             if (timeFrame.end_time == INT_MISSING) {
-                // An empty value is considered the end of the day (24:00:00).
+                // An empty value is considered the end of the day (24:00:00). The value is expressed in seconds
+                // past midnight, local time.
                 timeFrame.end_time = 86400;
             }
             timeFrame.service_id = getStringField(SERVICE_ID_NAME, true);

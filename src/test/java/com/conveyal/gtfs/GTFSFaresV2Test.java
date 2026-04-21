@@ -13,8 +13,9 @@ import com.conveyal.gtfs.model.RouteNetwork;
 import com.conveyal.gtfs.model.StopArea;
 import com.conveyal.gtfs.model.TimeFrame;
 import graphql.Assert;
-import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import java.util.zip.ZipFile;
 import static com.conveyal.gtfs.GTFS.load;
 import static com.conveyal.gtfs.GTFS.makeSnapshot;
 import static com.conveyal.gtfs.GTFS.validate;
+import static com.conveyal.gtfs.TestUtils.JDBC_URL;
 import static com.conveyal.gtfs.TestUtils.checkFileTestCases;
 import static com.conveyal.gtfs.model.RouteNetwork.ROUTE_NETWORK_FILE_NAME;
 import static com.conveyal.gtfs.model.Stop.STOP_AREAS_FILE_NAME;
@@ -41,28 +43,29 @@ public class GTFSFaresV2Test {
     public static String faresDBName;
     private static DataSource faresDataSource;
     private static String faresNamespace;
-    private static final String JDBC_URL = "jdbc:postgresql://localhost";
 
     @BeforeAll
-    public static void setUpClass() throws IOException {
+    static void setUp() throws IOException {
         String folderName = "fake-agency-with-fares-v2";
         faresZipFileName = TestUtils.zipFolderFiles(folderName, true);
-        // create a new database
+    }
+
+    @BeforeEach
+    public void beforeEachTest() {
         faresDBName = TestUtils.generateNewDB();
-        String dbConnectionUrl = String.format("%s/%s", JDBC_URL, faresDBName);
-        faresDataSource = TestUtils.createTestDataSource(dbConnectionUrl);
+        faresDataSource = TestUtils.createTestDataSource(String.format("%s/%s", JDBC_URL, faresDBName));
         // load feed into db
         FeedLoadResult feedLoadResult = load(faresZipFileName, faresDataSource);
         faresNamespace = feedLoadResult.uniqueIdentifier;
         // validate feed to create additional tables
         validate(faresNamespace, faresDataSource);
-        // Create an empty snapshot to create a new namespace and all the tables
-        FeedLoadResult result = makeSnapshot(null, faresDataSource, false);
+        // Create an empty snapshot to create a new namespace, all the tables and data.
+        FeedLoadResult result = makeSnapshot(faresNamespace, faresDataSource, false);
         faresNamespace = result.uniqueIdentifier;
     }
 
-    @AfterAll
-    public static void tearDownClass() {
+    @AfterEach
+    void tearDownAfterTest() {
         TestUtils.dropDB(faresDBName);
     }
 
@@ -190,14 +193,9 @@ public class GTFSFaresV2Test {
      */
     @Test
     void canExportFaresV2Files() throws IOException {
-        String testDBName = TestUtils.generateNewDB();
-        String zipFileName = TestUtils.zipFolderFiles("fake-agency-with-fares-v2", true);
-        DataSource dataSource = TestUtils.createTestDataSource(String.join("/", JDBC_URL, testDBName));
-        FeedLoadResult loadResult = GTFS.load(zipFileName, dataSource);
-        String namespace = loadResult.uniqueIdentifier;
-        File tempFile = TestUtils.exportGtfs(namespace, dataSource, false, true);
+        File tempFile = TestUtils.exportGtfs(faresNamespace, faresDataSource, false, true);
         try (ZipFile gtfsZipFile = new ZipFile(tempFile.getAbsolutePath())) {
-            tempFile = TestUtils.exportGtfs(namespace, dataSource, false, true);
+            tempFile = TestUtils.exportGtfs(faresNamespace, faresDataSource, false, true);
             Stream
                 .of(STOP_AREAS_FILE_NAME, ROUTE_NETWORK_FILE_NAME)
                 .forEach(fileName -> Assert.assertNotNull(gtfsZipFile.getEntry(fileName)));
@@ -205,7 +203,6 @@ public class GTFSFaresV2Test {
             Assert.assertShouldNeverHappen();
             LOG.error("An error occurred while attempting to test exporting of mandatory files.", e);
         } finally {
-            TestUtils.dropDB(testDBName);
             tempFile.deleteOnExit();
         }
     }

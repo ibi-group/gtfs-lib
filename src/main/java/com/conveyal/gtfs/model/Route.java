@@ -286,6 +286,7 @@ public class Route extends Entity {
             }
             return routeNetworksGroupedByRouteId;
         } catch (IOException e) {
+            // If any errors are encountered extracting the route networks, none are returned.
             return Collections.emptyMap();
         }
     }

@@ -9,6 +9,8 @@ import com.conveyal.gtfs.graphql.fetchers.PolylineFetcher;
 import com.conveyal.gtfs.graphql.fetchers.RowCountFetcher;
 import com.conveyal.gtfs.graphql.fetchers.SQLColumnFetcher;
 import com.conveyal.gtfs.graphql.fetchers.SourceObjectFetcher;
+import com.conveyal.gtfs.model.Route;
+import com.conveyal.gtfs.model.Stop;
 import graphql.schema.Coercing;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
@@ -21,7 +23,6 @@ import java.sql.Array;
 import java.sql.SQLException;
 import java.util.List;
 
-import static com.conveyal.gtfs.graphql.GraphQLUtil.createFieldDefinition;
 import static com.conveyal.gtfs.graphql.GraphQLUtil.floatArg;
 import static com.conveyal.gtfs.graphql.GraphQLUtil.buildArgs;
 import static com.conveyal.gtfs.graphql.GraphQLUtil.intArg;
@@ -29,7 +30,15 @@ import static com.conveyal.gtfs.graphql.GraphQLUtil.intt;
 import static com.conveyal.gtfs.graphql.GraphQLUtil.multiStringArg;
 import static com.conveyal.gtfs.graphql.GraphQLUtil.string;
 import static com.conveyal.gtfs.graphql.GraphQLUtil.stringArg;
-import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.*;
+import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.DATE_ARG;
+import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.FROM_ARG;
+import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.LIMIT_ARG;
+import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.MAX_LAT;
+import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.MAX_LON;
+import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.MIN_LAT;
+import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.MIN_LON;
+import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.SEARCH_ARG;
+import static com.conveyal.gtfs.graphql.fetchers.JDBCFetcher.TO_ARG;
 import static graphql.Scalars.GraphQLFloat;
 import static graphql.Scalars.GraphQLInt;
 import static graphql.Scalars.GraphQLString;
@@ -140,7 +149,7 @@ public class GraphQLGtfsSchema {
         .field(MapFetcher.field("payment_method", GraphQLInt))
         .field(MapFetcher.field("transfers", GraphQLInt))
         .field(MapFetcher.field("transfer_duration", GraphQLInt))
-        .field(createFieldDefinition("fare_rules", fareRuleType, "fare_rules", "fare_id"))
+        .field(GraphQLUtil.field("fare_rules", fareRuleType, "fare_rules", "fare_id"))
         .build();
 
     // Represents feed_info.txt
@@ -216,8 +225,8 @@ public class GraphQLGtfsSchema {
             .dataFetcher(new JDBCFetcher("stop_times", "trip_id", "stop_sequence", false))
             .build()
         )
-        .field(createFieldDefinition("frequencies", frequencyType, "frequencies", "trip_id"))
-        .field(createFieldDefinition("shape", shapePointType, "shapes", "shape_id"))
+        .field(GraphQLUtil.field("frequencies", frequencyType, "frequencies", "trip_id"))
+        .field(GraphQLUtil.field("shape", shapePointType, "shapes", "shape_id"))
         .build();
 
 
@@ -271,18 +280,18 @@ public class GraphQLGtfsSchema {
         .name("route")
         .description("A line from a GTFS routes.txt table")
         .field(MapFetcher.field("id", GraphQLInt))
-        .field(MapFetcher.field("agency_id"))
-        .field(MapFetcher.field("route_id"))
-        .field(MapFetcher.field("route_short_name"))
-        .field(MapFetcher.field("route_long_name"))
-        .field(MapFetcher.field("route_desc"))
-        .field(MapFetcher.field("route_url"))
-        .field(MapFetcher.field("route_branding_url"))
-        .field(MapFetcher.field("continuous_drop_off", GraphQLInt))
-        .field(MapFetcher.field("continuous_pickup", GraphQLInt))
-        .field(MapFetcher.field("route_type", GraphQLInt))
-        .field(MapFetcher.field("route_color"))
-        .field(MapFetcher.field("route_text_color"))
+        .field(MapFetcher.field(Route.AGENCY_ID_FIELD))
+        .field(MapFetcher.field(Route.ROUTE_ID_FIELD))
+        .field(MapFetcher.field(Route.ROUTE_SHORT_NAME_FIELD))
+        .field(MapFetcher.field(Route.ROUTE_LONG_NAME_FIELD))
+        .field(MapFetcher.field(Route.ROUTE_DESC_FIELD))
+        .field(MapFetcher.field(Route.ROUTE_URL_FIELD))
+        .field(MapFetcher.field(Route.ROUTE_BRANDING_URL_FIELD))
+        .field(MapFetcher.field(Route.CONTINUOUS_DROP_OFF_FIELD, GraphQLInt))
+        .field(MapFetcher.field(Route.CONTINUOUS_PICKUP_FIELD, GraphQLInt))
+        .field(MapFetcher.field(Route.ROUTE_TYPE_FIELD, GraphQLInt))
+        .field(MapFetcher.field(Route.ROUTE_COLOR_FIELD))
+        .field(MapFetcher.field(Route.ROUTE_TEXT_COLOR_FIELD))
         // FIXME ˇˇ Editor fields that should perhaps be moved elsewhere.
         .field(MapFetcher.field("wheelchair_accessible"))
         .field(MapFetcher.field("publicly_visible", GraphQLInt))
@@ -291,7 +300,7 @@ public class GraphQLGtfsSchema {
         // FIXME ^^
         .field(RowCountFetcher.field("trip_count", "trips", "route_id"))
         .field(RowCountFetcher.field("pattern_count", "patterns", "route_id"))
-        .field(MapFetcher.field("route_network_ids"))
+        .field(MapFetcher.field(Route.ROUTE_NETWORK_IDS_FIELD))
         .field(newFieldDefinition()
             .name("stops")
             .description("GTFS stop entities that the route serves")
@@ -338,20 +347,20 @@ public class GraphQLGtfsSchema {
         .name("stop")
         .description("A GTFS stop object")
         .field(MapFetcher.field("id", GraphQLInt))
-        .field(MapFetcher.field("stop_id"))
-        .field(MapFetcher.field("stop_name"))
-        .field(MapFetcher.field("stop_code"))
-        .field(MapFetcher.field("stop_desc"))
-        .field(MapFetcher.field("stop_lon", GraphQLFloat))
-        .field(MapFetcher.field("stop_lat", GraphQLFloat))
-        .field(MapFetcher.field("zone_id"))
-        .field(MapFetcher.field("stop_url"))
-        .field(MapFetcher.field("stop_timezone"))
-        .field(MapFetcher.field("parent_station"))
-        .field(MapFetcher.field("platform_code"))
-        .field(MapFetcher.field("location_type", GraphQLInt))
-        .field(MapFetcher.field("wheelchair_boarding", GraphQLInt))
-        .field(MapFetcher.field("stop_area_ids"))
+        .field(MapFetcher.field(Stop.STOP_ID_FIELD))
+        .field(MapFetcher.field(Stop.STOP_NAME_FIELD))
+        .field(MapFetcher.field(Stop.STOP_CODE_FIELD))
+        .field(MapFetcher.field(Stop.STOP_DESC_FIELD))
+        .field(MapFetcher.field(Stop.STOP_LON_FIELD, GraphQLFloat))
+        .field(MapFetcher.field(Stop.STOP_LAT_FIELD, GraphQLFloat))
+        .field(MapFetcher.field(Stop.ZONE_ID_FIELD))
+        .field(MapFetcher.field(Stop.STOP_URL_FIELD))
+        .field(MapFetcher.field(Stop.STOP_TIMEZONE_FIELD))
+        .field(MapFetcher.field(Stop.PARENT_STATION_FIELD))
+        .field(MapFetcher.field(Stop.PLATFORM_CODE_FIELD))
+        .field(MapFetcher.field(Stop.LOCATION_TYPE_FIELD, GraphQLInt))
+        .field(MapFetcher.field(Stop.WHEELCHAIR_BOARDING_FIELD, GraphQLInt))
+        .field(MapFetcher.field(Stop.STOP_AREA_IDS_FIELD))
         // Returns all stops that reference parent stop's stop_id
         .field(newFieldDefinition()
             .name("child_stops")
@@ -635,14 +644,14 @@ public class GraphQLGtfsSchema {
                 .dataFetcher(new ErrorCountFetcher())
                 .build())
             // A field for the errors themselves.
-            .field(createFieldDefinition(
+            .field(GraphQLUtil.field(
                 "errors",
                 validationErrorType,
                 GraphQLUtil.buildArgs(multiStringArg("error_type"))
             ))
-            .field(createFieldDefinition("feed_info", feedInfoType, "feed_info"))
+            .field(GraphQLUtil.field("feed_info", feedInfoType, "feed_info"))
             // A field containing all the unique stop sequences (patterns) in this feed.
-            .field(createFieldDefinition(
+            .field(GraphQLUtil.field(
                 "patterns",
                 patternType,
                 GraphQLUtil.buildArgs(
@@ -660,24 +669,24 @@ public class GraphQLGtfsSchema {
                 .dataFetcher(new PolylineFetcher())
                 .build())
             // Then the fields for the sub-tables within the feed (loaded directly from GTFS).
-            .field(createFieldDefinition(
+            .field(GraphQLUtil.field(
                 "agency",
                 agencyType,
                 GraphQLUtil.buildArgs(multiStringArg("agency_id"))
             ))
-            .field(createFieldDefinition("calendar", calendarType, GraphQLUtil.buildArgs(multiStringArg("service_id"))))
-            .field(createFieldDefinition(
+            .field(GraphQLUtil.field("calendar", calendarType, GraphQLUtil.buildArgs(multiStringArg("service_id"))))
+            .field(GraphQLUtil.field(
                 "fares",
                 fareType,
                 "fare_attributes",
                 GraphQLUtil.buildArgs(multiStringArg("fare_id"))
             ))
-            .field(createFieldDefinition(
+            .field(GraphQLUtil.field(
                 "routes",
                 routeType,
                 GraphQLUtil.buildArgs(multiStringArg("route_id"), stringArg(SEARCH_ARG))
             ))
-            .field(createFieldDefinition(
+            .field(GraphQLUtil.field(
                 "stops",
                 stopType,
                 GraphQLUtil.buildArgs(
@@ -690,7 +699,7 @@ public class GraphQLGtfsSchema {
                     stringArg(SEARCH_ARG)
                 )
             ))
-            .field(createFieldDefinition(
+            .field(GraphQLUtil.field(
                 "trips",
                 tripType,
                 GraphQLUtil.buildArgs(
@@ -701,11 +710,11 @@ public class GraphQLGtfsSchema {
                     intArg(TO_ARG)
                 )
             ))
-            .field(createFieldDefinition("schedule_exceptions", scheduleExceptionType, buildArgs()))
-            .field(createFieldDefinition("stop_times", stopTimeType, buildArgs()))
-            .field(createFieldDefinition("services", serviceType, buildArgs()))
-            .field(createFieldDefinition("attributions", attributionsType, buildArgs()))
-            .field(createFieldDefinition("translations", translationsType, buildArgs()))
+            .field(GraphQLUtil.field("schedule_exceptions", scheduleExceptionType, buildArgs()))
+            .field(GraphQLUtil.field("stop_times", stopTimeType, buildArgs()))
+            .field(GraphQLUtil.field("services", serviceType, buildArgs()))
+            .field(GraphQLUtil.field("attributions", attributionsType, buildArgs()))
+            .field(GraphQLUtil.field("translations", translationsType, buildArgs()))
             .fields(faresV2FieldDefinitions)
             .build();
     }

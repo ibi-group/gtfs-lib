@@ -70,7 +70,6 @@ public class FareLegJoinRule extends Entity {
             fareLegJoinRule.feed_id = feed.feedId;
             feed.fare_leg_join_rules.put(fareLegJoinRule.getId(), fareLegJoinRule);
         }
-
     }
 
     public static class Writer extends Entity.Writer<FareLegJoinRule> {

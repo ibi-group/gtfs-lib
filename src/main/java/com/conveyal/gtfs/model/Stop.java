@@ -243,6 +243,7 @@ public class Stop extends Entity {
             }
             return stopAreasGroupedByStopId;
         } catch (IOException e) {
+            // If any errors are encountered extracting the stop areas, none are returned.
             return Collections.emptyMap();
         }
     }

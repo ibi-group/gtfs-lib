@@ -65,7 +65,6 @@ public class JDBCTableReader<T extends Entity> implements TableReader<T> {
                 LOG.warn("Could not connect to required table " + qualifiedTableName);
             }
         }
-
     }
 
     public JDBCTableReader(Table specTable, DataSource dataSource, String tablePrefix, EntityPopulator<T> entityPopulator) {

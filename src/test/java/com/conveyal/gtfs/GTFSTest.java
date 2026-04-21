@@ -44,6 +44,7 @@ import java.util.Iterator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.conveyal.gtfs.TestUtils.JDBC_URL;
 import static com.conveyal.gtfs.TestUtils.exportGtfs;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -60,7 +61,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class GTFSTest {
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-    private static final String JDBC_URL = "jdbc:postgresql://localhost";
     private static final Logger LOG = LoggerFactory.getLogger(GTFSTest.class);
 
     // setup a stream to capture the output from the program

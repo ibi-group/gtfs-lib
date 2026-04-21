@@ -61,7 +61,6 @@ public class FareMedia extends Entity {
             fareMedia.feed_id = feed.feedId;
             feed.fare_medias.put(fareMedia.getId(), fareMedia);
         }
-
     }
 
     public static class Writer extends Entity.Writer<FareMedia> {
@@ -92,6 +91,3 @@ public class FareMedia extends Entity {
         }
     }
 }
-
-
-

@@ -88,50 +88,64 @@ public class CsvReaderUtil {
         ZipEntry entry,
         List<String> errors
     ) throws IOException {
-        CsvReader csvReader;
         if (tableFileName.equals(STOPS_FILE_NAME)) {
-            csvReader = getCsvReaderFromMergedFiles(zipFile, entry, errors, true);
+            return getCsvReaderFromStopsFile(zipFile, entry, errors);
         } else if (tableFileName.equals(Route.ROUTE_FILE_NAME)) {
-            csvReader = getCsvReaderFromMergedFiles(zipFile, entry, errors, false);
+            return getCsvReaderFromRoutesFile(zipFile, entry, errors);
         } else {
-            csvReader = getCsvReaderFromFile(zipFile, entry);
+            return getCsvReaderFromFile(zipFile, entry);
         }
-        return csvReader;
     }
 
     /**
-     * If the feed contains stop areas extract and merge with stops. If not, just return stops. If the feed contains
-     * route networks extract and merge with routes. If not, just return routes.
+     * If the feed contains stop areas extract and merge with stops. If not, just return stops.
      */
-    private static CsvReader getCsvReaderFromMergedFiles(
+    private static CsvReader getCsvReaderFromStopsFile(
         ZipFile zipFile,
         ZipEntry parentEntry,
-        List<String> errors,
-        boolean isStops
+        List<String> errors
     ) throws IOException {
-        ZipEntry zipEntry = isStops
-            ? getEntryFromZipFile(zipFile, Stop.STOP_AREAS_FILE_NAME)
-            : getEntryFromZipFile(zipFile, RouteNetwork.ROUTE_NETWORK_FILE_NAME);
+        ZipEntry zipEntry = getEntryFromZipFile(zipFile, Stop.STOP_AREAS_FILE_NAME);
 
         CsvReader reader = getCsvReaderFromFile(zipFile, parentEntry);
         if (zipEntry != null) {
             reader.setSkipEmptyRecords(false);
             reader.readHeaders();
-            CsvReader csvReader = isStops
-                ? getCsvReaderForFile(zipFile, zipEntry, errors, Stop.STOP_AREAS_NUMBER_OF_HEADERS)
-                : getCsvReaderForFile(zipFile, zipEntry, errors, RouteNetwork.ROUTE_NETWORK_NUMBER_OF_HEADERS);
+            CsvReader csvReader = getCsvReaderForFile(zipFile, zipEntry, errors, Stop.STOP_AREAS_NUMBER_OF_HEADERS);
             if (csvReader != null) {
-                Map<String, Set<String>> zipData = isStops
-                    ? Stop.groupStopAreaIds(csvReader, errors)
-                    : Route.groupRouteNetworkIds(csvReader, errors);
+                Map<String, Set<String>> zipData = Stop.groupStopAreaIds(csvReader, errors);
                 if (!zipData.isEmpty()) {
-                    return isStops
-                        ? Stop.getCsvReaderForStopsWithStopAreas(reader, zipData)
-                        : Route.getCsvReaderForRoutesWithRouteNetworks(reader, zipData);
+                    return Stop.getCsvReaderForStopsWithStopAreas(reader, zipData);
                 }
             }
         }
-        // No child data, provide just the parent feed.
+        // No stop areas, provide just the stops.
+        return reader;
+    }
+
+    /**
+     * If the feed contains route networks extract and merge with routes. If not, just return routes.
+     */
+    private static CsvReader getCsvReaderFromRoutesFile(
+        ZipFile zipFile,
+        ZipEntry parentEntry,
+        List<String> errors
+    ) throws IOException {
+        ZipEntry zipEntry = getEntryFromZipFile(zipFile, RouteNetwork.ROUTE_NETWORK_FILE_NAME);
+
+        CsvReader reader = getCsvReaderFromFile(zipFile, parentEntry);
+        if (zipEntry != null) {
+            reader.setSkipEmptyRecords(false);
+            reader.readHeaders();
+            CsvReader csvReader = getCsvReaderForFile(zipFile, zipEntry, errors, RouteNetwork.ROUTE_NETWORK_NUMBER_OF_HEADERS);
+            if (csvReader != null) {
+                Map<String, Set<String>> zipData = Route.groupRouteNetworkIds(csvReader, errors);
+                if (!zipData.isEmpty()) {
+                    return Route.getCsvReaderForRoutesWithRouteNetworks(reader, zipData);
+                }
+            }
+        }
+        // No route networks, provide just the routes.
         return reader;
     }
 
@@ -166,7 +180,8 @@ public class CsvReaderUtil {
 
     /**
      * Create a {@link CsvReader} from the provided file. Warning: Both input streams have to remain open so
-     * downstream processing using the {@link CsvReader} will continue to function.
+     * downstream processing using the {@link CsvReader} will continue to function. In line with this, the downstream
+     * processes will close the {@link CsvReader} and with it both input streams.
      */
     public static CsvReader getCsvReaderFromFile(ZipFile zipFile, ZipEntry entry) throws IOException {
         InputStream zipInputStream = zipFile.getInputStream(entry);

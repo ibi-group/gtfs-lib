@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.stream.Stream;
 
@@ -39,7 +38,7 @@ public class JDBCTableWriterFaresV2Test {
     }
 
     @BeforeAll
-    public static void setUpClass() throws SQLException {
+    static void setUpClass() throws SQLException {
         testDBName = TestUtils.generateNewDB();
         String dbConnectionUrl = String.format("jdbc:postgresql://localhost/%s", testDBName);
         testDataSource = TestUtils.createTestDataSource(dbConnectionUrl);
@@ -54,7 +53,7 @@ public class JDBCTableWriterFaresV2Test {
     }
 
     @AfterAll
-    public static void tearDownClass() {
+    static void tearDownClass() {
         TestUtils.dropDB(testDBName);
     }
 
@@ -148,7 +147,7 @@ public class JDBCTableWriterFaresV2Test {
     private static void deleteEntity(Table table) throws InvalidNamespaceException, SQLException {
         JdbcTableWriter deleteTableWriter = createTestTableWriter(table);
         deleteTableWriter.delete(1, true);
-        assertThatSqlQueryYieldsRowCount(getColumnsForId(1, table));
+        TestUtils.assertThatSqlQueryYieldsZeroRows(testDataSource, getColumnsForId(1, table));
     }
 
     /**
@@ -162,12 +161,5 @@ public class JDBCTableWriterFaresV2Test {
             table.name,
             id
         );
-    }
-
-    private static void assertThatSqlQueryYieldsRowCount(String sql) throws SQLException {
-        int recordCount = 0;
-        ResultSet rs = testDataSource.getConnection().prepareStatement(sql).executeQuery();
-        while (rs.next()) recordCount++;
-        assertEquals(0, recordCount, "Records matching query should equal expected count.");
     }
 }

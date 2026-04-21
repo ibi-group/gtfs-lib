@@ -1,14 +1,13 @@
 package com.conveyal.gtfs.graphql;
 
 import com.conveyal.gtfs.graphql.fetchers.JDBCFetcher;
+import com.google.common.collect.Lists;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLType;
 import graphql.schema.PropertyDataFetcher;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -71,7 +70,7 @@ public class GraphQLUtil {
      * Standard base arguments.
      */
     public static List<GraphQLArgument> buildArgs() {
-        return new ArrayList<>(Arrays.asList(intArg(ID_ARG), intArg(LIMIT_ARG), intArg(OFFSET_ARG)));
+        return Lists.newArrayList(intArg(ID_ARG), intArg(LIMIT_ARG), intArg(OFFSET_ARG));
     }
 
     /**
@@ -86,25 +85,21 @@ public class GraphQLUtil {
     /**
      * Standard field definition with base arguments.
      */
-    public static GraphQLFieldDefinition createFieldDefinition(String name, GraphQLType graphQLType, String tableName) {
-        return createFieldDefinition(name, graphQLType, tableName, buildArgs());
+    public static GraphQLFieldDefinition field(String name, GraphQLType graphQLType, String tableName) {
+        return field(name, graphQLType, tableName, buildArgs());
     }
 
     /**
      * Field definition with bespoke arguments. Name and table name are the same.
      */
-    public static GraphQLFieldDefinition createFieldDefinition(
-        String name,
-        GraphQLType graphQLType,
-        List<GraphQLArgument> arguments
-    ) {
-        return createFieldDefinition(name, graphQLType, name, arguments);
+    public static GraphQLFieldDefinition field(String name, GraphQLType graphQLType, List<GraphQLArgument> arguments) {
+        return field(name, graphQLType, name, arguments);
     }
 
     /**
      * Field definition with bespoke arguments.
      */
-    public static GraphQLFieldDefinition createFieldDefinition(
+    public static GraphQLFieldDefinition field(
         String name,
         GraphQLType graphQLType,
         String tableName,
@@ -122,7 +117,7 @@ public class GraphQLUtil {
     /**
      * Field definition for standard table join.
      */
-    public static GraphQLFieldDefinition createFieldDefinition(
+    public static GraphQLFieldDefinition field(
         String name,
         GraphQLType graphQLType,
         String tableName,
@@ -138,7 +133,7 @@ public class GraphQLUtil {
     /**
      * Field definition for join with child table.
      */
-    public static GraphQLFieldDefinition createFieldDefinition(
+    public static GraphQLFieldDefinition field(
         String name,
         GraphQLType graphQLType,
         String tableName,

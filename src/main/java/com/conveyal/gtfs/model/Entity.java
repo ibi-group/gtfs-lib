@@ -73,10 +73,10 @@ public abstract class Entity implements Serializable {
     /** Represents the csv line for feeds that have been loaded from a zip file. Otherwise it is simply a unique ID. */
     public int id;
 
-    /* The feed from which this entity was loaded. TODO is this really necessary in every entity? */
+    /** The feed from which this entity was loaded. TODO is this really necessary in every entity? */
     transient GTFSFeed feed;
 
-    // Record Separator is a non-printable ASCII character that is unlikely to appear in GTFS data.
+    /** Record Separator is a non-printable ASCII character that is unlikely to appear in GTFS data. */
     public static final String SEPARATOR = "\u001E";
 
     /**

@@ -93,7 +93,6 @@ public class FareLegRule extends Entity {
             fareLegRule.feed_id = feed.feedId;
             feed.fare_leg_rules.put(fareLegRule.getId(), fareLegRule);
         }
-
     }
 
     public static class Writer extends Entity.Writer<FareLegRule> {
@@ -134,5 +133,3 @@ public class FareLegRule extends Entity {
         }
     }
 }
-
-

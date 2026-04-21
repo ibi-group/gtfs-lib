@@ -57,7 +57,6 @@ public class Area extends Entity {
             area.feed_id = feed.feedId;
             feed.areas.put(area.getId(), area);
         }
-
     }
 
     public static class Writer extends Entity.Writer<Area> {

@@ -1,11 +1,9 @@
 package com.conveyal.gtfs;
 
 import com.conveyal.gtfs.error.NewGTFSErrorType;
-import com.conveyal.gtfs.loader.Table;
 import com.csvreader.CsvReader;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
-import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +35,7 @@ public class TestUtils {
     public static final String PG_TEST_USER = "postgres";
     public static final String PG_TEST_PASSWORD = "postgres";
 
-    private static final String JDBC_URL = "jdbc:postgresql://localhost";
+    public static final String JDBC_URL = "jdbc:postgresql://localhost";
 
     static final String TEST_RESOURCE_PATH = "src/test/resources/";
 
@@ -296,37 +294,6 @@ public class TestUtils {
                 String.format("Data Expectation record not found in %s", fileTestCase.filename)
             );
         }
-    }
-
-
-    /**
-     * Asserts that a given value for the specified field in result set matches provided matcher.
-     */
-    public static void assertResultValue(ResultSet resultSet, String field, Matcher matcher) throws SQLException {
-        assertThat(resultSet.getObject(field), matcher);
-    }
-
-    /**
-     * Executes SQL query for the specified ID and columns and returns the resulting result set.
-     */
-    public static ResultSet getResultSetForId(DataSource dataSource, String namespace, int id, Table table, String... columns) throws SQLException {
-        String sql = getColumnsForId(namespace, id, table, columns);
-        return dataSource.getConnection().prepareStatement(sql).executeQuery();
-    }
-
-    /**
-     * Constructs SQL query for the specified ID and columns and returns the resulting result set.
-     */
-    public static String getColumnsForId(String namespace, int id, Table table, String... columns) {
-        String sql = String.format(
-            "select %s from %s.%s where id=%d",
-            columns.length > 0 ? String.join(", ", columns) : "*",
-            namespace,
-            table.name,
-            id
-        );
-        LOG.info(sql);
-        return sql;
     }
 
     public static void assertThatSqlQueryYieldsRowCount(DataSource dataSource, String sql, int expectedRowCount) throws SQLException {

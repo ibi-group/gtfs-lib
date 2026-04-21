@@ -123,6 +123,3 @@ public class FareTransferRule extends Entity {
         }
     }
 }
-
-
-
