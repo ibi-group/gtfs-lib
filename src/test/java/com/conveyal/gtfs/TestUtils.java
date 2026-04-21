@@ -243,6 +243,13 @@ public class TestUtils {
             this.filename = filename;
             this.expectedColumnData = expectedColumnData;
         }
+
+        @Override
+        public String toString() {
+            return "FileTestCase{" +
+                "filename='" + filename + '\'' +
+                '}';
+        }
     }
 
     public static class DataExpectation {
@@ -261,39 +268,43 @@ public class TestUtils {
     public static void checkFileTestCases(ZipFile zip, FileTestCase[] fileTestCases) throws IOException {
         // Look through all written files in the zip file.
         for (TestUtils.FileTestCase fileTestCase : fileTestCases) {
-            ZipEntry entry = zip.getEntry(fileTestCase.filename);
+            checkFileTestCase(zip, fileTestCase);
+        }
+    }
 
-            // make sure the file exists within the zip file.
-            assertThat(entry, notNullValue());
+    public static void checkFileTestCase(ZipFile zip, FileTestCase fileTestCase) throws IOException {
+        ZipEntry entry = zip.getEntry(fileTestCase.filename);
 
-            // create csv reader for file
-            InputStream zis = zip.getInputStream(entry);
-            InputStream bis = new BOMInputStream(zis);
-            CsvReader reader = new CsvReader(bis, ',', StandardCharsets.UTF_8);
+        // make sure the file exists within the zip file.
+        assertThat(entry, notNullValue());
 
-            // make sure the file has headers
-            boolean hasHeaders = reader.readHeaders();
-            assertTrue(hasHeaders);
+        // create csv reader for file
+        InputStream zis = zip.getInputStream(entry);
+        InputStream bis = new BOMInputStream(zis);
+        CsvReader reader = new CsvReader(bis, ',', StandardCharsets.UTF_8);
 
-            // make sure that the record matching the expected row exists in this table.
-            boolean recordFound = false;
-            while (reader.readRecord() && !recordFound) {
-                boolean allExpectationsMetForThisRecord = true;
-                for (TestUtils.DataExpectation dataExpectation : fileTestCase.expectedColumnData) {
-                    if (!reader.get(dataExpectation.columnName).equals(dataExpectation.expectedValue)) {
-                        allExpectationsMetForThisRecord = false;
-                        break;
-                    }
-                }
-                if (allExpectationsMetForThisRecord) {
-                    recordFound = true;
+        // make sure the file has headers
+        boolean hasHeaders = reader.readHeaders();
+        assertTrue(hasHeaders);
+
+        // make sure that the record matching the expected row exists in this table.
+        boolean recordFound = false;
+        while (reader.readRecord() && !recordFound) {
+            boolean allExpectationsMetForThisRecord = true;
+            for (TestUtils.DataExpectation dataExpectation : fileTestCase.expectedColumnData) {
+                if (!reader.get(dataExpectation.columnName).equals(dataExpectation.expectedValue)) {
+                    allExpectationsMetForThisRecord = false;
+                    break;
                 }
             }
-            assertTrue(
-                recordFound,
-                String.format("Data Expectation record not found in %s", fileTestCase.filename)
-            );
+            if (allExpectationsMetForThisRecord) {
+                recordFound = true;
+            }
         }
+        assertTrue(
+            recordFound,
+            String.format("Data Expectation record not found in %s", fileTestCase.filename)
+        );
     }
 
     public static void assertThatSqlQueryYieldsRowCount(DataSource dataSource, String sql, int expectedRowCount) throws SQLException {
