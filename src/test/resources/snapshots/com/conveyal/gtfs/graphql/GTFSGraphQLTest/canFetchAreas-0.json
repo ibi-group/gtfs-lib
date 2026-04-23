@@ -1,0 +1,16 @@
+{
+  "data" : {
+    "feed" : {
+      "area" : [ {
+        "area_id" : "area_bl",
+        "area_name" : "Blue Line",
+        "id" : 2
+      }, {
+        "area_id" : "area_bl_airport",
+        "area_name" : "Blue Line - Airport Station",
+        "id" : 3
+      } ],
+      "feed_version" : "1.0"
+    }
+  }
+}

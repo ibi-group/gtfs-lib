@@ -1,0 +1,11 @@
+query ($namespace: String) {
+  feed(namespace: $namespace) {
+    feed_version
+    rider_category {
+      rider_category_id
+      rider_category_name
+      is_default_fare_category
+      eligibility_url
+    }
+  }
+}

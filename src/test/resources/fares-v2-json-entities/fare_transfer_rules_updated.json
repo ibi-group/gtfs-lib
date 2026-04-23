@@ -1,0 +1,13 @@
+{
+  "id": 1,
+  "from_leg_group_id": "leg_airport_rapid_transit_quick_subway updated",
+  "to_leg_group_id": "leg_local_bus_quick_subway updated",
+  "transfer_count": "",
+  "duration_limit": "7300",
+  "duration_limit_type": "1",
+  "fare_transfer_type": "0",
+  "fare_product_id": "prod_rapid_transit_quick_subway updated",
+  "filter_fare_product_id": "prod_rapid_transit_quick_subway updated",
+  "fare_media_behavior": "0",
+  "fare_product_behavior": "1"
+}

@@ -10,33 +10,37 @@ import com.conveyal.gtfs.loader.conditions.FieldNotEmptyAndMatchesValueCheck;
 import com.conveyal.gtfs.loader.conditions.ForeignRefExistsCheck;
 import com.conveyal.gtfs.loader.conditions.ReferenceFieldShouldBeProvidedCheck;
 import com.conveyal.gtfs.model.Agency;
+import com.conveyal.gtfs.model.Area;
 import com.conveyal.gtfs.model.Attribution;
 import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.CalendarDate;
 import com.conveyal.gtfs.model.Entity;
 import com.conveyal.gtfs.model.FareAttribute;
+import com.conveyal.gtfs.model.FareLegJoinRule;
+import com.conveyal.gtfs.model.FareLegRule;
+import com.conveyal.gtfs.model.FareMedia;
+import com.conveyal.gtfs.model.FareProduct;
 import com.conveyal.gtfs.model.FareRule;
+import com.conveyal.gtfs.model.FareTransferRule;
 import com.conveyal.gtfs.model.FeedInfo;
 import com.conveyal.gtfs.model.Frequency;
+import com.conveyal.gtfs.model.Network;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.PatternStop;
+import com.conveyal.gtfs.model.RiderCategory;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.ShapePoint;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
+import com.conveyal.gtfs.model.TimeFrame;
 import com.conveyal.gtfs.model.Transfer;
 import com.conveyal.gtfs.model.Translation;
 import com.conveyal.gtfs.model.Trip;
 import com.conveyal.gtfs.storage.StorageException;
-import com.csvreader.CsvReader;
-import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,18 +50,14 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.DUPLICATE_HEADER;
-import static com.conveyal.gtfs.error.NewGTFSErrorType.TABLE_IN_SUBDIRECTORY;
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.sanitize;
 import static com.conveyal.gtfs.loader.Requirement.EDITOR;
 import static com.conveyal.gtfs.loader.Requirement.EXTENSION;
@@ -132,6 +132,7 @@ public class Table {
     ).restrictDelete()
     .addPrimaryKey()
     .addPrimaryKeyNames("agency_id");
+
 
     // The GTFS spec says this table is required, but in practice it is not required if calendar_dates is present.
     public static final Table CALENDAR = new Table("calendar", Calendar.class, OPTIONAL,
@@ -213,7 +214,7 @@ public class Table {
         new StringField("route_short_name", OPTIONAL), // one of short or long must be provided
         new StringField("route_long_name", OPTIONAL),
         new StringField("route_desc", OPTIONAL),
-        // Max route type according to the GTFS spec is 7; however, there is a GTFS proposal that could see this 
+        // Max route type according to the GTFS spec is 7; however, there is a GTFS proposal that could see this
         // max value grow to around 1800: https://groups.google.com/forum/#!msg/gtfs-changes/keT5rTPS7Y0/71uMz2l6ke0J
         new IntegerField("route_type", REQUIRED, 1800),
         new URLField("route_url", OPTIONAL),
@@ -228,7 +229,9 @@ public class Table {
         // Status values are In progress (0), Pending approval (1), and Approved (2).
         new ShortField("status", EDITOR, 2),
         new ShortField("continuous_pickup", OPTIONAL,3),
-        new ShortField("continuous_drop_off", OPTIONAL,3)
+        new ShortField("continuous_drop_off", OPTIONAL,3),
+        new StringField("network_id",  OPTIONAL),
+        new StringField("route_network_ids",  OPTIONAL)
     ).addPrimaryKey()
     .addPrimaryKeyNames("route_id");
 
@@ -282,10 +285,125 @@ public class Table {
         new StringField("parent_station", OPTIONAL).requireConditions(),
         new StringField("stop_timezone", OPTIONAL),
         new ShortField("wheelchair_boarding", OPTIONAL, 2),
-        new StringField("platform_code", OPTIONAL)
+        new StringField("platform_code", OPTIONAL),
+        new StringField("stop_area_ids", OPTIONAL)
     ).restrictDelete()
     .addPrimaryKey()
     .addPrimaryKeyNames("stop_id");
+
+    public static final Table AREAS = new Table(Area.TABLE_NAME, Area.class, OPTIONAL,
+        new StringField(Area.AREA_ID_NAME, REQUIRED),
+        new StringField(Area.AREA_NAME_NAME, OPTIONAL)
+    )
+    .restrictDelete()
+    .addPrimaryKeyNames(Area.AREA_ID_NAME);
+
+    public static final Table FARE_MEDIAS = new Table(FareMedia.TABLE_NAME, FareMedia.class, OPTIONAL,
+        new StringField(FareMedia.FARE_MEDIA_ID_NAME, REQUIRED),
+        new StringField(FareMedia.FARE_MEDIA_NAME_NAME, OPTIONAL),
+        new IntegerField(FareMedia.FARE_MEDIA_TYPE_NAME, REQUIRED)
+    )
+    .restrictDelete()
+    .addPrimaryKeyNames(FareMedia.FARE_MEDIA_ID_NAME);
+
+    public static final Table FARE_PRODUCTS = new Table(FareProduct.TABLE_NAME, FareProduct.class, OPTIONAL,
+        new StringField(FareProduct.FARE_PRODUCT_ID_NAME, REQUIRED),
+        new StringField(FareProduct.FARE_PRODUCT_NAME_NAME, OPTIONAL),
+        new StringField(FareProduct.RIDER_CATEGORY_ID_NAME, OPTIONAL),
+        new StringField(FareProduct.FARE_MEDIA_ID_NAME, OPTIONAL).isReferenceTo(FARE_MEDIAS),
+        new DoubleField(FareProduct.AMOUNT_NAME, REQUIRED, 0.0, Double.MAX_VALUE, 2),
+        new StringField(FareProduct.CURRENCY_NAME, REQUIRED)
+    )
+    .restrictDelete()
+    .keyFieldIsNotUnique()
+    .addPrimaryKeyNames(FareProduct.FARE_PRODUCT_ID_NAME, FareProduct.FARE_MEDIA_ID_NAME);
+
+    public static final Table TIME_FRAMES = new Table(TimeFrame.TABLE_NAME, TimeFrame.class, OPTIONAL,
+        new StringField(TimeFrame.TIME_FRAME_GROUP_ID_NAME, REQUIRED),
+        new TimeField(TimeFrame.START_TIME_NAME, OPTIONAL),
+        new TimeField(TimeFrame.END_TIME_NAME, OPTIONAL),
+        new StringField(TimeFrame.SERVICE_ID_NAME, OPTIONAL).isReferenceTo(CALENDAR).isReferenceTo(CALENDAR_DATES)
+    )
+    .restrictDelete()
+    .keyFieldIsNotUnique()
+    .addPrimaryKeyNames(
+        TimeFrame.TIME_FRAME_GROUP_ID_NAME,
+        TimeFrame.START_TIME_NAME,
+        TimeFrame.END_TIME_NAME,
+        TimeFrame.SERVICE_ID_NAME
+    );
+
+    public static final Table FARE_LEG_RULES = new Table(FareLegRule.TABLE_NAME, FareLegRule.class, OPTIONAL,
+        new StringField(FareLegRule.LEG_GROUP_ID_NAME, OPTIONAL),
+        new StringField(FareLegRule.NETWORK_ID_NAME, OPTIONAL),
+        new StringField(FareLegRule.FROM_AREA_ID_NAME, OPTIONAL).isReferenceTo(AREAS),
+        new StringField(FareLegRule.TO_AREA_ID_NAME, OPTIONAL).isReferenceTo(AREAS),
+        new StringField(FareLegRule.FROM_TIMEFRAME_GROUP_ID_NAME, OPTIONAL).isReferenceTo(TIME_FRAMES),
+        new StringField(FareLegRule.TO_TIMEFRAME_GROUP_ID_NAME, OPTIONAL).isReferenceTo(TIME_FRAMES),
+        new StringField(FareLegRule.FARE_PRODUCT_ID_NAME, REQUIRED).isReferenceTo(FARE_PRODUCTS),
+        new IntegerField(FareLegRule.RULE_PRIORITY_NAME, OPTIONAL)
+    )
+    .restrictDelete()
+    .keyFieldIsNotUnique()
+    .addPrimaryKeyNames(
+        FareLegRule.NETWORK_ID_NAME,
+        FareLegRule.FROM_AREA_ID_NAME,
+        FareLegRule.TO_AREA_ID_NAME,
+        FareLegRule.FROM_TIMEFRAME_GROUP_ID_NAME,
+        FareLegRule.TO_TIMEFRAME_GROUP_ID_NAME,
+        FareLegRule.FARE_PRODUCT_ID_NAME
+    );
+
+    public static final Table FARE_TRANSFER_RULES = new Table(FareTransferRule.TABLE_NAME, FareTransferRule.class, OPTIONAL,
+        new StringField(FareTransferRule.FROM_LEG_GROUP_ID_NAME, OPTIONAL).isReferenceTo(FARE_LEG_RULES),
+        new StringField(FareTransferRule.TO_LEG_GROUP_ID_NAME, OPTIONAL).isReferenceTo(FARE_LEG_RULES),
+        new IntegerField(FareTransferRule.TRANSFER_COUNT_NAME, OPTIONAL, -1, Integer.MAX_VALUE),
+        new IntegerField(FareTransferRule.DURATION_LIMIT_NAME, OPTIONAL),
+        new IntegerField(FareTransferRule.DURATION_LIMIT_TYPE_NAME, OPTIONAL),
+        new IntegerField(FareTransferRule.FARE_TRANSFER_TYPE_NAME, REQUIRED),
+        new StringField(FareTransferRule.FARE_PRODUCT_ID_NAME, OPTIONAL).isReferenceTo(FARE_PRODUCTS)
+    )
+    .restrictDelete()
+    .keyFieldIsNotUnique()
+    .addPrimaryKeyNames(
+        FareTransferRule.FROM_LEG_GROUP_ID_NAME,
+        FareTransferRule.TO_LEG_GROUP_ID_NAME,
+        FareTransferRule.FARE_PRODUCT_ID_NAME,
+        FareTransferRule.TRANSFER_COUNT_NAME,
+        FareTransferRule.DURATION_LIMIT_NAME
+    );
+
+    public static final Table NETWORKS = new Table(Network.TABLE_NAME, Network.class, OPTIONAL,
+        new StringField(Network.NETWORK_ID_NAME, REQUIRED),
+        new StringField(Network.NETWORK_NAME_NAME, OPTIONAL)
+    )
+    .restrictDelete()
+    .addPrimaryKeyNames(Network.NETWORK_ID_NAME);
+
+    public static final Table RIDER_CATEGORIES = new Table(RiderCategory.TABLE_NAME, RiderCategory.class, OPTIONAL,
+        new StringField(RiderCategory.RIDER_CATEGORY_ID_NAME, REQUIRED),
+        new StringField(RiderCategory.RIDER_CATEGORY_NAME_NAME, REQUIRED),
+        new ShortField(RiderCategory.RIDER_CATEGORY_IS_DEFAULT_FARE_CATEGORY_NAME, REQUIRED, 1),
+        new URLField(RiderCategory.RIDER_CATEGORY_ELIGIBILITY_URL_NAME, OPTIONAL)
+    )
+    .restrictDelete()
+    .addPrimaryKeyNames(RiderCategory.RIDER_CATEGORY_ID_NAME);
+
+    public static final Table FARE_LEG_JOIN_RULES = new Table(FareLegJoinRule.TABLE_NAME, FareLegJoinRule.class, OPTIONAL,
+        new StringField(FareLegJoinRule.FROM_NETWORK_ID_NAME, REQUIRED),
+        new StringField(FareLegJoinRule.TO_NETWORK_ID_NAME, REQUIRED),
+        new StringField(FareLegJoinRule.FROM_STOP_ID_NAME, OPTIONAL),
+        new StringField(FareLegJoinRule.TO_STOP_ID_NAME, OPTIONAL)
+    )
+    .restrictDelete()
+    .addPrimaryKey()
+    .keyFieldIsNotUnique()
+    .addPrimaryKeyNames(
+        FareLegJoinRule.FROM_NETWORK_ID_NAME,
+        FareLegJoinRule.TO_NETWORK_ID_NAME,
+        FareLegJoinRule.FROM_STOP_ID_NAME,
+        FareLegJoinRule.TO_STOP_ID_NAME
+    );
 
     // GTFS reference: https://developers.google.com/transit/gtfs/reference#fare_rulestxt
     public static final Table FARE_RULES = new Table("fare_rules", FareRule.class, OPTIONAL,
@@ -437,12 +555,20 @@ public class Table {
         CALENDAR,
         SCHEDULE_EXCEPTIONS,
         CALENDAR_DATES,
+        TIME_FRAMES,
         FARE_ATTRIBUTES,
+        FARE_MEDIAS,
+        FARE_PRODUCTS,
+        NETWORKS,
+        FARE_LEG_RULES,
+        FARE_TRANSFER_RULES,
         FEED_INFO,
         ROUTES,
         PATTERNS,
         SHAPES,
         STOPS,
+        AREAS,
+        RIDER_CATEGORIES,
         FARE_RULES,
         PATTERN_STOP,
         TRANSFERS,
@@ -643,47 +769,6 @@ public class Table {
         return (tableName.equals("patterns"))
             ? String.format("%s%s%s", PROPRIETARY_FILE_PREFIX, tableName, fileExtension)
             : String.format("%s%s", tableName, fileExtension);
-    }
-
-    /**
-     * In GTFS feeds, all files are supposed to be in the root of the zip file, but feed producers often put them
-     * in a subdirectory. This function will search subdirectories if the entry is not found in the root.
-     * It records an error if the entry is in a subdirectory (as long as errorStorage is not null).
-     * It then creates a CSV reader for that table if it's found.
-     */
-    public CsvReader getCsvReader(ZipFile zipFile, SQLErrorStorage sqlErrorStorage) {
-        final String tableFileName = getTableFileNameWithExtension(this.name);
-        ZipEntry entry = zipFile.getEntry(tableFileName);
-        if (entry == null) {
-            // Table was not found, check if it is in a subdirectory.
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry e = entries.nextElement();
-                if (e.getName().endsWith(tableFileName)) {
-                    entry = e;
-                    if (sqlErrorStorage != null) sqlErrorStorage.storeError(NewGTFSError.forTable(this, TABLE_IN_SUBDIRECTORY));
-                    break;
-                }
-            }
-        }
-        if (entry == null) return null;
-        try {
-            // Stream will be closed when the csvReader is closed.
-            InputStream zipInputStream = zipFile.getInputStream(entry);
-            // Skip any byte order mark that may be present. Files must be UTF-8,
-            // but the GTFS spec says that "files that include the UTF byte order mark are acceptable".
-            InputStream bomInputStream = new BOMInputStream(zipInputStream);
-            CsvReader csvReader = new CsvReader(bomInputStream, ',', Charset.forName("UTF8"));
-            // Don't skip empty records (this is set to true by default on CsvReader. We want to check for empty records
-            // during table load, so that they are logged as validation issues (WRONG_NUMBER_OF_FIELDS).
-            csvReader.setSkipEmptyRecords(false);
-            csvReader.readHeaders();
-            return csvReader;
-        } catch (IOException e) {
-            LOG.error("Exception while opening zip entry: {}", e);
-            e.printStackTrace();
-            return null;
-        }
     }
 
     /**

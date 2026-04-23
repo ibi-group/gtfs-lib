@@ -26,4 +26,6 @@ public class RouteDTO {
     public Integer status;
     public int continuous_pickup;
     public int continuous_drop_off;
+    public String network_id;
+    public String route_network_ids;
 }

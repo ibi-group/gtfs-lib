@@ -4,6 +4,7 @@ import com.conveyal.gtfs.error.NewGTFSError;
 import com.conveyal.gtfs.error.NewGTFSErrorType;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.storage.StorageException;
+import com.conveyal.gtfs.util.CsvReaderUtil;
 import com.csvreader.CsvReader;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
@@ -156,8 +157,17 @@ public class JdbcGtfsLoader {
             result.agency = load(Table.AGENCY);
             result.calendar = load(Table.CALENDAR);
             result.calendarDates = load(Table.CALENDAR_DATES);
+            result.timeFrames = load(Table.TIME_FRAMES);
             result.routes = load(Table.ROUTES);
             result.fareAttributes = load(Table.FARE_ATTRIBUTES);
+            result.fareMedias = load(Table.FARE_MEDIAS);
+            result.fareProducts = load(Table.FARE_PRODUCTS);
+            result.networks = load(Table.NETWORKS);
+            result.areas = load(Table.AREAS);
+            result.fareLegRules = load(Table.FARE_LEG_RULES);
+            result.fareLegJoinRules = load(Table.FARE_LEG_JOIN_RULES);
+            result.fareTransferRules = load(Table.FARE_TRANSFER_RULES);
+            result.riderCategories = load(Table.RIDER_CATEGORIES);
             result.feedInfo = load(Table.FEED_INFO);
             result.shapes = load(Table.SHAPES);
             result.patterns = load(Table.PATTERNS); // refs shapes and routes.
@@ -169,6 +179,7 @@ public class JdbcGtfsLoader {
             result.stopTimes = load(Table.STOP_TIMES);
             result.translations = load(Table.TRANSLATIONS);
             result.attributions = load(Table.ATTRIBUTIONS);
+
             result.errorCount = errorStorage.getErrorCount();
             // This will commit and close the single connection that has been shared between all preceding load steps.
             errorStorage.commitAndClose();
@@ -222,7 +233,7 @@ public class JdbcGtfsLoader {
         // FIXME is this extra CSV reader used anymore? Check comment below.
         // First, inspect feed_info.txt to extract the ID and version.
         // We could get this with SQL after loading, but feed_info, feed_id and feed_version are all optional.
-        CsvReader csvReader = Table.FEED_INFO.getCsvReader(zip, errorStorage);
+        CsvReader csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(Table.FEED_INFO, zip, errorStorage);
         String feedId = "", feedVersion = "";
         if (csvReader != null) {
             // feed_info.txt has been found and opened.
@@ -322,7 +333,7 @@ public class JdbcGtfsLoader {
      * @return number of rows that were loaded.
      */
     private int loadInternal(Table table) throws Exception {
-        CsvReader csvReader = table.getCsvReader(zip, errorStorage);
+        CsvReader csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(table, zip, errorStorage);
         if (csvReader == null) {
             LOG.info("File {} not found in gtfs zip file.", Table.getTableFileNameWithExtension(table.name));
             // This GTFS table could not be opened in the zip, even in a subdirectory.

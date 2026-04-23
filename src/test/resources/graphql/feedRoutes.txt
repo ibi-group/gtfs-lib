@@ -28,6 +28,7 @@ query ($namespace: String) {
         trip_id
       }
       wheelchair_accessible
+      network_id
     }
   }
 }

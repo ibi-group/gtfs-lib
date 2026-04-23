@@ -1,0 +1,108 @@
+{
+  "data" : {
+    "feed" : {
+      "fare_leg_rule" : [ {
+        "fare_product_id" : "prod_rapid_transit_quick_subway",
+        "from_area_id" : "area_bl_airport",
+        "from_timeframe_group_id" : "timeframe_regular",
+        "id" : 2,
+        "leg_group_id" : "leg_airport_rapid_transit_quick_subway",
+        "network_id" : "rapid_transit",
+        "rule_priority" : null,
+        "to_area_id" : null,
+        "to_timeframe_group_id" : null
+      }, {
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "from_area_id" : "area_cf_zone_buzzards",
+        "from_timeframe_group_id" : null,
+        "id" : 3,
+        "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
+        "network_id" : "cape_flyer",
+        "rule_priority" : null,
+        "to_area_id" : "area_cf_zone_hyannis",
+        "to_timeframe_group_id" : null
+      }, {
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "from_area_id" : "area_cf_zone_hyannis",
+        "from_timeframe_group_id" : null,
+        "id" : 4,
+        "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
+        "network_id" : "cape_flyer",
+        "rule_priority" : null,
+        "to_area_id" : "area_cf_zone_buzzards",
+        "to_timeframe_group_id" : null
+      }, {
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "from_area_id" : "area_cf_zone_hyannis",
+        "from_timeframe_group_id" : null,
+        "id" : 5,
+        "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
+        "network_id" : "cape_flyer",
+        "rule_priority" : null,
+        "to_area_id" : "area_commuter_rail_zone_8",
+        "to_timeframe_group_id" : null
+      }, {
+        "fare_product_id" : "prod_cape_buzzards_hyannis_fare",
+        "from_area_id" : "area_commuter_rail_zone_8",
+        "from_timeframe_group_id" : null,
+        "id" : 6,
+        "leg_group_id" : "leg_cape_buzzards_hyannis_cash",
+        "network_id" : "cape_flyer",
+        "rule_priority" : null,
+        "to_area_id" : "area_cf_zone_hyannis",
+        "to_timeframe_group_id" : null
+      }, {
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "from_area_id" : "area_cf_zone_buzzards",
+        "from_timeframe_group_id" : null,
+        "id" : 7,
+        "leg_group_id" : "leg_cape_sbb_buzzards_cash",
+        "network_id" : "cape_flyer",
+        "rule_priority" : null,
+        "to_area_id" : "area_commuter_rail_zone_1a",
+        "to_timeframe_group_id" : null
+      }, {
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "from_area_id" : "area_cf_zone_buzzards",
+        "from_timeframe_group_id" : null,
+        "id" : 8,
+        "leg_group_id" : "leg_cape_sbb_buzzards_cash",
+        "network_id" : "cape_flyer",
+        "rule_priority" : null,
+        "to_area_id" : "area_commuter_rail_zone_2",
+        "to_timeframe_group_id" : null
+      }, {
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "from_area_id" : "area_cf_zone_buzzards",
+        "from_timeframe_group_id" : null,
+        "id" : 9,
+        "leg_group_id" : "leg_cape_sbb_buzzards_cash",
+        "network_id" : "cape_flyer",
+        "rule_priority" : null,
+        "to_area_id" : "area_commuter_rail_zone_4",
+        "to_timeframe_group_id" : null
+      }, {
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "from_area_id" : "area_commuter_rail_zone_1a",
+        "from_timeframe_group_id" : null,
+        "id" : 10,
+        "leg_group_id" : "leg_cape_sbb_buzzards_cash",
+        "network_id" : "cape_flyer",
+        "rule_priority" : null,
+        "to_area_id" : "area_cf_zone_buzzards",
+        "to_timeframe_group_id" : null
+      }, {
+        "fare_product_id" : "prod_cape_sbb_buzzards_fare",
+        "from_area_id" : "area_commuter_rail_zone_2",
+        "from_timeframe_group_id" : null,
+        "id" : 11,
+        "leg_group_id" : "leg_cape_sbb_buzzards_cash",
+        "network_id" : "cape_flyer",
+        "rule_priority" : null,
+        "to_area_id" : "area_cf_zone_buzzards",
+        "to_timeframe_group_id" : null
+      } ],
+      "feed_version" : "1.0"
+    }
+  }
+}

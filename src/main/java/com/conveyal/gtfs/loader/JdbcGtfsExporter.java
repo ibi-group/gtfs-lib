@@ -3,8 +3,10 @@ package com.conveyal.gtfs.loader;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.CalendarDate;
+import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.ScheduleException;
 import com.conveyal.gtfs.model.Service;
+import com.conveyal.gtfs.model.Stop;
 import com.google.common.collect.Lists;
 import org.apache.commons.dbutils.DbUtils;
 import org.postgresql.copy.CopyManager;
@@ -14,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,10 +30,8 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -256,19 +255,8 @@ public class JdbcGtfsExporter {
             }
 
             // Only write "approved" routes using COPY TO with results of select query
-            if (fromEditor) {
-                // The filter clause for routes is simple. We're just checking that the route is APPROVED.
-                result.routes = export(
-                    Table.ROUTES,
-                    String.join(
-                        " ",
-                        Table.ROUTES.generateSelectSql(feedIdToExport, Requirement.OPTIONAL),
-                        whereRouteIsApproved
-                    )
-                );
-            } else {
-                result.routes = export(Table.ROUTES, connection);
-            }
+            // The filter clause for routes is simple. We're just checking that the route is APPROVED.
+            result.routes = Route.exportRoutes(dataSource, feedIdToExport, zipOutputStream, fromEditor ? whereRouteIsApproved : null);
 
             // Only write shapes for "approved" routes using COPY TO with results of select query
             if (fromEditor) {
@@ -300,7 +288,8 @@ public class JdbcGtfsExporter {
             } else {
                 result.shapes = export(Table.SHAPES, connection);
             }
-            result.stops = export(Table.STOPS, connection);
+            result.stops = Stop.exportStops(dataSource, feedIdToExport, zipOutputStream);
+            result.stopAreas = Stop.exportStopAreas(dataSource, feedIdToExport, zipOutputStream);
             // Only write stop times for "approved" routes using COPY TO with results of select query
             if (fromEditor) {
                 // Generate filter SQL for trips if exporting a feed/schema that represents an editor snapshot.
@@ -346,6 +335,17 @@ public class JdbcGtfsExporter {
             } else {
                 result.trips = export(Table.TRIPS, connection);
             }
+
+            result.areas = export(Table.AREAS, connection);
+            result.fareMedias = export(Table.FARE_MEDIAS, connection);
+            result.fareProducts = export(Table.FARE_PRODUCTS, connection);
+            result.timeFrames = export(Table.TIME_FRAMES, connection);
+            result.fareLegRules = export(Table.FARE_LEG_RULES, connection);
+            result.fareLegJoinRules = export(Table.FARE_LEG_JOIN_RULES, connection);
+            result.fareTransferRules = export(Table.FARE_TRANSFER_RULES, connection);
+            result.networks = export(Table.NETWORKS, connection);
+            result.routeNetworks = Route.exportRouteNetworks(dataSource, feedIdToExport, zipOutputStream);
+            result.riderCategories = export(Table.RIDER_CATEGORIES, connection);
 
             exportProprietaryFiles(result);
 

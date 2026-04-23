@@ -1,0 +1,23 @@
+{
+  "data" : {
+    "feed" : {
+      "feed_version" : "1.0",
+      "rider_category" : [ {
+        "eligibility_url" : "https://trimet.org/fares/honoredcitizen.htm",
+        "is_default_fare_category" : "0",
+        "rider_category_id" : "HONORED_CITIZEN",
+        "rider_category_name" : "Honored Citizen"
+      }, {
+        "eligibility_url" : null,
+        "is_default_fare_category" : "1",
+        "rider_category_id" : "ADULT",
+        "rider_category_name" : "Adult"
+      }, {
+        "eligibility_url" : "https://trimet.org/fares/youth.htm",
+        "is_default_fare_category" : "0",
+        "rider_category_id" : "YOUTH",
+        "rider_category_name" : "Youth"
+      } ]
+    }
+  }
+}

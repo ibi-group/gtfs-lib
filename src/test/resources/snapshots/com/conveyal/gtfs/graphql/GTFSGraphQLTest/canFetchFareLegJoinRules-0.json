@@ -1,0 +1,13 @@
+{
+  "data" : {
+    "feed" : {
+      "fare_leg_join_rule" : [ {
+        "from_network_id" : "1",
+        "from_stop_id" : "3",
+        "to_network_id" : "2",
+        "to_stop_id" : "4"
+      } ],
+      "feed_version" : "1.0"
+    }
+  }
+}

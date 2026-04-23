@@ -41,6 +41,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static com.conveyal.gtfs.model.RouteNetwork.ROUTE_NETWORK_FILE_NAME;
+
 /**
  * All entities must be from a single feed namespace.
  * Composed of several GTFSTables.
@@ -62,6 +64,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     // This is how you do a multimap in mapdb: https://github.com/jankotek/MapDB/blob/release-1.0/src/test/java/examples/MultiMap.java
     public final NavigableSet<Tuple2<String, Frequency>> frequencies;
     public final Map<String, Route> routes;
+    public final Map<String, StopArea> stop_areas;
     public final Map<String, Stop> stops;
     public final Map<String, Transfer> transfers;
     public final BTreeMap<String, Trip> trips;
@@ -109,6 +112,17 @@ public class GTFSFeed implements Cloneable, Closeable {
 
     /* A place to store an event bus that is passed through constructor. */
     public transient EventBus eventBus;
+
+    public final Map<String, Area> areas;
+    public final Map<String, FareProduct> fare_products;
+    public final Map<String, FareMedia> fare_medias;
+    public final Map<String, TimeFrame> time_frames;
+    public final Map<String, FareLegRule> fare_leg_rules;
+    public final Map<String, FareLegJoinRule> fare_leg_join_rules;
+    public final Map<String, FareTransferRule> fare_transfer_rules;
+    public final Map<String, Network> networks;
+    public final Map<String, RouteNetwork> route_networks;
+    public final Map<String, RiderCategory> rider_categories;
 
     /**
      * The order in which we load the tables is important for two reasons.
@@ -170,13 +184,33 @@ public class GTFSFeed implements Cloneable, Closeable {
         fares = null; // free memory
 
         new Pattern.Loader(this).loadTable(zip);
+        new RouteNetwork.Loader(this).loadTable(zip);
         new Route.Loader(this).loadTable(zip);
+        if (!route_networks.isEmpty()) {
+            Route.mergeRouteNetworks(routes, route_networks);
+        }
         new ShapePoint.Loader(this).loadTable(zip);
+        new StopArea.Loader(this).loadTable(zip);
         new Stop.Loader(this).loadTable(zip);
+        if (!stop_areas.isEmpty()) {
+            Stop.mergeStopAreas(stops, stop_areas);
+        }
         new Transfer.Loader(this).loadTable(zip);
         new Trip.Loader(this).loadTable(zip);
         new Frequency.Loader(this).loadTable(zip);
         new StopTime.Loader(this).loadTable(zip); // comment out this line for quick testing using NL feed
+
+        // Fares v2.
+        new Area.Loader(this).loadTable(zip);
+        new TimeFrame.Loader(this).loadTable(zip);
+        new Network.Loader(this).loadTable(zip);
+        new FareMedia.Loader(this).loadTable(zip);
+        new FareProduct.Loader(this).loadTable(zip);
+        new FareLegRule.Loader(this).loadTable(zip);
+        new FareLegJoinRule.Loader(this).loadTable(zip);
+        new FareTransferRule.Loader(this).loadTable(zip);
+        new RiderCategory.Loader(this).loadTable(zip);
+
         LOG.info("{} errors", errors.size());
         for (GTFSError error : errors) {
             LOG.info("{}", error);
@@ -212,12 +246,32 @@ public class GTFSFeed implements Cloneable, Closeable {
             new FareRule.Writer(this).writeTable(zip);
             new Frequency.Writer(this).writeTable(zip);
             new Route.Writer(this).writeTable(zip);
+            if (!routes.isEmpty()) {
+                // Export route networks.
+                Entity.writeEntityToFile(zip, new ArrayList<>(routes.values()), ROUTE_NETWORK_FILE_NAME);
+            }
             new Stop.Writer(this).writeTable(zip);
+            if (!stops.isEmpty()) {
+                // Export stop areas.
+                Entity.writeEntityToFile(zip, new ArrayList<>(stops.values()), Stop.STOP_AREAS_FILE_NAME);
+            }
             new ShapePoint.Writer(this).writeTable(zip);
             new Transfer.Writer(this).writeTable(zip);
             new Trip.Writer(this).writeTable(zip);
             new StopTime.Writer(this).writeTable(zip);
             new Pattern.Writer(this).writeTable(zip);
+
+            // Fares v2.
+            new Area.Writer(this).writeTable(zip);
+            new TimeFrame.Writer(this).writeTable(zip);
+            new Network.Writer(this).writeTable(zip);
+            new FareMedia.Writer(this).writeTable(zip);
+            new FareProduct.Writer(this).writeTable(zip);
+            new FareLegRule.Writer(this).writeTable(zip);
+            new FareLegJoinRule.Writer(this).writeTable(zip);
+            new FareTransferRule.Writer(this).writeTable(zip);
+            new RiderCategory.Writer(this).writeTable(zip);
+
             LOG.info("GTFS file written");
         } catch (Exception e) {
             LOG.error("Error saving GTFS: {}", e.getMessage());
@@ -605,19 +659,29 @@ public class GTFSFeed implements Cloneable, Closeable {
         this.db = db;
 
         agency = db.getTreeMap("agency");
+        areas = db.getTreeMap("area");
+        fare_leg_rules = db.getTreeMap("fare_leg_rules");
+        fare_leg_join_rules = db.getTreeMap(FareLegJoinRule.TABLE_NAME);
+        fare_medias = db.getTreeMap("fare_medias");
+        fare_products = db.getTreeMap("fare_products");
+        fare_transfer_rules = db.getTreeMap("fare_transfer_rules");
         feedInfo = db.getTreeMap("feed_info");
+        networks = db.getTreeMap("networks");
         routes = db.getTreeMap("routes");
+        route_networks = db.getTreeMap("route_networks");
         trips = db.getTreeMap("trips");
         stop_times = db.getTreeMap("stop_times");
         frequencies = db.getTreeSet("frequencies");
         transfers = db.getTreeMap("transfers");
+        stop_areas = db.getTreeMap("stop_areas");
         stops = db.getTreeMap("stops");
         fares = db.getTreeMap("fares");
         services = db.getTreeMap("services");
         shape_points = db.getTreeMap("shape_points");
+        time_frames = db.getTreeMap("time_frames");
         translations = db.getTreeMap("translations");
         attributions = db.getTreeMap("attributions");
-
+        rider_categories = db.getTreeMap(RiderCategory.TABLE_NAME);
         feedId = db.getAtomicString("feed_id").get();
         checksum = db.getAtomicLong("checksum").get();
 
