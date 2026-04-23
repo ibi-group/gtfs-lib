@@ -45,6 +45,7 @@ public class GTFSFaresV2Test {
     public static String faresDBName;
     private static DataSource faresDataSource;
     private static String faresNamespace;
+    private static File faresV2OutputZip;
 
     @BeforeAll
     static void setUp() throws IOException {
@@ -60,29 +61,25 @@ public class GTFSFaresV2Test {
         // Create an empty snapshot to create a new namespace, all the tables and data.
         FeedLoadResult result = makeSnapshot(faresNamespace, faresDataSource, false);
         faresNamespace = result.uniqueIdentifier;
+
+        // create a temp file for this test
+        faresV2OutputZip = File.createTempFile("fares-v2-output", ".zip");
+        // delete file to make sure we can assert that this program created the file
+        faresV2OutputZip.delete();
+        GTFSFeed feed = GTFSFeed.fromFile(faresZipFileName);
+        feed.toFile(faresV2OutputZip.getAbsolutePath());
+        feed.close();
     }
 
     @AfterAll
     static void tearDown() {
         TestUtils.dropDB(faresDBName);
+        faresV2OutputZip.delete();
     }
 
-    private static Stream<Arguments> createFileTestCases() throws IOException {
-        // create a temp file for this test
-        File outZip = File.createTempFile("fares-v2-output", ".zip");
-
-        // delete file to make sure we can assert that this program created the file
-        outZip.delete();
-
-        GTFSFeed feed = GTFSFeed.fromFile(faresZipFileName);
-        feed.toFile(outZip.getAbsolutePath());
-        feed.close();
-        assertTrue(outZip.exists());
-        ZipFile zip = new ZipFile(outZip);
-
+    private static Stream<Arguments> createFileTestCases() {
         return Stream.of(
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                     "areas.txt",
                     new TestUtils.DataExpectation[] {
@@ -92,7 +89,6 @@ public class GTFSFaresV2Test {
                 )
             ),
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                 "fare_leg_rules.txt",
                     new TestUtils.DataExpectation[] {
@@ -103,7 +99,6 @@ public class GTFSFaresV2Test {
                 )
             ),
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                     "fare_leg_join_rules.txt",
                     new TestUtils.DataExpectation[] {
@@ -115,7 +110,6 @@ public class GTFSFaresV2Test {
                 )
             ),
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                     "fare_media.txt",
                     new TestUtils.DataExpectation[] {
@@ -126,7 +120,6 @@ public class GTFSFaresV2Test {
                 )
             ),
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                     "fare_products.txt",
                     new TestUtils.DataExpectation[] {
@@ -140,7 +133,6 @@ public class GTFSFaresV2Test {
                 )
             ),
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                     "fare_transfer_rules.txt",
                     new TestUtils.DataExpectation[] {
@@ -155,7 +147,6 @@ public class GTFSFaresV2Test {
                 )
             ),
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                     "networks.txt",
                     new TestUtils.DataExpectation[] {
@@ -165,7 +156,6 @@ public class GTFSFaresV2Test {
                 )
             ),
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                     "route_networks.txt",
                     new TestUtils.DataExpectation[] {
@@ -175,7 +165,6 @@ public class GTFSFaresV2Test {
                 )
             ),
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                     "stop_areas.txt",
                     new TestUtils.DataExpectation[] {
@@ -185,7 +174,6 @@ public class GTFSFaresV2Test {
                 )
             ),
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                     "timeframes.txt",
                     new TestUtils.DataExpectation[] {
@@ -197,7 +185,6 @@ public class GTFSFaresV2Test {
                 )
             ),
             Arguments.of(
-                zip,
                 new TestUtils.FileTestCase(
                     "rider_categories.txt",
                     new TestUtils.DataExpectation[] {
@@ -214,10 +201,13 @@ public class GTFSFaresV2Test {
     /**
      * Make sure a round-trip of loading fares v2 data and then writing this to another zip file can be performed.
      */
-    @ParameterizedTest(name = "{1}")
+    @ParameterizedTest(name = "{0}")
     @MethodSource("createFileTestCases")
-    void canDoRoundTripLoadAndWriteToZipFile(ZipFile zip, TestUtils.FileTestCase fileTestCase) throws IOException {
-        checkFileTestCase(zip, fileTestCase);
+    void canDoRoundTripLoadAndWriteToZipFile(TestUtils.FileTestCase fileTestCase) throws IOException {
+        assertTrue(faresV2OutputZip.exists());
+        try (ZipFile zip = new ZipFile(faresV2OutputZip)) {
+            checkFileTestCase(zip, fileTestCase);
+        }
     }
 
     /**

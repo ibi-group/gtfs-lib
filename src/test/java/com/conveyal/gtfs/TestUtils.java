@@ -246,9 +246,7 @@ public class TestUtils {
 
         @Override
         public String toString() {
-            return "FileTestCase{" +
-                "filename='" + filename + '\'' +
-                '}';
+            return String.format("FileTestCase{filename='%s'}", filename);
         }
     }
 
