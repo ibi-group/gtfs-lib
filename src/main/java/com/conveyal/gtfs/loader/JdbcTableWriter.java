@@ -854,7 +854,6 @@ public class JdbcTableWriter implements TableWriter {
         for (String tripId : timesForTripIds.keySet()) {
             // Initialize travel time with previous stop time value.
             int cumulativeTravelTime = timesForTripIds.get(tripId);
-            int cumulativeInterpolatedTime = cumulativeTravelTime;
             int timepointNumber = 0;
             double previousShapeDistTraveled = 0; // Used for calculating timepoint speed for interpolation
             for (PatternStop patternStop : patternStops) {
@@ -870,26 +869,14 @@ public class JdbcTableWriter implements TableWriter {
                     if (!isTimepoint) travelTime = interpolateTimesFromTimepoints(patternStop, timepoints, timepointNumber, previousShapeDistTraveled);
                     previousShapeDistTraveled += patternStop.shape_dist_traveled;
                 }
-                int dwellTime = patternStop.default_dwell_time == Entity.INT_MISSING ? 0 : patternStop.default_dwell_time;
-                int oneBasedIndex = 1;
+                int dwellTime = patternStop.default_dwell_time == Entity.INT_MISSING || interpolateStopTimes ? 0 : patternStop.default_dwell_time;
                 // Increase travel time by current pattern stop's travel and dwell times (and set values for update).
-                if (!isTimepoint && interpolateStopTimes) {
-                    // We don't want to increment the true cumulative travel time because that adjusts the timepoint
-                    // times later in the pattern.
-                    // Dwell times are ignored right now as they do not fit the typical use case for interpolation.
-                    // They may be incorporated by accounting for all dwell times in intermediate stops when calculating
-                    // the timepoint speed.
-                    cumulativeInterpolatedTime += travelTime;
-                    updateStopTimeStatement.setInt(oneBasedIndex++, cumulativeInterpolatedTime);
-                    updateStopTimeStatement.setInt(oneBasedIndex++, cumulativeInterpolatedTime);
-                } else {
-                    cumulativeTravelTime += travelTime;
-                    updateStopTimeStatement.setInt(oneBasedIndex++, cumulativeTravelTime);
-                    cumulativeTravelTime += dwellTime;
-                    updateStopTimeStatement.setInt(oneBasedIndex++, cumulativeTravelTime);
-                }
-                updateStopTimeStatement.setString(oneBasedIndex++, tripId);
-                updateStopTimeStatement.setInt(oneBasedIndex++, patternStop.stop_sequence);
+                cumulativeTravelTime += travelTime;
+                updateStopTimeStatement.setInt(1, cumulativeTravelTime);
+                cumulativeTravelTime += dwellTime;
+                updateStopTimeStatement.setInt(2, cumulativeTravelTime);
+                updateStopTimeStatement.setString(3, tripId);
+                updateStopTimeStatement.setInt(4, patternStop.stop_sequence);
                 stopTimesTracker.addBatch();
             }
         }
