@@ -793,19 +793,19 @@ public class JdbcTableWriter implements TableWriter {
             throw new IllegalStateException("Issue in pattern stops which prevents interpolation (e.g. less than 2 timepoints)");
         }
         PatternStop nextTimepoint = timepoints.get(timepointNumber);
-        PatternStop lastTimepoint = timepoints.get(timepointNumber-1);
+        PatternStop prevTimepoint = timepoints.get(timepointNumber-1);
 
         if (
             nextTimepoint == null ||
             nextTimepoint.default_travel_time == Entity.INT_MISSING ||
             nextTimepoint.shape_dist_traveled == Entity.DOUBLE_MISSING ||
-            lastTimepoint.shape_dist_traveled == Entity.DOUBLE_MISSING
+            prevTimepoint.shape_dist_traveled == Entity.DOUBLE_MISSING
         ) {
             throw new IllegalStateException("Error with stop time interpolation: timepoint or shape_dist_traveled is null");
         }
 
-        double timepointSpeed = nextTimepoint.shape_dist_traveled / nextTimepoint.default_travel_time;
-        return (int) Math.round(Math.abs(patternStop.shape_dist_traveled - lastTimepoint.shape_dist_traveled) / timepointSpeed);
+        double timepointSpeed = (nextTimepoint.shape_dist_traveled - prevTimepoint.shape_dist_traveled) / nextTimepoint.default_travel_time;
+        return (int) Math.round(patternStop.shape_dist_traveled / timepointSpeed);
     }
 
     /**
