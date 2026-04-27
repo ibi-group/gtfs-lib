@@ -804,7 +804,8 @@ public class JdbcTableWriter implements TableWriter {
             throw new IllegalStateException("Error with stop time interpolation: timepoint or shape_dist_traveled is null");
         }
 
-        double timepointSpeed = (nextTimepoint.shape_dist_traveled - prevTimepoint.shape_dist_traveled) / nextTimepoint.default_travel_time;
+        // TODO: average with the previous timepoint's time?
+        double timepointSpeed = nextTimepoint.shape_dist_traveled / nextTimepoint.default_travel_time;
         return (int) Math.round(patternStop.shape_dist_traveled / timepointSpeed);
     }
 
