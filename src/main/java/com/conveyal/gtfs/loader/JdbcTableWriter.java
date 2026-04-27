@@ -806,7 +806,7 @@ public class JdbcTableWriter implements TableWriter {
         }
 
         double timepointSpeed = (nextTimepoint.shape_dist_traveled - lastTimepoint.shape_dist_traveled) / nextTimepoint.default_travel_time;
-        return (int) Math.round((patternStop.shape_dist_traveled - previousShapeDistTraveled) / timepointSpeed);
+        return (int) Math.abs(Math.round((patternStop.shape_dist_traveled - previousShapeDistTraveled) / timepointSpeed));
     }
 
     /**
