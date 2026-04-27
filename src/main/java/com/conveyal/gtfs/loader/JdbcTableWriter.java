@@ -870,6 +870,12 @@ public class JdbcTableWriter implements TableWriter {
                     previousShapeDistTraveled += patternStop.shape_dist_traveled;
                 }
                 int dwellTime = patternStop.default_dwell_time == Entity.INT_MISSING || interpolateStopTimes ? 0 : patternStop.default_dwell_time;
+
+                // In interpolation mode, don't write changes to db for timepoints
+                if (interpolateStopTimes && isTimepoint) {
+                    cumulativeTravelTime = cumulativeTravelTime + travelTime + dwellTime;
+                    continue;
+                }
                 // Increase travel time by current pattern stop's travel and dwell times (and set values for update).
                 cumulativeTravelTime += travelTime;
                 updateStopTimeStatement.setInt(1, cumulativeTravelTime);
