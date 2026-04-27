@@ -806,7 +806,7 @@ public class JdbcTableWriter implements TableWriter {
         }
 
         double timepointSpeed = (nextTimepoint.shape_dist_traveled - lastTimepoint.shape_dist_traveled) / nextTimepoint.default_travel_time;
-        return (int) Math.abs(Math.round((patternStop.shape_dist_traveled - previousShapeDistTraveled) / timepointSpeed));
+        return (int) Math.round(Math.abs(patternStop.shape_dist_traveled - previousShapeDistTraveled) / timepointSpeed);
     }
 
     /**
@@ -862,6 +862,7 @@ public class JdbcTableWriter implements TableWriter {
                 if (isTimepoint) timepointNumber++;
                 // Gather travel/dwell time for pattern stop (being sure to check for missing values).
                 int travelTime = patternStop.default_travel_time == Entity.INT_MISSING ? 0 : patternStop.default_travel_time;
+                cumulativeTravelTime += travelTime;
                 if (interpolateStopTimes) {
                     if (patternStop.shape_dist_traveled == Entity.DOUBLE_MISSING) {
                         throw new IllegalStateException("Shape_dist_traveled must be defined for all stops in order to perform interpolation");
@@ -871,25 +872,28 @@ public class JdbcTableWriter implements TableWriter {
                     previousShapeDistTraveled += patternStop.shape_dist_traveled;
                 }
                 int dwellTime = patternStop.default_dwell_time == Entity.INT_MISSING ? 0 : patternStop.default_dwell_time;
-                int oneBasedIndex = 1;
+
                 // Increase travel time by current pattern stop's travel and dwell times (and set values for update).
-                if (!isTimepoint && interpolateStopTimes) {
-                    // We don't want to increment the true cumulative travel time because that adjusts the timepoint
-                    // times later in the pattern.
-                    // Dwell times are ignored right now as they do not fit the typical use case for interpolation.
-                    // They may be incorporated by accounting for all dwell times in intermediate stops when calculating
-                    // the timepoint speed.
-                    cumulativeInterpolatedTime += travelTime;
-                    updateStopTimeStatement.setInt(oneBasedIndex++, cumulativeInterpolatedTime);
-                    updateStopTimeStatement.setInt(oneBasedIndex++, cumulativeInterpolatedTime);
+                if (!isTimepoint) {
+                    if (interpolateStopTimes) {
+                        // We don't want to increment the true cumulative travel time because that adjusts the timepoint
+                        // times later in the pattern.
+                        // Dwell times are ignored right now as they do not fit the typical use case for interpolation.
+                        // They may be incorporated by accounting for all dwell times in intermediate stops when calculating
+                        // the timepoint speed.
+                        cumulativeInterpolatedTime += travelTime;
+                    } else {
+                        cumulativeInterpolatedTime = cumulativeTravelTime;
+                    }
+                    updateStopTimeStatement.setInt(1, cumulativeInterpolatedTime);
+                    updateStopTimeStatement.setInt(2, cumulativeInterpolatedTime);
                 } else {
-                    cumulativeTravelTime += travelTime;
-                    updateStopTimeStatement.setInt(oneBasedIndex++, cumulativeTravelTime);
+                    updateStopTimeStatement.setInt(1, cumulativeTravelTime);
                     cumulativeTravelTime += dwellTime;
-                    updateStopTimeStatement.setInt(oneBasedIndex++, cumulativeTravelTime);
+                    updateStopTimeStatement.setInt(2, cumulativeTravelTime);
                 }
-                updateStopTimeStatement.setString(oneBasedIndex++, tripId);
-                updateStopTimeStatement.setInt(oneBasedIndex++, patternStop.stop_sequence);
+                updateStopTimeStatement.setString(3, tripId);
+                updateStopTimeStatement.setInt(4, patternStop.stop_sequence);
                 stopTimesTracker.addBatch();
             }
         }
