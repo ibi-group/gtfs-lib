@@ -787,7 +787,8 @@ public class JdbcTableWriter implements TableWriter {
     private int interpolateTimesFromTimepoints(
         PatternStop patternStop,
         List<PatternStop> timepoints,
-        Integer timepointNumber
+        Integer timepointNumber,
+        PatternStop prevPatternStop
     ) {
         if (timepointNumber == 0 || timepoints.size() == 1 || timepointNumber >= timepoints.size()) {
             throw new IllegalStateException("Issue in pattern stops which prevents interpolation (e.g. less than 2 timepoints)");
@@ -799,14 +800,16 @@ public class JdbcTableWriter implements TableWriter {
             nextTimepoint == null ||
             nextTimepoint.default_travel_time == Entity.INT_MISSING ||
             nextTimepoint.shape_dist_traveled == Entity.DOUBLE_MISSING ||
-            prevTimepoint.shape_dist_traveled == Entity.DOUBLE_MISSING
+            prevTimepoint.shape_dist_traveled == Entity.DOUBLE_MISSING ||
+            (prevPatternStop != null && prevPatternStop.shape_dist_traveled == Entity.DOUBLE_MISSING)
         ) {
             throw new IllegalStateException("Error with stop time interpolation: timepoint or shape_dist_traveled is null");
         }
 
-        // TODO: average with the previous timepoint's time?
-        double timepointSpeed = nextTimepoint.shape_dist_traveled / nextTimepoint.default_travel_time;
-        return (int) Math.round(patternStop.shape_dist_traveled / timepointSpeed);
+        double prevSdt = prevPatternStop == null ? 0 : prevPatternStop.shape_dist_traveled;
+
+        double timepointSpeed = (nextTimepoint.shape_dist_traveled - prevTimepoint.shape_dist_traveled) / nextTimepoint.default_travel_time;
+        return (int) Math.round((patternStop.shape_dist_traveled - prevSdt) / timepointSpeed);
     }
 
     /**
@@ -854,7 +857,9 @@ public class JdbcTableWriter implements TableWriter {
         for (String tripId : timesForTripIds.keySet()) {
             // Initialize travel time with previous stop time value.
             int cumulativeTravelTime = timesForTripIds.get(tripId);
+            int timepointCumulativeTravelTime = cumulativeTravelTime;
             int timepointNumber = 0;
+            PatternStop prevPatternStop = null;
             for (PatternStop patternStop : patternStops) {
                 boolean isTimepoint = patternStop.timepoint == 1;
                 if (isTimepoint) timepointNumber++;
@@ -865,13 +870,16 @@ public class JdbcTableWriter implements TableWriter {
                         throw new IllegalStateException("Shape_dist_traveled must be defined for all stops in order to perform interpolation");
                     }
                     // Override travel time if we're interpolating between timepoints.
-                    if (!isTimepoint) travelTime = interpolateTimesFromTimepoints(patternStop, timepoints, timepointNumber);
+                    if (!isTimepoint) travelTime = interpolateTimesFromTimepoints(patternStop, timepoints, timepointNumber, prevPatternStop);
                 }
-                int dwellTime = patternStop.default_dwell_time == Entity.INT_MISSING || interpolateStopTimes ? 0 : patternStop.default_dwell_time;
+                int dwellTime = patternStop.default_dwell_time == Entity.INT_MISSING || (interpolateStopTimes && !isTimepoint) ? 0 : patternStop.default_dwell_time;
 
                 // In interpolation mode, don't write changes to db for timepoints
+                // We don't write the travel time, since it is interpolated
                 if (interpolateStopTimes && isTimepoint) {
-                    cumulativeTravelTime = cumulativeTravelTime + travelTime + dwellTime;
+                    timepointCumulativeTravelTime = timepointCumulativeTravelTime + travelTime + dwellTime;
+                    // Reset the cumulativeTravelTime to the schedule truth
+                    cumulativeTravelTime = timepointCumulativeTravelTime;
                     continue;
                 }
                 // Increase travel time by current pattern stop's travel and dwell times (and set values for update).
@@ -882,6 +890,8 @@ public class JdbcTableWriter implements TableWriter {
                 updateStopTimeStatement.setString(3, tripId);
                 updateStopTimeStatement.setInt(4, patternStop.stop_sequence);
                 stopTimesTracker.addBatch();
+                
+                prevPatternStop = patternStop;
             }
         }
         return stopTimesTracker.executeRemaining();
@@ -1612,7 +1622,7 @@ public class JdbcTableWriter implements TableWriter {
         return parsedString.replaceAll("[{}]", "").split("[,]", 0);
     }
 
-    private String getResultSetString(int column, ResultSet resultSet) throws java.sql.SQLException {
+    private String getResultSetString(int column, ResultSet resultSet) throws SQLException {
         String resultSetString = resultSet.getString(column);
         return resultSetString == null ? "" : resultSetString;
     }
