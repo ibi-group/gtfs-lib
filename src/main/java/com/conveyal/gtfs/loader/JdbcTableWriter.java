@@ -262,7 +262,7 @@ public class JdbcTableWriter implements TableWriter {
      * false for interpolation.
      */
     public int normalizeStopTimesForPattern(int id, int beginWithSequence) throws SQLException {
-        return normalizeStopTimesForPattern(id, beginWithSequence, false);
+        return normalizeStopTimesForPattern(id, beginWithSequence, false, false);
     }
 
     /**
@@ -271,7 +271,7 @@ public class JdbcTableWriter implements TableWriter {
      *
      * @return number of stop times updated
      */
-    public int normalizeStopTimesForPattern(int id, int beginWithSequence, boolean interpolateStopTimes) throws SQLException {
+    public int normalizeStopTimesForPattern(int id, int beginWithSequence, boolean interpolateStopTimes, boolean ignoreNonBlankStopTimes) throws SQLException {
         try {
             JDBCTableReader<PatternStop> patternStops = new JDBCTableReader(
                 Table.PATTERN_STOP,
@@ -288,7 +288,7 @@ public class JdbcTableWriter implements TableWriter {
                     patternStopsToNormalize.add(patternStop);
                 }
             }
-            int stopTimesUpdated = updateStopTimesForPatternStops(patternStopsToNormalize, interpolateStopTimes);
+            int stopTimesUpdated = updateStopTimesForPatternStops(patternStopsToNormalize, interpolateStopTimes, ignoreNonBlankStopTimes);
             connection.commit();
             return stopTimesUpdated;
         } catch (Exception e) {
@@ -812,6 +812,22 @@ public class JdbcTableWriter implements TableWriter {
         return (int) Math.round((patternStop.shape_dist_traveled - prevSdt) / timepointSpeed);
     }
 
+    private boolean checkIfArrivalTimeExists(int stopSequence, String trip_id) throws SQLException {
+        String sql = String.format(
+                "select st.trip_id, arrival_time from %s.stop_times st where stop_sequence = ? " +
+                        "and st.trip_id = ?",
+                tablePrefix
+        );
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setInt(1, stopSequence);
+        statement.setString(2, trip_id);
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            int arrivalTime = resultSet.getInt(2);
+            if (arrivalTime <= 0) return false;
+        }
+        return true;
+    }
     /**
      * Normalizes all stop times' arrivals and departures for an ordered set of pattern stops. This set can be the full
      * set of stops for a pattern or just a subset. Typical usage for this method would be to overwrite the arrival and
@@ -821,8 +837,9 @@ public class JdbcTableWriter implements TableWriter {
      * @throws SQLException
      *
      * TODO? add param Set<String> serviceIdFilters service_id values to filter trips on
+     * TODO: Simply logic, avoid use of continue
      */
-    private int updateStopTimesForPatternStops(List<PatternStop> patternStops, boolean interpolateStopTimes) throws SQLException {
+    private int updateStopTimesForPatternStops(List<PatternStop> patternStops, boolean interpolateStopTimes, boolean ignoreNonBlankStopTimes) throws SQLException {
         PatternStop firstPatternStop = patternStops.iterator().next();
         List<PatternStop> timepoints = patternStops.stream().filter(ps -> ps.timepoint == 1).collect(Collectors.toList());
         int firstStopSequence = firstPatternStop.stop_sequence;
@@ -863,16 +880,35 @@ public class JdbcTableWriter implements TableWriter {
             for (PatternStop patternStop : patternStops) {
                 boolean isTimepoint = patternStop.timepoint == 1;
                 if (isTimepoint) timepointNumber++;
+                boolean hasStopTime = ignoreNonBlankStopTimes ? checkIfArrivalTimeExists(patternStop.stop_sequence, tripId) : true;
                 // Gather travel/dwell time for pattern stop (being sure to check for missing values).
                 int travelTime = patternStop.default_travel_time == Entity.INT_MISSING ? 0 : patternStop.default_travel_time;
-                if (interpolateStopTimes) {
+                if (interpolateStopTimes || ignoreNonBlankStopTimes) {
                     if (patternStop.shape_dist_traveled == Entity.DOUBLE_MISSING) {
                         throw new IllegalStateException("Shape_dist_traveled must be defined for all stops in order to perform interpolation");
                     }
                     // Override travel time if we're interpolating between timepoints.
-                    if (!isTimepoint) travelTime = interpolateTimesFromTimepoints(patternStop, timepoints, timepointNumber, prevPatternStop);
+                    if (!isTimepoint && !ignoreNonBlankStopTimes) travelTime = interpolateTimesFromTimepoints(patternStop, timepoints, timepointNumber, prevPatternStop);
+
+                    if (ignoreNonBlankStopTimes && !hasStopTime &&patternStop.stop_sequence != 0) travelTime = interpolateTimesFromTimepoints(patternStop, timepoints, timepointNumber, prevPatternStop);
                 }
                 int dwellTime = patternStop.default_dwell_time == Entity.INT_MISSING || (interpolateStopTimes && !isTimepoint) ? 0 : patternStop.default_dwell_time;
+
+                // In non-blank stop time mode, only update if our stoptime is blank
+                if (ignoreNonBlankStopTimes) {
+                    if (hasStopTime) {
+                        cumulativeTravelTime = cumulativeTravelTime + travelTime + dwellTime;
+                        prevPatternStop = patternStop;
+                        continue;
+                    }
+
+                    updateStopTimeStatement.setInt(1, cumulativeTravelTime + travelTime);
+                    updateStopTimeStatement.setInt(2, cumulativeTravelTime + travelTime);
+                    updateStopTimeStatement.setString(3, tripId);
+                    updateStopTimeStatement.setInt(4, patternStop.stop_sequence);
+                    stopTimesTracker.addBatch();
+                }
+
 
                 // In interpolation mode, don't write changes to db for timepoints
                 // We don't write the travel time, since it is interpolated
@@ -880,6 +916,7 @@ public class JdbcTableWriter implements TableWriter {
                     timepointCumulativeTravelTime = timepointCumulativeTravelTime + travelTime + dwellTime;
                     // Reset the cumulativeTravelTime to the schedule truth
                     cumulativeTravelTime = timepointCumulativeTravelTime;
+                    prevPatternStop = patternStop;
                     continue;
                 }
                 // Increase travel time by current pattern stop's travel and dwell times (and set values for update).
