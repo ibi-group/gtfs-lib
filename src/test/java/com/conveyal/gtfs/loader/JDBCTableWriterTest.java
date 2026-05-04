@@ -874,7 +874,7 @@ public class JDBCTableWriterTest {
         LOG.info("Updated pattern output: {}", updatedPatternOutput);
         // Normalize stop times.
         JdbcTableWriter updateTripWriter = createTestTableWriter(tripsTable);
-        updateTripWriter.normalizeStopTimesForPattern(pattern.id, 0, interpolateStopTimes);
+        updateTripWriter.normalizeStopTimesForPattern(pattern.id, 0, interpolateStopTimes, false);
 
         return createdTrip.trip_id;
     }
