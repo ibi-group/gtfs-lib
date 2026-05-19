@@ -11,6 +11,7 @@ import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.common.collect.Lists;
+import org.apache.commons.math3.util.Pair;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -24,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FlexValidatorTest {
+    private static final int CONTINUOUS_PICKUP_ALLOWED = 0;
+    private static final int CONTINUOUS_DROP_OFF_NOT_ALLOWED = 1;
 
     @ParameterizedTest
     @MethodSource("createLocationGroupChecks")
@@ -407,36 +410,44 @@ class FlexValidatorTest {
 
     @ParameterizedTest
     @MethodSource("createContinuousPickupTests")
-    void validateContinuousPickupTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
+    void validateContinuousPickupTest(StopTime stopTime, List<Pair<NewGTFSErrorType, Integer>> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
         FlexValidator.validateContinuousPickup(stopTime, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
+        checkValidationErrorsMatchExpectedErrorsAndBadValues(errors, expectedErrors);
     }
 
     private static Stream<Arguments> createContinuousPickupTests() {
         return Stream.of(
-            Arguments.of(createStopTimeForContinuousPickupTest(INT_MISSING), null),
+            Arguments.of(createStopTimeForContinuousPickupTest(INT_MISSING, CONTINUOUS_PICKUP_ALLOWED), null),
+            Arguments.of(createStopTimeForContinuousPickupTest(INT_MISSING, INT_MISSING), null),
+            Arguments.of(createStopTimeForContinuousPickupTest(1300, INT_MISSING), null),
+            // Only case where continuous_pickup is set while start|end_pickup_drop_off_window are defined.
             Arguments.of(
-                createStopTimeForContinuousPickupTest(1300),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP)
+                createStopTimeForContinuousPickupTest(1300, CONTINUOUS_PICKUP_ALLOWED),
+                Lists.newArrayList(new Pair<>(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP, CONTINUOUS_PICKUP_ALLOWED))
             )
         );
     }
 
     @ParameterizedTest
     @MethodSource("createContinuousDropOffTests")
-    void validateContinuousDropOffTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
+    void validateContinuousDropOffTest(StopTime stopTime, List<Pair<NewGTFSErrorType, Integer>> expectedErrors) {
         List<NewGTFSError> errors = new ArrayList<>();
         FlexValidator.validateContinuousDropOff(stopTime, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
+        checkValidationErrorsMatchExpectedErrorsAndBadValues(errors, expectedErrors);
     }
 
     private static Stream<Arguments> createContinuousDropOffTests() {
         return Stream.of(
-            Arguments.of(createStopTimeForContinuousPickupTest(INT_MISSING), null),
+            Arguments.of(createStopTimeForContinuousDropOffTest(INT_MISSING, CONTINUOUS_DROP_OFF_NOT_ALLOWED), null),
+            Arguments.of(createStopTimeForContinuousDropOffTest(INT_MISSING, INT_MISSING), null),
+            Arguments.of(createStopTimeForContinuousDropOffTest(1300, INT_MISSING), null),
+            // Only case where continuous_drop_off is set while start|end_pickup_drop_off_window are defined.
             Arguments.of(
-                createStopTimeForContinuousPickupTest(1300),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF)
+                createStopTimeForContinuousDropOffTest(1300, CONTINUOUS_DROP_OFF_NOT_ALLOWED),
+                Lists.newArrayList(new Pair<>(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF,
+                    CONTINUOUS_DROP_OFF_NOT_ALLOWED
+                ))
             )
         );
     }
@@ -533,6 +544,27 @@ class FlexValidatorTest {
         if (expectedErrors != null) {
             for (int i = 0; i < validationErrors.size(); i++) {
                 assertEquals(expectedErrors.get(i), validationErrors.get(i).errorType);
+            }
+        } else {
+            // No errors expected, so the reported errors should be empty.
+            assertTrue(validationErrors.isEmpty());
+        }
+    }
+
+    /**
+     * Check that the errors produced by the flex validator match the expected errors. If no errors are expected, check
+     * that no errors were produced. If errors are expected loop over the validation errors so as not to hide any
+     * unexpected errors.
+     * This version of the check also compares the badValue field of the error with the expected value.
+     */
+    private void checkValidationErrorsMatchExpectedErrorsAndBadValues(
+        List<NewGTFSError> validationErrors,
+        List<Pair<NewGTFSErrorType, Integer>> expectedErrors
+    ) {
+        if (expectedErrors != null) {
+            for (int i = 0; i < validationErrors.size(); i++) {
+                assertEquals(expectedErrors.get(i).getKey(), validationErrors.get(i).errorType);
+                assertEquals(Integer.toString(expectedErrors.get(i).getValue()), validationErrors.get(i).badValue);
             }
         } else {
             // No errors expected, so the reported errors should be empty.
@@ -654,10 +686,22 @@ class FlexValidatorTest {
     }
 
     private static StopTime createStopTimeForContinuousPickupTest(
-        int startPickupDropOffWindow
+        int startPickupDropOffWindow,
+        int continuousPickUp
     ) {
         StopTime stopTime = new StopTime();
         stopTime.start_pickup_drop_off_window = startPickupDropOffWindow;
+        stopTime.continuous_pickup = continuousPickUp;
+        return stopTime;
+    }
+
+    private static StopTime createStopTimeForContinuousDropOffTest(
+        int startPickupDropOffWindow,
+        int continuousDropOff
+    ) {
+        StopTime stopTime = new StopTime();
+        stopTime.start_pickup_drop_off_window = startPickupDropOffWindow;
+        stopTime.continuous_drop_off = continuousDropOff;
         return stopTime;
     }
 

@@ -418,10 +418,10 @@ public class FlexValidator extends FeedValidator {
      * - Optional otherwise.
      */
     public static void validateContinuousPickup(StopTime stopTime, List<NewGTFSError> errors) {
-        if (hasStartOrEndPickupDropOffWindow(stopTime)) {
+        if (hasStartOrEndPickupDropOffWindow(stopTime) && stopTime.continuous_pickup != INT_MISSING) {
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP)
-                .setBadValue(Integer.toString(stopTime.drop_off_type))
+                .setBadValue(Integer.toString(stopTime.continuous_pickup))
             );
         }
     }
@@ -432,10 +432,10 @@ public class FlexValidator extends FeedValidator {
      * - Optional otherwise.
      */
     public static void validateContinuousDropOff(StopTime stopTime, List<NewGTFSError> errors) {
-        if (hasStartOrEndPickupDropOffWindow(stopTime)) {
+        if (hasStartOrEndPickupDropOffWindow(stopTime) && stopTime.continuous_drop_off != INT_MISSING) {
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF)
-                .setBadValue(Integer.toString(stopTime.drop_off_type))
+                .setBadValue(Integer.toString(stopTime.continuous_drop_off))
             );
         }
     }
