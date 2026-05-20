@@ -422,7 +422,7 @@ public class FlexValidator extends FeedValidator {
 
     /**
      * Conditionally Forbidden:
-     * - Forbidden if start_pickup_drop_off_window or end_pickup_drop_off_window are defined.
+     * - Any value other than 1 or empty is forbidden if start_pickup_drop_off_window or end_pickup_drop_off_window are defined.
      * - Optional otherwise.
      */
     public static void validateContinuousPickup(StopTime stopTime, List<NewGTFSError> errors) {
@@ -436,7 +436,7 @@ public class FlexValidator extends FeedValidator {
 
     /**
      * Conditionally Forbidden:
-     * - Forbidden if start_pickup_drop_off_window or end_pickup_drop_off_window are defined.
+     * - Any value other than 1 or empty is forbidden if start_pickup_drop_off_window or end_pickup_drop_off_window are defined.
      * - Optional otherwise.
      */
     public static void validateContinuousDropOff(StopTime stopTime, List<NewGTFSError> errors) {
