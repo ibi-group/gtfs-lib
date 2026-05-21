@@ -416,7 +416,7 @@ public class FlexValidator extends FeedValidator {
         }
     }
 
-    private static boolean isNotMissingOrDisallowed(int pickupOrDropOff) {
+    private static boolean isContinuousStopping(int pickupOrDropOff) {
         return pickupOrDropOff != INT_MISSING && pickupOrDropOff != CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED;
     }
 
@@ -426,7 +426,7 @@ public class FlexValidator extends FeedValidator {
      * - Optional otherwise.
      */
     public static void validateContinuousPickup(StopTime stopTime, List<NewGTFSError> errors) {
-        if (isNotMissingOrDisallowed(stopTime.continuous_pickup) && hasStartOrEndPickupDropOffWindow(stopTime)) {
+        if (isContinuousStopping(stopTime.continuous_pickup) && hasStartOrEndPickupDropOffWindow(stopTime)) {
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP)
                 .setBadValue(Integer.toString(stopTime.continuous_pickup))
@@ -440,7 +440,7 @@ public class FlexValidator extends FeedValidator {
      * - Optional otherwise.
      */
     public static void validateContinuousDropOff(StopTime stopTime, List<NewGTFSError> errors) {
-        if (isNotMissingOrDisallowed(stopTime.continuous_drop_off) && hasStartOrEndPickupDropOffWindow(stopTime)) {
+        if (isContinuousStopping(stopTime.continuous_drop_off) && hasStartOrEndPickupDropOffWindow(stopTime)) {
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF)
                 .setBadValue(Integer.toString(stopTime.continuous_drop_off))
