@@ -461,24 +461,16 @@ class FlexValidatorTest {
         CONTINUOUS_PICKUP_DROP_OFF_PHONE,
         CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER
     })
-    void invalidContinuousPickupTest(int continuousPickup) {
-        StopTime stopTime = createContinuousStopTime(1300, continuousPickup);
-        List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateContinuousPickup(stopTime, errors);
-        checkSingleError(errors, FLEX_FORBIDDEN_CONTINUOUS_PICKUP, continuousPickup);
-    }
+    void invalidContinuousStopTimeTest(int continuousPickupDropOff) {
+        StopTime stopTime = createContinuousStopTime(1300, continuousPickupDropOff);
 
-    @ParameterizedTest
-    @ValueSource(ints = {
-        CONTINUOUS_PICKUP_DROP_OFF_ALLOWED,
-        CONTINUOUS_PICKUP_DROP_OFF_PHONE,
-        CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER
-    })
-    void invalidContinuousDropOffTest(int continuousDropOff) {
-        StopTime stopTime = createContinuousStopTime(1300, continuousDropOff);
-        List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateContinuousDropOff(stopTime, errors);
-        checkSingleError(errors, FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF, continuousDropOff);
+        List<NewGTFSError> pickupErrors = new ArrayList<>();
+        FlexValidator.validateContinuousPickup(stopTime, pickupErrors);
+        checkSingleError(pickupErrors, FLEX_FORBIDDEN_CONTINUOUS_PICKUP, continuousPickupDropOff);
+
+        List<NewGTFSError> dropOffErrors = new ArrayList<>();
+        FlexValidator.validateContinuousDropOff(stopTime, dropOffErrors);
+        checkSingleError(dropOffErrors, FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF, continuousPickupDropOff);
     }
 
     @ParameterizedTest
