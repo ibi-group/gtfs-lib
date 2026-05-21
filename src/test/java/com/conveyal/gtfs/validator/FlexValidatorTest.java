@@ -11,7 +11,6 @@ import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.common.collect.Lists;
-import org.apache.commons.math3.util.Pair;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -21,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
@@ -29,6 +30,7 @@ import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_O
 import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_OFF_PHONE;
 import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FlexValidatorTest {
@@ -111,10 +113,10 @@ class FlexValidatorTest {
         List<Trip> trips = Lists.newArrayList(createTrip());
         List<StopTime> stopTimes = Lists.newArrayList(createStopTime("trip-id-1", 1, 1));
 
-        int badValue = pickup == INT_MISSING ? dropOff : pickup;
-        checkValidationErrorsMatchExpectedErrorsAndBadValues(
+        checkSingleError(
             FlexValidator.validateRoute(route, trips, stopTimes),
-            Lists.newArrayList(new Pair<>(errorType, badValue))
+            errorType,
+            pickup == INT_MISSING ? dropOff : pickup
         );
     }
 
@@ -461,13 +463,9 @@ class FlexValidatorTest {
     })
     void invalidContinuousPickupTest(int continuousPickup) {
         StopTime stopTime = createContinuousStopTime(1300, continuousPickup);
-        List<Pair<NewGTFSErrorType, Integer>> expectedErrors = Lists.newArrayList(
-            new Pair<>(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP, continuousPickup)
-        );
-
         List<NewGTFSError> errors = new ArrayList<>();
         FlexValidator.validateContinuousPickup(stopTime, errors);
-        checkValidationErrorsMatchExpectedErrorsAndBadValues(errors, expectedErrors);
+        checkSingleError(errors, FLEX_FORBIDDEN_CONTINUOUS_PICKUP, continuousPickup);
     }
 
     @ParameterizedTest
@@ -478,13 +476,9 @@ class FlexValidatorTest {
     })
     void invalidContinuousDropOffTest(int continuousDropOff) {
         StopTime stopTime = createContinuousStopTime(1300, continuousDropOff);
-        List<Pair<NewGTFSErrorType, Integer>> expectedErrors = Lists.newArrayList(
-            new Pair<>(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF, continuousDropOff)
-        );
-
         List<NewGTFSError> errors = new ArrayList<>();
         FlexValidator.validateContinuousDropOff(stopTime, errors);
-        checkValidationErrorsMatchExpectedErrorsAndBadValues(errors, expectedErrors);
+        checkSingleError(errors, FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF, continuousDropOff);
     }
 
     @ParameterizedTest
@@ -587,24 +581,17 @@ class FlexValidatorTest {
     }
 
     /**
-     * Check that the errors produced by the flex validator match the expected errors. If no errors are expected, check
-     * that no errors were produced. If errors are expected loop over the validation errors so as not to hide any
-     * unexpected errors.
-     * This version of the check also compares the badValue field of the error with the expected value.
+     * Check that validation errors is just one error of a specific type and bad value.
      */
-    private void checkValidationErrorsMatchExpectedErrorsAndBadValues(
+    private void checkSingleError(
         List<NewGTFSError> validationErrors,
-        List<Pair<NewGTFSErrorType, Integer>> expectedErrors
+        NewGTFSErrorType errorType,
+        int badValue
     ) {
-        if (expectedErrors != null) {
-            for (int i = 0; i < validationErrors.size(); i++) {
-                assertEquals(expectedErrors.get(i).getKey(), validationErrors.get(i).errorType);
-                assertEquals(Integer.toString(expectedErrors.get(i).getValue()), validationErrors.get(i).badValue);
-            }
-        } else {
-            // No errors expected, so the reported errors should be empty.
-            assertTrue(validationErrors.isEmpty());
-        }
+        assertFalse(validationErrors.isEmpty());
+        assertEquals(1, validationErrors.size());
+        assertEquals(errorType, validationErrors.get(0).errorType);
+        assertEquals(Integer.toString(badValue), validationErrors.get(0).badValue);
     }
 
     private static FareRule createFareRule(String containsId, String destinationId, String originId) {
