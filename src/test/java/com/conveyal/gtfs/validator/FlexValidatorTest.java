@@ -76,25 +76,25 @@ class FlexValidatorTest {
                 null
             ),
             Arguments.of(
-                creeateRoute(1, INT_MISSING),
+                creeateRoute(CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED, INT_MISSING),
                 Lists.newArrayList(createTrip()),
                 Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF)
+                null
             ),
             Arguments.of(
-                creeateRoute(INT_MISSING, 1),
+                creeateRoute(INT_MISSING, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED),
                 Lists.newArrayList(createTrip()),
                 Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP)
+                null
             ),
             Arguments.of(
-                creeateRoute(INT_MISSING, 1),
+                creeateRoute(INT_MISSING, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED),
                 Lists.newArrayList(createTrip()),
                 Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING)),
                 null
             ),
             Arguments.of(
-                creeateRoute(1, INT_MISSING),
+                creeateRoute(CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED, INT_MISSING),
                 Lists.newArrayList(createTrip()),
                 Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING)),
                 null

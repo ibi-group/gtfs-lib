@@ -138,13 +138,13 @@ public class FlexValidator extends FeedValidator {
                     .filter(stopTime -> stopTime.trip_id.equalsIgnoreCase(trip.trip_id))
                     .anyMatch(FlexValidator::hasStartOrEndPickupDropOffWindow);
                 if (match) {
-                    if (route.continuous_drop_off != INT_MISSING) {
+                    if (isContinuousStopping(route.continuous_drop_off)) {
                         errors.add(NewGTFSError
                             .forEntity(route, NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF)
                             .setBadValue(String.valueOf(route.continuous_drop_off))
                         );
                     }
-                    if (route.continuous_pickup != INT_MISSING) {
+                    if (isContinuousStopping(route.continuous_pickup)) {
                         errors.add(NewGTFSError
                             .forEntity(route, NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP)
                             .setBadValue(String.valueOf(route.continuous_pickup))
