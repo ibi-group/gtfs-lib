@@ -62,44 +62,53 @@ class FlexValidatorTest {
     }
 
     @ParameterizedTest
-    @MethodSource("createRouteChecks")
-    void validateRouteTests(Route route, List<Trip> trips, List<StopTime> stopTimes, List<NewGTFSErrorType> expectedErrors) {
-        checkValidationErrorsMatchExpectedErrors(FlexValidator.validateRoute(route, trips, stopTimes), expectedErrors);
+    @MethodSource("createValidRouteContinuousStoppingChecks")
+    void validRouteContinuousStoppingTests(Route route, List<StopTime> stopTimes) {
+        List<Trip> trips = Lists.newArrayList(createTrip());
+        assertTrue(FlexValidator.validateRoute(route, trips, stopTimes).isEmpty());
     }
 
-    private static Stream<Arguments> createRouteChecks() {
+    private static Stream<Arguments> createValidRouteContinuousStoppingChecks() {
         return Stream.of(
             Arguments.of(
                 creeateRoute(INT_MISSING, INT_MISSING),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                null
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1))
             ),
             Arguments.of(
                 creeateRoute(CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED, INT_MISSING),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                null
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1))
             ),
             Arguments.of(
                 creeateRoute(INT_MISSING, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                null
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1))
             ),
             Arguments.of(
                 creeateRoute(INT_MISSING, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING)),
-                null
+                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING))
             ),
             Arguments.of(
                 creeateRoute(CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED, INT_MISSING),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING)),
-                null
+                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING))
             )
         );
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {
+        CONTINUOUS_PICKUP_DROP_OFF_ALLOWED,
+        CONTINUOUS_PICKUP_DROP_OFF_PHONE,
+        CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER
+    })
+    void invalidRouteContinuousStoppingTests(int continuousPickupDropOff) {
+        Route route = creeateRoute(continuousPickupDropOff, continuousPickupDropOff);
+        List<Trip> trips = Lists.newArrayList(createTrip());
+        List<StopTime> stopTimes = Lists.newArrayList(createStopTime("trip-id-1", 1, 1));
+
+        List<Pair<NewGTFSErrorType, Integer>> expectedErrors = Lists.newArrayList(
+            new Pair<>(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF, continuousPickupDropOff),
+            new Pair<>(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP, continuousPickupDropOff)
+        );
+        checkValidationErrorsMatchExpectedErrorsAndBadValues(FlexValidator.validateRoute(route, trips, stopTimes), expectedErrors);
     }
 
     @ParameterizedTest
