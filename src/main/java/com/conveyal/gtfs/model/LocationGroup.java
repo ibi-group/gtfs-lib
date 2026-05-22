@@ -125,9 +125,8 @@ public class LocationGroup extends Entity {
                 );
                 locationGroups.put(locationGroup.location_group_id, locationGroup.location_group_name);
             }
-            return (locationGroups.isEmpty())
-                ? csvReader
-                : produceCsvPayload(locationGroups);
+            // Return a brand new CSV reader because other code after this will parse the headers again.
+            return produceCsvPayload(locationGroups);
         } catch (IOException e) {
             return csvReader;
         }

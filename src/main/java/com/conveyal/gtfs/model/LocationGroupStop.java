@@ -156,9 +156,8 @@ public class LocationGroupStop extends Entity {
                     multiLocationGroupStops.put(locationGroupStop.location_group_id, locationGroupStop);
                 }
             }
-            return (multiLocationGroupStops.isEmpty())
-                ? csvReader
-                : produceCsvPayload(multiLocationGroupStops);
+            // Return a brand new CSV reader because other code after this will parse the headers again.
+            return produceCsvPayload(multiLocationGroupStops);
         } catch (IOException e) {
             return csvReader;
         }

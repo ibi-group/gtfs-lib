@@ -1,5 +1,6 @@
 package com.conveyal.gtfs.loader;
 
+import com.conveyal.gtfs.GTFS;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.TestUtils;
 import com.conveyal.gtfs.TestUtils.DataExpectation;
@@ -34,17 +35,19 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Load in a GTFS feed with GTFS flex features, and ensure all needed fields are imported correctly.
- * TODO: update feed to use more features, and test for these.
  */
-public class GtfsFlexTest {
+class GtfsFlexTest {
     private static String islandTransitTestDBName;
     private static DataSource islandTransitTestDataSource;
     private static String islandTransitTestNamespace;
     private static String islandTransitGtfsZipFileName;
     private static String unexpectedGeoJsonZipFileName;
+    private static String flexFeedWithEmptyLocationGroups;
+    private static String flexFeedWithEmptyLocationGroupsDBName;
+    private static DataSource flexFeedWithEmptyLocationGroupsDataSource;
 
     @BeforeAll
-    public static void setUpClass() throws IOException {
+    static void setUpClass() throws IOException {
         islandTransitTestDBName = TestUtils.generateNewDB();
         islandTransitTestDataSource = TestUtils.createTestDataSource(String.format("jdbc:postgresql://localhost/%s", islandTransitTestDBName));
         islandTransitGtfsZipFileName = getResourceFileName("real-world-gtfs-feeds/islandtransit-wa-us--flex-v2.zip");
@@ -52,11 +55,15 @@ public class GtfsFlexTest {
         islandTransitTestNamespace = feedLoadResult.uniqueIdentifier;
         validate(islandTransitTestNamespace, islandTransitTestDataSource);
         unexpectedGeoJsonZipFileName = TestUtils.zipFolderFiles("fake-agency-unexpected-geojson", true);
+        flexFeedWithEmptyLocationGroups = getResourceFileName("real-world-gtfs-feeds/bellhop-flex.zip");
+        flexFeedWithEmptyLocationGroupsDBName = TestUtils.generateNewDB();
+        flexFeedWithEmptyLocationGroupsDataSource = TestUtils.createTestDataSource(String.format("jdbc:postgresql://localhost/%s", flexFeedWithEmptyLocationGroupsDBName));
     }
 
     @AfterAll
-    public static void tearDownClass() {
+    static void tearDownClass() {
         TestUtils.dropDB(islandTransitTestDBName);
+        TestUtils.dropDB(flexFeedWithEmptyLocationGroupsDBName);
     }
 
     @Test
@@ -209,5 +216,11 @@ public class GtfsFlexTest {
         }
         // delete file to make sure we can assert that this program created the file
         outZip.delete();
+    }
+
+    @Test
+    void canLoadFeedWithEmptyLocationGroups() {
+        FeedLoadResult loadResult = GTFS.load(flexFeedWithEmptyLocationGroups, flexFeedWithEmptyLocationGroupsDataSource);
+        assertEquals(0, loadResult.errorCount);
     }
 }
