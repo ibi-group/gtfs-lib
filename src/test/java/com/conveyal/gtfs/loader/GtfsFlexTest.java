@@ -45,6 +45,9 @@ class GtfsFlexTest {
     private static String flexFeedWithEmptyLocationGroups;
     private static String flexFeedWithEmptyLocationGroupsDBName;
     private static DataSource flexFeedWithEmptyLocationGroupsDataSource;
+    private static String flexFeedWithBadLocationGroupRefs;
+    private static String flexFeedWithBadLocationGroupRefsDBName;
+    private static DataSource flexFeedWithBadLocationGroupRefsDataSource;
 
     @BeforeAll
     static void setUpClass() throws IOException {
@@ -58,12 +61,16 @@ class GtfsFlexTest {
         flexFeedWithEmptyLocationGroups = getResourceFileName("real-world-gtfs-feeds/bellhop-flex.zip");
         flexFeedWithEmptyLocationGroupsDBName = TestUtils.generateNewDB();
         flexFeedWithEmptyLocationGroupsDataSource = TestUtils.createTestDataSource(String.format("jdbc:postgresql://localhost/%s", flexFeedWithEmptyLocationGroupsDBName));
+        flexFeedWithBadLocationGroupRefs = getResourceFileName("real-world-gtfs-feeds/bellhop-flex-comma-content.zip");
+        flexFeedWithBadLocationGroupRefsDBName = TestUtils.generateNewDB();
+        flexFeedWithBadLocationGroupRefsDataSource = TestUtils.createTestDataSource(String.format("jdbc:postgresql://localhost/%s", flexFeedWithBadLocationGroupRefsDBName));
     }
 
     @AfterAll
     static void tearDownClass() {
         TestUtils.dropDB(islandTransitTestDBName);
         TestUtils.dropDB(flexFeedWithEmptyLocationGroupsDBName);
+        TestUtils.dropDB(flexFeedWithBadLocationGroupRefsDBName);
     }
 
     @Test
@@ -221,6 +228,12 @@ class GtfsFlexTest {
     @Test
     void canLoadFeedWithEmptyLocationGroups() {
         FeedLoadResult loadResult = GTFS.load(flexFeedWithEmptyLocationGroups, flexFeedWithEmptyLocationGroupsDataSource);
+        assertEquals(0, loadResult.errorCount);
+    }
+
+    @Test
+    void canLoadFeedWithOneLocationGroups() {
+        FeedLoadResult loadResult = GTFS.load(flexFeedWithBadLocationGroupRefs, flexFeedWithBadLocationGroupRefsDataSource);
         assertEquals(0, loadResult.errorCount);
     }
 }

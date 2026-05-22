@@ -108,10 +108,8 @@ public class LocationGroupStop extends Entity {
     }
 
     public String toCsvRow() {
-        return GeoJsonUtil.createCSVRow(
-            location_group_id,
-            (stop_id != null) ? stop_id.contains(",") ? "\"" + stop_id + "\"" : stop_id : ""
-        );
+        // GeoJsonUtil will add quotes for content with commas.
+        return GeoJsonUtil.createCSVRow(location_group_id, (stop_id != null) ? stop_id : "");
     }
 
     /**
