@@ -784,7 +784,7 @@ public class JdbcTableWriter implements TableWriter {
         PatternStop prevPatternStop
     ) {
         if (timepointNumber == 0 || timepoints.size() == 1 || timepointNumber >= timepoints.size()) {
-            throw new IllegalStateException("Issue in pattern stops which prevents interpolation (e.g. less than 2 timepoints)");
+            throw new IllegalStateException("Issue in pattern stops which prevents interpolation (e.g. less than 2 stoptimes to interpolate between)");
         }
         PatternStop nextTimepoint = timepoints.get(timepointNumber);
         PatternStop prevTimepoint = timepoints.get(timepointNumber-1);
