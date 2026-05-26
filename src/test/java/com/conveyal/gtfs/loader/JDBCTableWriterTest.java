@@ -42,6 +42,7 @@ import static com.conveyal.gtfs.GTFS.validate;
 import static com.conveyal.gtfs.TestUtils.getResourceFileName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -62,6 +63,7 @@ public class JDBCTableWriterTest {
     private static DataSource testDataSource;
     private static String testNamespace;
     private static String testGtfsGLSnapshotNamespace;
+    private static String testGtfsBlankStoptimesSnapshotNamespace;
     private static String simpleServiceId = "1";
     private static String firstStopId = "1";
     private static String secondStopId= "1.5";
@@ -109,6 +111,16 @@ public class JDBCTableWriterTest {
         JdbcGtfsSnapshotter snapshotter = new JdbcGtfsSnapshotter(testGtfsGLNamespace, testDataSource, false);
         SnapshotResult snapshotResult = snapshotter.copyTables();
         testGtfsGLSnapshotNamespace = snapshotResult.uniqueIdentifier;
+
+        // Load fake-agency-blank-stoptimes feed for use with blank stoptimes insertion test
+        FeedLoadResult blankStoptimesFeedLoadResult = load(TestUtils.zipFolderFiles("fake-agency-blank-stoptimes", true), testDataSource);
+        String testGtfsBlankStoptimesNamespace = blankStoptimesFeedLoadResult.uniqueIdentifier;
+        // validate feed to create additional tables
+        validate(testGtfsBlankStoptimesNamespace, testDataSource);
+        // load into editor via snapshot
+        JdbcGtfsSnapshotter blankStoptimesSnapshotter = new JdbcGtfsSnapshotter(testGtfsBlankStoptimesNamespace, testDataSource, false);
+        SnapshotResult blankStoptimesSnapshotResult = blankStoptimesSnapshotter.copyTables();
+        testGtfsBlankStoptimesSnapshotNamespace = blankStoptimesSnapshotResult.uniqueIdentifier;
     }
 
     @AfterAll
@@ -948,6 +960,25 @@ public class JDBCTableWriterTest {
         }
         // Ensure that updated stop times equals pattern stops length
         assertThat(index, equalTo(patternStops.length));
+    }
+
+    @Test
+    public void canInterpolateMissingStoptimes() throws IOException, SQLException, InvalidNamespaceException {
+        JdbcTableWriter tableWriter = new JdbcTableWriter(Table.PATTERN_STOP, testDataSource, testGtfsBlankStoptimesSnapshotNamespace);
+        tableWriter.normalizeStopTimesForPattern(1, 0, false, true);
+
+        JDBCTableReader<StopTime> stopTimesTable = new JDBCTableReader(Table.STOP_TIMES,
+                testDataSource,
+                testGtfsBlankStoptimesSnapshotNamespace + ".",
+                EntityPopulator.STOP_TIME);
+        int index = 0;
+        for (StopTime stopTime : stopTimesTable.getOrdered("1720")) {
+            LOG.info("stop times i={} arrival={} departure={}", index, stopTime.arrival_time, stopTime.departure_time);
+            // These outcomes will be nonsensical, but correct given the nonsensical shape-dist-traveled values
+            assertThat(stopTime.arrival_time, greaterThan(0));
+            assertThat(stopTime.departure_time, greaterThan(0));
+            index++;
+        }
     }
 
     /**
