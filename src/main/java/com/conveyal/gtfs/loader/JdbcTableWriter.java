@@ -787,7 +787,7 @@ public class JdbcTableWriter implements TableWriter {
             throw new IllegalStateException("Issue in pattern stops which prevents interpolation (e.g. less than 2 stoptimes to interpolate between)");
         }
         PatternStop nextTimepoint = timepoints.get(timepointNumber);
-        PatternStop prevTimepoint = timepoints.get(timepointNumber-1);
+        PatternStop prevTimepoint = timepoints.get(timepointNumber - 1);
 
         if (
             nextTimepoint == null ||
@@ -806,7 +806,7 @@ public class JdbcTableWriter implements TableWriter {
     }
 
     private boolean checkIfArrivalTimeExists(int stopSequence, String trip_id) throws SQLException {
-        String sql = String.format("select arrival_time from %s.stop_times where stop_sequence = ? " + "and trip_id = ?", tablePrefix);
+        String sql = String.format("select arrival_time from %s.stop_times where stop_sequence = ? and trip_id = ?", tablePrefix);
         PreparedStatement statement = connection.prepareStatement(sql);
         statement.setInt(1, stopSequence);
         statement.setString(2, trip_id);
@@ -890,6 +890,7 @@ public class JdbcTableWriter implements TableWriter {
                     }
                 }
                 // When interpolating, assume that *all* non-timepoint data is incorrect/missing
+                // The travel and dwell times defined for stops between timepoints will be ignored.
                 int dwellTime = patternStop.default_dwell_time == Entity.INT_MISSING || (interpolateStopTimes && !isTimepoint) ?
                         0 : patternStop.default_dwell_time;
 
