@@ -29,8 +29,8 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-    # Install Node 22.x (LTS) for running e2e tests (and for maven-semantic-release).
-    - name: Use Node.js 22.x
+    # Install node 22.x (LTS) for running maven-semantic-release.
+    - name: Use Node.js 22.X
       uses: actions/setup-node@v1
       with:
         node-version: 22.x

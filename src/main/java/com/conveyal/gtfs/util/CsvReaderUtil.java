@@ -6,6 +6,9 @@ import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.loader.Table;
 import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.LocationGroupStop;
+import com.conveyal.gtfs.model.Route;
+import com.conveyal.gtfs.model.RouteNetwork;
+import com.conveyal.gtfs.model.Stop;
 import com.csvreader.CsvReader;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
@@ -30,6 +33,11 @@ import static com.conveyal.gtfs.loader.Table.LOCATION_GEO_JSON_FILE_NAME;
 import static com.conveyal.gtfs.loader.Table.LOCATION_GROUP_FILE_NAME;
 import static com.conveyal.gtfs.loader.Table.LOCATION_GROUP_STOPS_FILE_NAME;
 import static com.conveyal.gtfs.loader.Table.getTableFileNameWithExtension;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Set;
+
+import static com.conveyal.gtfs.model.Stop.STOPS_FILE_NAME;
 
 public class CsvReaderUtil {
 
@@ -133,6 +141,12 @@ public class CsvReaderUtil {
                 initialReader = CsvReaderUtil.getCsvReaderForFile(zipFile, entry, errors, LocationGroupStop.NUMBER_OF_HEADERS);
                 csvReader = (initialReader != null) ? LocationGroupStop.getParsedData(initialReader, errors) : defaultCsvReader;
                 break;
+            case STOPS_FILE_NAME:
+                csvReader = getCsvReaderFromStopsFile(zipFile, entry, errors);
+                break;
+            case Route.ROUTE_FILE_NAME:
+                csvReader = getCsvReaderFromRoutesFile(zipFile, entry, errors);
+                break;
             default:
                 csvReader = getCsvReaderFromFile(zipFile, entry);
                 break;
@@ -141,9 +155,61 @@ public class CsvReaderUtil {
     }
 
     /**
+     * If the feed contains stop areas extract and merge with stops. If not, just return stops.
+     */
+    private static CsvReader getCsvReaderFromStopsFile(
+        ZipFile zipFile,
+        ZipEntry parentEntry,
+        List<String> errors
+    ) throws IOException {
+        ZipEntry zipEntry = getEntryFromZipFile(zipFile, Stop.STOP_AREAS_FILE_NAME);
+
+        CsvReader reader = getCsvReaderFromFile(zipFile, parentEntry);
+        if (zipEntry != null) {
+            reader.setSkipEmptyRecords(false);
+            reader.readHeaders();
+            CsvReader csvReader = getCsvReaderForFile(zipFile, zipEntry, errors, Stop.STOP_AREAS_NUMBER_OF_HEADERS);
+            if (csvReader != null) {
+                Map<String, Set<String>> zipData = Stop.groupStopAreaIds(csvReader, errors);
+                if (!zipData.isEmpty()) {
+                    return Stop.getCsvReaderForStopsWithStopAreas(reader, zipData);
+                }
+            }
+        }
+        // No stop areas, provide just the stops.
+        return reader;
+    }
+
+    /**
+     * If the feed contains route networks extract and merge with routes. If not, just return routes.
+     */
+    private static CsvReader getCsvReaderFromRoutesFile(
+        ZipFile zipFile,
+        ZipEntry parentEntry,
+        List<String> errors
+    ) throws IOException {
+        ZipEntry zipEntry = getEntryFromZipFile(zipFile, RouteNetwork.ROUTE_NETWORK_FILE_NAME);
+
+        CsvReader reader = getCsvReaderFromFile(zipFile, parentEntry);
+        if (zipEntry != null) {
+            reader.setSkipEmptyRecords(false);
+            reader.readHeaders();
+            CsvReader csvReader = getCsvReaderForFile(zipFile, zipEntry, errors, RouteNetwork.ROUTE_NETWORK_NUMBER_OF_HEADERS);
+            if (csvReader != null) {
+                Map<String, Set<String>> zipData = Route.groupRouteNetworkIds(csvReader, errors);
+                if (!zipData.isEmpty()) {
+                    return Route.getCsvReaderForRoutesWithRouteNetworks(reader, zipData);
+                }
+            }
+        }
+        // No route networks, provide just the routes.
+        return reader;
+    }
+
+    /**
      * Create a {@link CsvReader} from file and check that the number of headers meets the expected number of headers.
      */
-    public static CsvReader getCsvReaderForFile(
+    private static CsvReader getCsvReaderForFile(
         ZipFile zipFile,
         ZipEntry entry,
         List<String> errors,
@@ -171,7 +237,8 @@ public class CsvReaderUtil {
 
     /**
      * Create a {@link CsvReader} from the provided file. Warning: Both input streams have to remain open so
-     * downstream processing using the {@link CsvReader} will continue to function.
+     * downstream processing using the {@link CsvReader} will continue to function. In line with this, the downstream
+     * processes will close the {@link CsvReader} and with it both input streams.
      */
     public static CsvReader getCsvReaderFromFile(ZipFile zipFile, ZipEntry entry) throws IOException {
         InputStream zipInputStream = zipFile.getInputStream(entry);
@@ -199,5 +266,24 @@ public class CsvReaderUtil {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Get entry and allow for the file being in a subdirectory.
+     */
+    public static ZipEntry getEntryFromZipFile(ZipFile zipFile, String fileName) {
+        ZipEntry entry = zipFile.getEntry(fileName);
+        if (entry == null) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            // check if table is contained within subdirectory
+            while (entries.hasMoreElements()) {
+                ZipEntry e = entries.nextElement();
+                if (Paths.get(e.getName()).getFileName().toString().equals(fileName)) {
+                    entry = e;
+                    break;
+                }
+            }
+        }
+        return entry;
     }
 }

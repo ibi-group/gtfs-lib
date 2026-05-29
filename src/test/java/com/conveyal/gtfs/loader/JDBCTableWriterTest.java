@@ -53,6 +53,7 @@ import static com.conveyal.gtfs.TestUtils.getResourceFileName;
 import static com.conveyal.gtfs.model.LocationShape.polygonCornerCountErrorMessage;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -83,6 +84,18 @@ public class JDBCTableWriterTest {
     private static final double FIRST_STOP_LON = -87.333;
     private static final double LAST_STOP_LAT = 34.2233;
     private static final double LAST_STOP_LON = -87.334;
+    private static String testGtfsBlankStoptimesSnapshotNamespace;
+    private static String simpleServiceId = "1";
+    private static String firstStopId = "1";
+    private static String secondStopId= "1.5";
+    private static String lastStopId = "2";
+    private static double firstStopLat = 34.2222;
+    private static double firstStopLon = -87.333;
+    private static double secondStopLat = 34.2227;
+    private static double secondStopLon = -87.3335;
+    private static double lastStopLat = 34.2233;
+    private static double lastStopLon = -87.334;
+    private static String sharedShapeId = "shared_shape_id";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private static PatternDTO pattern;
@@ -130,6 +143,15 @@ public class JDBCTableWriterTest {
         JdbcGtfsSnapshotter snapshotter = new JdbcGtfsSnapshotter(testGtfsGLNamespace, testDataSource, false);
         SnapshotResult snapshotResult = snapshotter.copyTables();
         testGtfsGLSnapshotNamespace = snapshotResult.uniqueIdentifier;
+        // Load fake-agency-blank-stoptimes feed for use with blank stoptimes insertion test
+        FeedLoadResult blankStoptimesFeedLoadResult = load(TestUtils.zipFolderFiles("fake-agency-blank-stoptimes", true), testDataSource);
+        String testGtfsBlankStoptimesNamespace = blankStoptimesFeedLoadResult.uniqueIdentifier;
+        // validate feed to create additional tables
+        validate(testGtfsBlankStoptimesNamespace, testDataSource);
+        // load into editor via snapshot
+        JdbcGtfsSnapshotter blankStoptimesSnapshotter = new JdbcGtfsSnapshotter(testGtfsBlankStoptimesNamespace, testDataSource, false);
+        SnapshotResult blankStoptimesSnapshotResult = blankStoptimesSnapshotter.copyTables();
+        testGtfsBlankStoptimesSnapshotNamespace = blankStoptimesSnapshotResult.uniqueIdentifier;
         patternReconciliationSetUp();
     }
 
@@ -920,7 +942,7 @@ public class JDBCTableWriterTest {
 
         // Normalize stop times.
         JdbcTableWriter updateTripWriter = createTestTableWriter(tripsTable);
-        updateTripWriter.normalizeStopTimesForPattern(pattern.id, 0, interpolateStopTimes);
+        updateTripWriter.normalizeStopTimesForPattern(pattern.id, 0, interpolateStopTimes, false);
 
         return createdTrip.trip_id;
     }
@@ -1004,6 +1026,25 @@ public class JDBCTableWriterTest {
         }
         // Ensure that updated stop times equals pattern stops length
         assertThat(index, equalTo(patternStops.length));
+    }
+
+    @Test
+    public void canInterpolateMissingStoptimes() throws IOException, SQLException, InvalidNamespaceException {
+        JdbcTableWriter tableWriter = new JdbcTableWriter(Table.PATTERN_STOP, testDataSource, testGtfsBlankStoptimesSnapshotNamespace);
+        tableWriter.normalizeStopTimesForPattern(1, 0, false, true);
+
+        JDBCTableReader<StopTime> stopTimesTable = new JDBCTableReader(Table.STOP_TIMES,
+                testDataSource,
+                testGtfsBlankStoptimesSnapshotNamespace + ".",
+                EntityPopulator.STOP_TIME);
+        int index = 0;
+        for (StopTime stopTime : stopTimesTable.getOrdered("1720")) {
+            LOG.info("stop times i={} arrival={} departure={}", index, stopTime.arrival_time, stopTime.departure_time);
+            // These outcomes will be nonsensical, but correct given the nonsensical shape-dist-traveled values
+            assertThat(stopTime.arrival_time, greaterThan(0));
+            assertThat(stopTime.departure_time, greaterThan(0));
+            index++;
+        }
     }
 
     /**

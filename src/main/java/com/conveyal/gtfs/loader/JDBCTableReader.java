@@ -10,12 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.lang.reflect.Field;
 import java.sql.*;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import static java.sql.ResultSet.CONCUR_READ_ONLY;
@@ -44,7 +40,7 @@ public class JDBCTableReader<T extends Entity> implements TableReader<T> {
     /**
      * @param tablePrefix must not be null, can be empty string, should include any separator character (dot)
      */
-    public JDBCTableReader(Table specTable, DataSource dataSource, String tablePrefix, EntityPopulator<T> entityPopulator) {
+    public JDBCTableReader(Table specTable, DataSource dataSource, String tablePrefix, EntityPopulator<T> entityPopulator, String whereClause) {
         qualifiedTableName = tablePrefix + specTable.name;
         this.dataSource = dataSource;
         this.entityPopulator = entityPopulator;
@@ -53,12 +49,12 @@ public class JDBCTableReader<T extends Entity> implements TableReader<T> {
         // We do this in the constructor to avoid rebuilding the mapping every time we fetch a single entity from the table.
         // No entry value defaults to zero, and SQL columns are 1-based.
         columnForName = new TObjectIntHashMap<>();
-        selectClause = "select * from " + qualifiedTableName;
+        selectClause = String.format("select * from %s %s", qualifiedTableName, whereClause != null ? whereClause : "");
         // Try-with-resources will automatically close the connection when the try block exits.
         try (Connection connection = dataSource.getConnection()) {
             LOG.info("Connected to {}", qualifiedTableName);
             PreparedStatement selectAll = connection.prepareStatement(
-                    selectClause, TYPE_FORWARD_ONLY, CONCUR_READ_ONLY, CLOSE_CURSORS_AT_COMMIT);
+                selectClause, TYPE_FORWARD_ONLY, CONCUR_READ_ONLY, CLOSE_CURSORS_AT_COMMIT);
             ResultSetMetaData metaData = selectAll.getMetaData();
             int nColumns = metaData.getColumnCount();
             for (int c = 1; c <= nColumns; c++) {
@@ -69,6 +65,10 @@ public class JDBCTableReader<T extends Entity> implements TableReader<T> {
                 LOG.warn("Could not connect to required table " + qualifiedTableName);
             }
         }
+    }
+
+    public JDBCTableReader(Table specTable, DataSource dataSource, String tablePrefix, EntityPopulator<T> entityPopulator) {
+        this(specTable, dataSource, tablePrefix, entityPopulator, null);
     }
 
     /**

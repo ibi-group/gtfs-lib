@@ -26,7 +26,9 @@ import org.slf4j.LoggerFactory;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -43,6 +45,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -50,6 +53,15 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static com.conveyal.gtfs.loader.Table.LOCATION_GEO_JSON_FILE_NAME;
+import static com.conveyal.gtfs.model.Route.ROUTE_FILE_NAME;
+import static com.conveyal.gtfs.model.Route.packRouteNetworks;
+import static com.conveyal.gtfs.model.Route.packRoutes;
+import static com.conveyal.gtfs.model.RouteNetwork.ROUTE_NETWORK_FILE_NAME;
+import static com.conveyal.gtfs.model.Stop.STOPS_FILE_NAME;
+import static com.conveyal.gtfs.model.Stop.STOP_AREAS_FILE_NAME;
+import static com.conveyal.gtfs.model.Stop.packStopAreas;
+import static com.conveyal.gtfs.model.Stop.packStops;
+import static com.conveyal.gtfs.util.CsvReaderUtil.getEntryFromZipFile;
 
 /**
  * An abstract base class that represents a row in a GTFS table, e.g. a Stop, Trip, or Agency.
@@ -64,8 +76,11 @@ public abstract class Entity implements Serializable {
     /** Represents the csv line for feeds that have been loaded from a zip file. Otherwise it is simply a unique ID. */
     public int id;
 
-    /* The feed from which this entity was loaded. TODO is this really necessary in every entity? */
+    /** The feed from which this entity was loaded. TODO is this really necessary in every entity? */
     transient GTFSFeed feed;
+
+    /** Record Separator is a non-printable ASCII character that is unlikely to appear in GTFS data. */
+    public static final String SEPARATOR = "\u001E";
 
     /**
      * This method should be overridden by each Entity subtype to return the proper key field for that subtype.
@@ -306,10 +321,14 @@ public abstract class Entity implements Serializable {
                 if (this.isRequired()) {
                     feed.errors.add(new MissingTableError(tableName));
                 } else {
-                    LOG.info("Table {} was missing but it is not required.", tableName);
+                    /* This GTFS table did not exist in the zip. */
+                    if (this.isRequired()) {
+                        feed.errors.add(new MissingTableError(tableName));
+                    } else {
+                        LOG.info("Table {} was missing but it is not required.", tableName);
+                    }
+                    return;
                 }
-
-                if (entry == null) return;
             }
             LOG.info("Loading GTFS table {} from {}", tableName, entry);
             List<String> errors = new ArrayList<>();
@@ -334,7 +353,9 @@ public abstract class Entity implements Serializable {
                     feed.errors.add(new EmptyTableError(tableName));
                 }
             } finally {
-                reader.close();
+                if (reader != null) {
+                    reader.close();
+                }
             }
         }
 
@@ -521,7 +542,6 @@ public abstract class Entity implements Serializable {
         return value == null ? DOUBLE_MISSING : Double.parseDouble(value);
     }
 
-
     /**
      * Creates a primary key from the provided fields. It is acceptable for a field that makes up the primary key to be
      * optional! In this case the null value is represented with "empty".
@@ -531,5 +551,92 @@ public abstract class Entity implements Serializable {
             .stream(fields)
             .map(id -> id == null ? "empty" : id.toString())
             .collect(Collectors.joining("_"));
+    }
+
+    /**
+     * Convert multiple rows of data back into CSV, with header and return a {@link CsvReader}
+     * representation.
+     */
+    protected static CsvReader produceCsvPayload(List<String> rows, String header) {
+        StringBuilder csvContent = new StringBuilder();
+        csvContent.append(header);
+        rows.forEach(csvContent::append);
+        return new CsvReader(new StringReader(csvContent.toString()));
+    }
+
+    /**
+     * Create a row from the column values provided.
+     */
+    protected static String createRow(String... columnValues) {
+        return String.join(",", columnValues) + System.lineSeparator();
+    }
+
+    /**
+     * Create a CSV row by combining an array of values plus another one.
+     */
+    protected static String createRow(String[] values, String extraValue) {
+        return String.format("%s,%s%n", String.join(",", values), extraValue);
+    }
+
+    /**
+     * Create a CSV row from original fields plus grouped (stop areas or route network) ids.
+     */
+    protected static String createRow(CsvReader csvReader, String ids, String[] csvFields) throws IOException {
+        String[] fields = new String[csvFields.length];
+        for (int i = 0; i < csvFields.length; i++) {
+            fields[i] = csvReader.get(csvFields[i]);
+        }
+        return createRow(fields, ids);
+    }
+
+    protected static String computeCsvValue(String value) {
+        return value != null ? value : "";
+    }
+
+    protected static String computeCsvValue(URL value) {
+        return value != null ? value.toString() : "";
+    }
+
+    protected static String computeCsvValue(int value) {
+        return value != INT_MISSING ? String.valueOf(value) : "";
+    }
+
+    protected static String computeCsvValue(double value) {
+        return value != DOUBLE_MISSING ? String.valueOf(value) : "";
+    }
+
+    /**
+     * Write stops, stop areas, routes or route networks to zip file.
+     */
+    public static <T> void writeEntityToFile(ZipOutputStream zipOutputStream, List<T> entities, String fileName) throws IOException {
+        // Create entry for table.
+        zipOutputStream.putNextEntry(new ZipEntry(fileName));
+        // Create and use PrintWriter, but don't close. This is done when the zip entry is closed.
+        PrintWriter p = new PrintWriter(zipOutputStream);
+        switch (fileName) {
+            case STOPS_FILE_NAME:
+                p.print(packStops((List<Stop>) entities));
+                break;
+            case STOP_AREAS_FILE_NAME:
+                p.print(packStopAreas((List<Stop>) entities));
+                break;
+            case ROUTE_FILE_NAME:
+                p.print(packRoutes((List<Route>) entities));
+                break;
+            case ROUTE_NETWORK_FILE_NAME:
+                p.print(packRouteNetworks((List<Route>) entities));
+                break;
+        }
+        p.flush();
+        zipOutputStream.closeEntry();
+    }
+
+    /**
+     * Get all child ids matching provided parent id.
+     */
+    protected static String getChildIdsMatchingParentId(Map<String, Set<String>> groupedChildIds, String parentId) {
+        return Optional.ofNullable(groupedChildIds.get(parentId))
+            .map(id -> String.join(SEPARATOR, id))
+            .orElse("");
     }
 }

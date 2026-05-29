@@ -2,14 +2,40 @@ package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.error.NoAgencyInFeedError;
+import com.conveyal.gtfs.loader.EntityPopulator;
+import com.conveyal.gtfs.loader.JDBCTableReader;
+import com.conveyal.gtfs.loader.Table;
+import com.conveyal.gtfs.loader.TableLoadResult;
+import com.conveyal.gtfs.loader.TableReader;
+import com.csvreader.CsvReader;
+import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import java.util.zip.ZipOutputStream;
 
-public class Route extends Entity { // implements Entity.Factory<Route>
+import static com.conveyal.gtfs.model.RouteNetwork.ROUTE_NETWORK_FILE_NAME;
+import static com.conveyal.gtfs.util.CsvReaderUtil.hasExpectedNumberOfColumns;
+
+public class Route extends Entity {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Route.class);
 
     private static final long serialVersionUID = -819444896818029068L;
 
@@ -36,6 +62,52 @@ public class Route extends Entity { // implements Entity.Factory<Route>
     public String feed_id;
     public int continuous_pickup = INT_MISSING;
     public int continuous_drop_off = INT_MISSING;
+
+    /** Used to directly link a route to a network. Multiple routes can have the same network id. This is forbidden if
+     * route network ids are defined. */
+    public String network_id;
+    public String route_network_ids;
+
+    public static final String ROUTE_ID_FIELD = "route_id";
+    public static final String AGENCY_ID_FIELD = "agency_id";
+    public static final String ROUTE_SHORT_NAME_FIELD = "route_short_name";
+    public static final String ROUTE_LONG_NAME_FIELD = "route_long_name";
+    public static final String ROUTE_DESC_FIELD = "route_desc";
+    public static final String ROUTE_TYPE_FIELD = "route_type";
+    public static final String ROUTE_URL_FIELD = "route_url";
+    public static final String ROUTE_COLOR_FIELD = "route_color";
+    public static final String ROUTE_SORT_ORDER_FIELD = "route_sort_order";
+    public static final String ROUTE_TEXT_COLOR_FIELD = "route_text_color";
+    public static final String ROUTE_BRANDING_URL_FIELD = "route_branding_url";
+    public static final String CONTINUOUS_PICKUP_FIELD = "continuous_pickup";
+    public static final String CONTINUOUS_DROP_OFF_FIELD = "continuous_drop_off";
+    public static final String NETWORK_ID_FIELD = "network_id";
+    public static final String ROUTE_NETWORK_IDS_FIELD = "route_network_ids";
+
+    public static final String ROUTE_FILE_NAME = "routes.txt";
+
+    public static final String TABLE_NAME = "routes";
+
+    /**
+     * Specification route headers. This deliberately omits route_network_ids which is explicitly handled separately if
+     * route networks have been defined.
+     */
+    private static final String[] SPEC_ROUTE_CSV_HEADERS = new String[] {
+        ROUTE_ID_FIELD,
+        AGENCY_ID_FIELD,
+        ROUTE_SHORT_NAME_FIELD,
+        ROUTE_LONG_NAME_FIELD,
+        ROUTE_DESC_FIELD,
+        ROUTE_TYPE_FIELD,
+        ROUTE_URL_FIELD,
+        ROUTE_COLOR_FIELD,
+        ROUTE_SORT_ORDER_FIELD,
+        ROUTE_TEXT_COLOR_FIELD,
+        ROUTE_BRANDING_URL_FIELD,
+        CONTINUOUS_PICKUP_FIELD,
+        CONTINUOUS_DROP_OFF_FIELD,
+        NETWORK_ID_FIELD
+    };
 
     @Override
     public String getId () {
@@ -68,12 +140,16 @@ public class Route extends Entity { // implements Entity.Factory<Route>
         setIntParameter(statement, oneBasedIndex++, 0);
         setIntParameter(statement, oneBasedIndex++, continuous_pickup);
         setIntParameter(statement, oneBasedIndex++, continuous_drop_off);
+        statement.setString(oneBasedIndex++, network_id);
+        // Not strictly part of Routes, but must match the hardcoded definition in Table.ROUTES.
+        statement.setString(oneBasedIndex, route_network_ids);
+
     }
 
     public static class Loader extends Entity.Loader<Route> {
 
         public Loader(GTFSFeed feed) {
-            super(feed, "routes");
+            super(feed, TABLE_NAME);
         }
 
         @Override
@@ -85,7 +161,7 @@ public class Route extends Entity { // implements Entity.Factory<Route>
         public void loadOneRow() throws IOException {
             Route r = new Route();
             r.id = row + 1; // offset line number by 1 to account for 0-based row index
-            r.route_id = getStringField("route_id", true);
+            r.route_id = getStringField(ROUTE_ID_FIELD, true);
             Agency agency = getRefField("agency_id", false, feed.agency);
 
             if (agency == null) {
@@ -99,17 +175,19 @@ public class Route extends Entity { // implements Entity.Factory<Route>
                 r.agency_id = agency.agency_id;
             }
 
-            r.route_short_name = getStringField("route_short_name", false); // one or the other required, needs a special validator
-            r.route_long_name = getStringField("route_long_name", false);
-            r.route_desc = getStringField("route_desc", false);
-            r.route_type = getIntField("route_type", true, 0, 7);
-            r.route_sort_order = getIntField("route_sort_order", false, 0, Integer.MAX_VALUE);
-            r.route_url = getUrlField("route_url", false);
-            r.route_color = getStringField("route_color", false);
-            r.route_text_color = getStringField("route_text_color", false);
-            r.route_branding_url = getUrlField("route_branding_url", false);
-            r.continuous_pickup = getIntField("continuous_pickup", false, 0, 3, INT_MISSING);
-            r.continuous_drop_off = getIntField("continuous_drop_off", false, 0, 3, INT_MISSING);
+            r.route_short_name = getStringField(ROUTE_SHORT_NAME_FIELD, false); // one or the other required, needs a special validator
+            r.route_long_name = getStringField(ROUTE_LONG_NAME_FIELD, false);
+            r.route_desc = getStringField(ROUTE_DESC_FIELD, false);
+            r.route_type = getIntField(ROUTE_TYPE_FIELD, true, 0, 7);
+            r.route_sort_order = getIntField(ROUTE_SORT_ORDER_FIELD, false, 0, Integer.MAX_VALUE);
+            r.route_url = getUrlField(ROUTE_URL_FIELD, false);
+            r.route_color = getStringField(ROUTE_COLOR_FIELD, false);
+            r.route_text_color = getStringField(ROUTE_TEXT_COLOR_FIELD, false);
+            r.route_branding_url = getUrlField(ROUTE_BRANDING_URL_FIELD, false);
+            r.continuous_pickup = getIntField(CONTINUOUS_PICKUP_FIELD, false, 0, 3, INT_MISSING);
+            r.continuous_drop_off = getIntField(CONTINUOUS_DROP_OFF_FIELD, false, 0, 3, INT_MISSING);
+            r.network_id = getStringField(NETWORK_ID_FIELD, false);
+            r.route_network_ids = getStringField(ROUTE_NETWORK_IDS_FIELD, false);
             r.feed = feed;
             r.feed_id = feed.feedId;
             // Attempting to put a null key or value will cause an NPE in BTreeMap
@@ -120,25 +198,12 @@ public class Route extends Entity { // implements Entity.Factory<Route>
 
     public static class Writer extends Entity.Writer<Route> {    	
         public Writer (GTFSFeed feed) {
-            super(feed, "routes");
+            super(feed, TABLE_NAME);
         }
 
         @Override
         public void writeHeaders() throws IOException {
-            writeStringField("agency_id");
-            writeStringField("route_id");
-            writeStringField("route_short_name");
-            writeStringField("route_long_name");
-            writeStringField("route_desc");
-            writeStringField("route_type");
-            writeStringField("route_url");
-            writeStringField("route_color");
-            writeStringField("route_text_color");
-            writeStringField("route_branding_url");
-            writeStringField("route_sort_order");
-            writeStringField("continuous_pickup");
-            writeStringField("continuous_drop_off");
-            endRecord();
+            writer.writeRecord(SPEC_ROUTE_CSV_HEADERS);
         }
 
         @Override
@@ -156,6 +221,7 @@ public class Route extends Entity { // implements Entity.Factory<Route>
             writeIntField(r.route_sort_order);
             writeIntField(r.continuous_pickup);
             writeIntField(r.continuous_drop_off);
+            writeStringField(r.network_id);
             endRecord();
         }
 
@@ -163,5 +229,186 @@ public class Route extends Entity { // implements Entity.Factory<Route>
         public Iterator<Route> iterator() {
             return feed.routes.values().iterator();
         }   	
+    }
+
+    /**
+     * Merge route networks into routes when loading from file.
+     */
+    public static void mergeRouteNetworks(Map<String, Route> routes, Map<String, RouteNetwork> routeNetworks) {
+        Map<String, Set<String>> routeNetworksByRouteId = new HashMap<>();
+
+        routeNetworks.values().forEach(routeNetwork ->
+            routeNetworksByRouteId
+                .computeIfAbsent(routeNetwork.route_id, id -> new HashSet<>())
+                .add(routeNetwork.network_id)
+        );
+
+        routes.values().forEach(route -> route.route_network_ids = getChildIdsMatchingParentId(routeNetworksByRouteId, route.route_id));
+    }
+
+    /**
+     * Merge route networks into routes when loading into DB.
+     */
+    public static CsvReader getCsvReaderForRoutesWithRouteNetworks(
+        CsvReader routesReader,
+        Map<String, Set<String>> routeNetworksByRouteId
+    ) {
+        List<String> rows = new ArrayList<>();
+        try {
+            while (routesReader.readRecord()) {
+                String routeId = routesReader.get(ROUTE_ID_FIELD);
+                rows.add(createRow(routesReader, getChildIdsMatchingParentId(routeNetworksByRouteId, routeId), SPEC_ROUTE_CSV_HEADERS));
+            }
+            return (rows.isEmpty())
+                ? routesReader
+                : produceCsvPayload(rows, createRow(SPEC_ROUTE_CSV_HEADERS, ROUTE_NETWORK_IDS_FIELD));
+        } catch (Exception e) {
+            LOG.error("Error while merging routes", e);
+            // Any issues, return the original routes reader (minus route networks).
+            return routesReader;
+        }
+    }
+
+    /**
+     * Extract the route networks from file and group by route id. This is to allow for easier CRUD by the DT UI.
+     */
+    public static Map<String, Set<String>> groupRouteNetworkIds(CsvReader csvReader, List<String> errors) {
+        Map<String, Set<String>> routeNetworksGroupedByRouteId = new HashMap<>();
+
+        try {
+            while (csvReader.readRecord()) {
+                if (!hasExpectedNumberOfColumns(csvReader, errors, 2)) {
+                    continue;
+                }
+                String routeNetworkId = csvReader.get(RouteNetwork.NETWORK_ID_NAME);
+                String routeId = csvReader.get(RouteNetwork.ROUTE_ID_NAME);
+                routeNetworksGroupedByRouteId.computeIfAbsent(routeId, k -> new HashSet<>()).add(routeNetworkId);
+            }
+            return routeNetworksGroupedByRouteId;
+        } catch (IOException e) {
+            // If any errors are encountered extracting the route networks, none are returned.
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Expand all route network ids into a single row for each route id. This is to conform with the GTFS Fares v2 standard.
+     */
+    public static String packRouteNetworks(List<Route> routes) {
+        StringBuilder csvContent = new StringBuilder(createRow(RouteNetwork.NETWORK_ID_NAME, RouteNetwork.ROUTE_ID_NAME));
+        routes
+            .stream()
+            .filter(route -> route.route_network_ids != null)
+            .forEach(route -> {
+                String[] routeNetworkIds = route.route_network_ids.split(SEPARATOR);
+                for (String routeNetworkId : routeNetworkIds) {
+                    csvContent.append(createRow(routeNetworkId, route.route_id));
+                }
+            });
+        return csvContent.toString();
+    }
+
+    /**
+     * Export routes, minus route networks.
+     */
+    public static TableLoadResult exportRoutes(
+        DataSource dataSource,
+        String feedIdToExport,
+        ZipOutputStream zipOutputStream,
+        String whereRouteIsApproved
+    ) {
+        long startTime = System.currentTimeMillis();
+        TableLoadResult tableLoadResult = new TableLoadResult();
+
+        try {
+            final TableReader<Route> routeIterator = new JDBCTableReader<>(
+                Table.ROUTES,
+                dataSource,
+                feedIdToExport + ".",
+                EntityPopulator.ROUTE,
+                whereRouteIsApproved
+            );
+
+            List<Route> routes = Lists.newArrayList(routeIterator);
+            tableLoadResult.rowCount = routes.size();
+            writeEntityToFile(zipOutputStream, routes, ROUTE_FILE_NAME);
+
+            long duration = System.currentTimeMillis() - startTime;
+            LOG.info("Copied {} {} in {} ms.", tableLoadResult.rowCount, ROUTE_FILE_NAME, duration);
+
+        } catch (IOException e) {
+            tableLoadResult.fatalException = e.toString();
+            LOG.error("Exception while exporting {}", ROUTE_FILE_NAME, e);
+        }
+
+        return tableLoadResult;
+    }
+
+    /**
+     * Expand each route into a single row.
+     */
+    public static String packRoutes(List<Route> routes) {
+        StringBuilder csvContent = new StringBuilder(createRow(SPEC_ROUTE_CSV_HEADERS));
+        routes.forEach(route -> csvContent.append(createRow(
+            computeCsvValue(route.route_id),
+            computeCsvValue(route.agency_id),
+            computeCsvValue(route.route_short_name),
+            computeCsvValue(route.route_long_name),
+            computeCsvValue(route.route_desc),
+            computeCsvValue(route.route_type),
+            computeCsvValue(route.route_url),
+            computeCsvValue(route.route_color),
+            computeCsvValue(route.route_sort_order),
+            computeCsvValue(route.route_text_color),
+            computeCsvValue(route.route_branding_url),
+            computeCsvValue(route.continuous_pickup),
+            computeCsvValue(route.continuous_drop_off),
+            computeCsvValue(route.network_id)
+        )));
+        return csvContent.toString();
+    }
+
+    /**
+     * Export route networks.
+     */
+    public static TableLoadResult exportRouteNetworks(
+        DataSource dataSource,
+        String feedIdToExport,
+        ZipOutputStream zipOutputStream
+    ) {
+        long startTime = System.currentTimeMillis();
+        TableLoadResult tableLoadResult = new TableLoadResult();
+
+        try {
+            final TableReader<Route> routeIterator = new JDBCTableReader<>(
+                Table.ROUTES,
+                dataSource,
+                feedIdToExport + ".",
+                EntityPopulator.ROUTE
+            );
+
+            List<Route> routesWithRouteNetworks = StreamSupport
+                .stream(routeIterator.spliterator(), false)
+                .filter(route -> !StringUtils.isBlank(route.route_network_ids))
+                .collect(Collectors.toList());
+
+            // Only export if data is available.
+            if (routesWithRouteNetworks.isEmpty()) {
+                LOG.warn("No route networks exported as none have been defined!");
+                return tableLoadResult;
+            }
+
+            tableLoadResult.rowCount = routesWithRouteNetworks.size();
+            writeEntityToFile(zipOutputStream, routesWithRouteNetworks, ROUTE_NETWORK_FILE_NAME);
+
+            long duration = System.currentTimeMillis() - startTime;
+            LOG.info("Copied {} {} in {} ms.", tableLoadResult.rowCount, ROUTE_NETWORK_FILE_NAME, duration);
+
+        } catch (IOException e) {
+            tableLoadResult.fatalException = e.toString();
+            LOG.error("Exception while exporting {}", ROUTE_NETWORK_FILE_NAME, e);
+        }
+
+        return tableLoadResult;
     }
 }

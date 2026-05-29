@@ -1,7 +1,6 @@
 package com.conveyal.gtfs;
 
 import com.conveyal.gtfs.model.StopTime;
-
 import org.hamcrest.comparator.ComparatorMatcherBuilder;
 import com.conveyal.gtfs.TestUtils.DataExpectation;
 import com.conveyal.gtfs.TestUtils.FileTestCase;
@@ -12,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.zip.ZipFile;
 
+import static com.conveyal.gtfs.TestUtils.checkFileTestCases;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -54,74 +54,73 @@ public class GTFSFeedTest {
         // assert that rows of data were written to files within the zip file.
         FileTestCase[] fileTestCases = {
             // agency.txt
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "agency.txt",
-                new TestUtils.DataExpectation[]{
+                new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("agency_id", "1"),
                     new TestUtils.DataExpectation("agency_name", "Fake Transit")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "calendar.txt",
-                new DataExpectation[]{
-                    new DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57"),
-                    new DataExpectation("start_date", "20170915"),
-                    new DataExpectation("end_date", "20170917")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57"),
+                    new TestUtils.DataExpectation("start_date", "20170915"),
+                    new TestUtils.DataExpectation("end_date", "20170917")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "calendar_dates.txt",
-                new DataExpectation[]{
-                    new DataExpectation("service_id", "calendar-date-service"),
-                    new DataExpectation("date", "20170917"),
-                    new DataExpectation("exception_type", "1")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("service_id", "calendar-date-service"),
+                    new TestUtils.DataExpectation("date", "20170917"),
+                    new TestUtils.DataExpectation("exception_type", "1")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "routes.txt",
-                new DataExpectation[]{
-                    new DataExpectation("agency_id", "1"),
-                    new DataExpectation("route_id", "1"),
-                    new DataExpectation("route_long_name", "Route 1")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("agency_id", "1"),
+                    new TestUtils.DataExpectation("route_id", "1"),
+                    new TestUtils.DataExpectation("route_long_name", "Route 1")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "shapes.txt",
-                new DataExpectation[]{
-                    new DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e"),
-                    new DataExpectation("shape_pt_lat", "37.0612132"),
-                    new DataExpectation("shape_pt_lon", "-122.0074332")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e"),
+                    new TestUtils.DataExpectation("shape_pt_lat", "37.0612132"),
+                    new TestUtils.DataExpectation("shape_pt_lon", "-122.0074332")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "stop_times.txt",
-                new DataExpectation[]{
-                    new DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
-                    new DataExpectation("departure_time", "07:00:00"),
-                    new DataExpectation("stop_id", "4u6g")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
+                    new TestUtils.DataExpectation("departure_time", "07:00:00"),
+                    new TestUtils.DataExpectation("stop_id", "4u6g")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "trips.txt",
-                new DataExpectation[]{
-                    new DataExpectation("route_id", "1"),
-                    new DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
-                    new DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("route_id", "1"),
+                    new TestUtils.DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
+                    new TestUtils.DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57")
                 }
             ),
-            new FileTestCase(
+            new TestUtils.FileTestCase(
                 "datatools_patterns.txt",
-                new DataExpectation[]{
-                    new DataExpectation("pattern_id", "1"),
-                    new DataExpectation("route_id", "1"),
-                    new DataExpectation("name", "2 stops from Butler Ln to Scotts Valley Dr & Victor Sq (1 trips)"),
-                    new DataExpectation("direction_id", "0"),
-                    new DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e")
+                new TestUtils.DataExpectation[] {
+                    new TestUtils.DataExpectation("pattern_id", "1"),
+                    new TestUtils.DataExpectation("route_id", "1"),
+                    new TestUtils.DataExpectation("name", "2 stops from Butler Ln to Scotts Valley Dr & Victor Sq (1 trips)"),
+                    new TestUtils.DataExpectation("direction_id", "0"),
+                    new TestUtils.DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e")
                 }
             )
         };
         loadAndWriteToZipFile(simpleGtfsZipFileName, fileTestCases);
-
     }
 
     /**
@@ -232,6 +231,7 @@ public class GTFSFeedTest {
 
     /**
      * Make sure that a GTFS feed with interpolated stop times have calculated times after feed processing
+     *
      * @throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes
      */
     @Test

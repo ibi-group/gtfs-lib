@@ -1,0 +1,7 @@
+{
+  "id": 1,
+  "from_network_id": "111",
+  "to_network_id": "222",
+  "from_stop_id": "aaa",
+  "to_stop_id": "bbb"
+}

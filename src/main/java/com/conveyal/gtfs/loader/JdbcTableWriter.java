@@ -317,14 +317,19 @@ public class JdbcTableWriter implements TableWriter {
      *
      * @return number of stop times updated
      */
-    public int normalizeStopTimesForPattern(int id, int beginWithSequence, boolean interpolateStopTimes) throws SQLException {
+    public int normalizeStopTimesForPattern(
+        int id,
+        int beginWithSequence,
+        boolean interpolateStopTimes,
+        boolean ignoreNonBlankStopTimes
+    ) throws SQLException {
         if (!interpolateStopTimes) {
             // Use the newer approach which can handle flex.
             return normalizeStopTimesForPattern(id, beginWithSequence);
         } else {
             // Use the legacy approach which can handle only pattern stops (not flex), but can do interpolating.
             StopTimeNormalization stopTimeNormalization = new StopTimeNormalization(dataSource, connection, tablePrefix);
-            return stopTimeNormalization.normalizeStopTimesForPattern(id, beginWithSequence, true);
+            return stopTimeNormalization.normalizeStopTimesForPattern(id, beginWithSequence, interpolateStopTimes, ignoreNonBlankStopTimes);
         }
     }
 
@@ -1284,7 +1289,7 @@ public class JdbcTableWriter implements TableWriter {
         return parsedString.replaceAll("[{}]", "").split("[,]", 0);
     }
 
-    private String getResultSetString(int column, ResultSet resultSet) throws java.sql.SQLException {
+    private String getResultSetString(int column, ResultSet resultSet) throws SQLException {
         String resultSetString = resultSet.getString(column);
         return resultSetString == null ? "" : resultSetString;
     }
