@@ -321,14 +321,10 @@ public abstract class Entity implements Serializable {
                 if (this.isRequired()) {
                     feed.errors.add(new MissingTableError(tableName));
                 } else {
-                    /* This GTFS table did not exist in the zip. */
-                    if (this.isRequired()) {
-                        feed.errors.add(new MissingTableError(tableName));
-                    } else {
-                        LOG.info("Table {} was missing but it is not required.", tableName);
-                    }
-                    return;
+                    LOG.info("Table {} was missing but it is not required.", tableName);
                 }
+
+                if (entry == null) return;
             }
             LOG.info("Loading GTFS table {} from {}", tableName, entry);
             List<String> errors = new ArrayList<>();

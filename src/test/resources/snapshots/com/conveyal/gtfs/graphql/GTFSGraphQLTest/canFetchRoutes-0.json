@@ -12,9 +12,8 @@
         "locations" : [ {
           "location_id" : "area_251"
         } ],
-        "pattern_count" : 3,
         "network_id" : null,
-        "pattern_count" : 2,
+        "pattern_count" : 3,
         "patterns" : [ {
           "pattern_id" : "1"
         }, {

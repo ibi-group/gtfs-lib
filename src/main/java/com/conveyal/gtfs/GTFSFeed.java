@@ -32,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentNavigableMap;
@@ -245,7 +246,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     public void toFile (String file) {
         File out = new File(file);
         try (
-            OutputStream os = new FileOutputStream(out);
+            OutputStream os = Files.newOutputStream(out.toPath());
             ZipOutputStream zip = new ZipOutputStream(os);
         ) {
             // write everything
@@ -290,7 +291,6 @@ public class GTFSFeed implements Cloneable, Closeable {
                     new ArrayList<>(locationShapes.values())
                 );
             }
-            zip.close();
 
             // Fares v2.
             new Area.Writer(this).writeTable(zip);

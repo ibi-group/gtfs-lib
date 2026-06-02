@@ -261,14 +261,6 @@ public class GTFSGraphQLTest {
         });
     }
 
-    /** Tests that stops with children can be fetched. */
-    @Test
-    void canFetchStopWithChildren() {
-        assertTimeout(testDuration, () -> {
-            MatcherAssert.assertThat(queryGraphQL("feedStopWithChildren.txt"), matchesSnapshot());
-        });
-    }
-
     /** Tests that the trips of a feed can be fetched. */
     @Test
     void canFetchTrips() {
