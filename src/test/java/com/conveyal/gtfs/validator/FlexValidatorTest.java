@@ -14,13 +14,23 @@ import com.google.common.collect.Lists;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
+import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_OFF_ALLOWED;
+import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED;
+import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_OFF_PHONE;
+import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FlexValidatorTest {
@@ -56,43 +66,57 @@ class FlexValidatorTest {
     }
 
     @ParameterizedTest
-    @MethodSource("createRouteChecks")
-    void validateRouteTests(Route route, List<Trip> trips, List<StopTime> stopTimes, List<NewGTFSErrorType> expectedErrors) {
-        checkValidationErrorsMatchExpectedErrors(FlexValidator.validateRoute(route, trips, stopTimes), expectedErrors);
+    @MethodSource("createValidRouteContinuousStoppingChecks")
+    void validRouteContinuousStoppingTests(Route route, List<StopTime> stopTimes) {
+        List<Trip> trips = Lists.newArrayList(createTrip());
+        assertTrue(FlexValidator.validateRoute(route, trips, stopTimes).isEmpty());
     }
 
-    private static Stream<Arguments> createRouteChecks() {
+    private static Stream<Arguments> createValidRouteContinuousStoppingChecks() {
         return Stream.of(
             Arguments.of(
-                creeateRoute(INT_MISSING, INT_MISSING),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                null
+                createRoute(INT_MISSING, INT_MISSING),
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1))
             ),
             Arguments.of(
-                creeateRoute(1, INT_MISSING),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF)
+                createRoute(CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED, INT_MISSING),
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1))
             ),
             Arguments.of(
-                creeateRoute(INT_MISSING, 1),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP)
+                createRoute(INT_MISSING, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED),
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1))
             ),
             Arguments.of(
-                creeateRoute(INT_MISSING, 1),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING)),
-                null
+                createRoute(INT_MISSING, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED),
+                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING))
             ),
             Arguments.of(
-                creeateRoute(1, INT_MISSING),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING)),
-                null
+                createRoute(CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED, INT_MISSING),
+                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING))
             )
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {
+        CONTINUOUS_PICKUP_DROP_OFF_ALLOWED,
+        CONTINUOUS_PICKUP_DROP_OFF_PHONE,
+        CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER
+    })
+    void invalidRouteContinuousStoppingTests(int continuousPickupDropOff) {
+        checkInvalidRouteContinuousStopping(INT_MISSING, continuousPickupDropOff, FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP);
+        checkInvalidRouteContinuousStopping(continuousPickupDropOff, INT_MISSING, FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF);
+    }
+
+    void checkInvalidRouteContinuousStopping(int dropOff, int pickup, NewGTFSErrorType errorType) {
+        Route route = createRoute(dropOff, pickup);
+        List<Trip> trips = Lists.newArrayList(createTrip());
+        List<StopTime> stopTimes = Lists.newArrayList(createStopTime("trip-id-1", 1, 1));
+
+        checkSingleError(
+            FlexValidator.validateRoute(route, trips, stopTimes),
+            errorType,
+            pickup == INT_MISSING ? dropOff : pickup
         );
     }
 
@@ -406,39 +430,47 @@ class FlexValidatorTest {
     }
 
     @ParameterizedTest
-    @MethodSource("createContinuousPickupTests")
-    void validateContinuousPickupTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
+    @MethodSource("createValidContinuousStopValues")
+    void validContinuousPickupTest(StopTime stopTime) {
         List<NewGTFSError> errors = new ArrayList<>();
         FlexValidator.validateContinuousPickup(stopTime, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
+        assertTrue(errors.isEmpty());
     }
 
-    private static Stream<Arguments> createContinuousPickupTests() {
+    @ParameterizedTest
+    @MethodSource("createValidContinuousStopValues")
+    void validContinuousDropOffTest(StopTime stopTime) {
+        List<NewGTFSError> errors = new ArrayList<>();
+        FlexValidator.validateContinuousDropOff(stopTime, errors);
+        assertTrue(errors.isEmpty());
+    }
+
+    private static Stream<Arguments> createValidContinuousStopValues() {
         return Stream.of(
-            Arguments.of(createStopTimeForContinuousPickupTest(INT_MISSING), null),
-            Arguments.of(
-                createStopTimeForContinuousPickupTest(1300),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP)
-            )
+            Arguments.of(createContinuousStopTime(INT_MISSING, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED)),
+            Arguments.of(createContinuousStopTime(INT_MISSING, INT_MISSING)),
+            // Permitted values for continuous_pickup/continuous_drop_off if the pickup/dropoff window is defined.
+            Arguments.of(createContinuousStopTime(1300, INT_MISSING)),
+            Arguments.of(createContinuousStopTime(1300, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED))
         );
     }
 
     @ParameterizedTest
-    @MethodSource("createContinuousDropOffTests")
-    void validateContinuousDropOffTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
-        List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateContinuousDropOff(stopTime, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
-    }
+    @ValueSource(ints = {
+        CONTINUOUS_PICKUP_DROP_OFF_ALLOWED,
+        CONTINUOUS_PICKUP_DROP_OFF_PHONE,
+        CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER
+    })
+    void invalidContinuousStopTimeTest(int continuousPickupDropOff) {
+        StopTime stopTime = createContinuousStopTime(1300, continuousPickupDropOff);
 
-    private static Stream<Arguments> createContinuousDropOffTests() {
-        return Stream.of(
-            Arguments.of(createStopTimeForContinuousPickupTest(INT_MISSING), null),
-            Arguments.of(
-                createStopTimeForContinuousPickupTest(1300),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF)
-            )
-        );
+        List<NewGTFSError> pickupErrors = new ArrayList<>();
+        FlexValidator.validateContinuousPickup(stopTime, pickupErrors);
+        checkSingleError(pickupErrors, FLEX_FORBIDDEN_CONTINUOUS_PICKUP, continuousPickupDropOff);
+
+        List<NewGTFSError> dropOffErrors = new ArrayList<>();
+        FlexValidator.validateContinuousDropOff(stopTime, dropOffErrors);
+        checkSingleError(dropOffErrors, FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF, continuousPickupDropOff);
     }
 
     @ParameterizedTest
@@ -538,6 +570,20 @@ class FlexValidatorTest {
             // No errors expected, so the reported errors should be empty.
             assertTrue(validationErrors.isEmpty());
         }
+    }
+
+    /**
+     * Check that validation errors is just one error of a specific type and bad value.
+     */
+    private void checkSingleError(
+        List<NewGTFSError> validationErrors,
+        NewGTFSErrorType errorType,
+        int badValue
+    ) {
+        assertFalse(validationErrors.isEmpty());
+        assertEquals(1, validationErrors.size());
+        assertEquals(errorType, validationErrors.get(0).errorType);
+        assertEquals(Integer.toString(badValue), validationErrors.get(0).badValue);
     }
 
     private static FareRule createFareRule(String containsId, String destinationId, String originId) {
@@ -653,11 +699,14 @@ class FlexValidatorTest {
         return stopTime;
     }
 
-    private static StopTime createStopTimeForContinuousPickupTest(
-        int startPickupDropOffWindow
+    private static StopTime createContinuousStopTime(
+        int startPickupDropOffWindow,
+        int continuousPickupOrDropOff
     ) {
         StopTime stopTime = new StopTime();
         stopTime.start_pickup_drop_off_window = startPickupDropOffWindow;
+        stopTime.continuous_pickup = continuousPickupOrDropOff;
+        stopTime.continuous_drop_off = continuousPickupOrDropOff;
         return stopTime;
     }
 
@@ -688,7 +737,7 @@ class FlexValidatorTest {
         return stopTime;
     }
 
-    private static Route creeateRoute(int continuousDropOff, int continuousPickup) {
+    private static Route createRoute(int continuousDropOff, int continuousPickup) {
         Route route = new Route();
         route.route_id = "route-id-1";
         route.continuous_drop_off = continuousDropOff;

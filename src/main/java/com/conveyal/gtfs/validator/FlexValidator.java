@@ -22,7 +22,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.conveyal.gtfs.error.NewGTFSErrorType.VALIDATOR_FAILED;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.VALIDATOR_INCOMPLETE;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
 import static com.conveyal.gtfs.model.StopTime.flexColumnsExist;
@@ -35,6 +34,11 @@ import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
  *
  */
 public class FlexValidator extends FeedValidator {
+
+    public static final int CONTINUOUS_PICKUP_DROP_OFF_ALLOWED = 0;
+    public static final int CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED = 1;
+    public static final int CONTINUOUS_PICKUP_DROP_OFF_PHONE = 2;
+    public static final int CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER = 3;
 
     DataSource dataSource;
 
@@ -134,13 +138,13 @@ public class FlexValidator extends FeedValidator {
                     .filter(stopTime -> stopTime.trip_id.equalsIgnoreCase(trip.trip_id))
                     .anyMatch(FlexValidator::hasStartOrEndPickupDropOffWindow);
                 if (match) {
-                    if (route.continuous_drop_off != INT_MISSING) {
+                    if (isContinuousStopping(route.continuous_drop_off)) {
                         errors.add(NewGTFSError
                             .forEntity(route, NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF)
                             .setBadValue(String.valueOf(route.continuous_drop_off))
                         );
                     }
-                    if (route.continuous_pickup != INT_MISSING) {
+                    if (isContinuousStopping(route.continuous_pickup)) {
                         errors.add(NewGTFSError
                             .forEntity(route, NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP)
                             .setBadValue(String.valueOf(route.continuous_pickup))
@@ -412,30 +416,34 @@ public class FlexValidator extends FeedValidator {
         }
     }
 
+    private static boolean isContinuousStopping(int pickupOrDropOff) {
+        return pickupOrDropOff != INT_MISSING && pickupOrDropOff != CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED;
+    }
+
     /**
      * Conditionally Forbidden:
-     * - Forbidden if start_pickup_drop_off_window or end_pickup_drop_off_window are defined.
+     * - Any value other than 1 or empty is forbidden if start_pickup_drop_off_window or end_pickup_drop_off_window are defined.
      * - Optional otherwise.
      */
     public static void validateContinuousPickup(StopTime stopTime, List<NewGTFSError> errors) {
-        if (hasStartOrEndPickupDropOffWindow(stopTime)) {
+        if (isContinuousStopping(stopTime.continuous_pickup) && hasStartOrEndPickupDropOffWindow(stopTime)) {
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP)
-                .setBadValue(Integer.toString(stopTime.drop_off_type))
+                .setBadValue(Integer.toString(stopTime.continuous_pickup))
             );
         }
     }
 
     /**
      * Conditionally Forbidden:
-     * - Forbidden if start_pickup_drop_off_window or end_pickup_drop_off_window are defined.
+     * - Any value other than 1 or empty is forbidden if start_pickup_drop_off_window or end_pickup_drop_off_window are defined.
      * - Optional otherwise.
      */
     public static void validateContinuousDropOff(StopTime stopTime, List<NewGTFSError> errors) {
-        if (hasStartOrEndPickupDropOffWindow(stopTime)) {
+        if (isContinuousStopping(stopTime.continuous_drop_off) && hasStartOrEndPickupDropOffWindow(stopTime)) {
             errors.add(NewGTFSError
                 .forEntity(stopTime, NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF)
-                .setBadValue(Integer.toString(stopTime.drop_off_type))
+                .setBadValue(Integer.toString(stopTime.continuous_drop_off))
             );
         }
     }
