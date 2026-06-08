@@ -54,14 +54,14 @@ public class GTFSFeedTest {
         // assert that rows of data were written to files within the zip file.
         FileTestCase[] fileTestCases = {
             // agency.txt
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "agency.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("agency_id", "1"),
                     new TestUtils.DataExpectation("agency_name", "Fake Transit")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "calendar.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57"),
@@ -69,7 +69,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("end_date", "20170917")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "calendar_dates.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("service_id", "calendar-date-service"),
@@ -77,7 +77,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("exception_type", "1")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "routes.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("agency_id", "1"),
@@ -85,7 +85,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("route_long_name", "Route 1")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "shapes.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e"),
@@ -93,7 +93,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("shape_pt_lon", "-122.0074332")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "stop_times.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
@@ -101,7 +101,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("stop_id", "4u6g")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "trips.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("route_id", "1"),
@@ -109,7 +109,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "datatools_patterns.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("pattern_id", "1"),

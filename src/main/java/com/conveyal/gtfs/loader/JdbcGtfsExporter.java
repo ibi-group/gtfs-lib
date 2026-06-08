@@ -303,7 +303,6 @@ public class JdbcGtfsExporter {
             // Locations and location shapes are exported at the same time. The result will be the same for both.
             result.locations = exportLocationsAndShapes();
             result.locationShapes = result.locations;
-            result.stops = export(Table.STOPS, connection);
             result.stops = Stop.exportStops(dataSource, feedIdToExport, zipOutputStream);
             result.stopAreas = Stop.exportStopAreas(dataSource, feedIdToExport, zipOutputStream);
             // Only write stop times for "approved" routes using COPY TO with results of select query

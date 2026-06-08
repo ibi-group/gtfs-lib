@@ -420,7 +420,8 @@ public class StopTimeNormalization {
                 prevPatternStop = patternStop;
             }
         }
-        return stopTimesTracker.executeRemaining();    }
+        return stopTimesTracker.executeRemaining();
+    }
 
     /**
      * Updates the non-timepoint stop times between two timepoints using the speed implied  by

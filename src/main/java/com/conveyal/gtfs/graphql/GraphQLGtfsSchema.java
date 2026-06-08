@@ -157,7 +157,7 @@ public class GraphQLGtfsSchema {
     // Represents rows from fare_rules.txt
     public static final GraphQLObjectType fareRuleType = newObject()
         .name("fareRule")
-        .description("A GTFS agency object")
+        .description("A GTFS fare rule object")
         .field(MapFetcher.field("id", GraphQLInt))
         .field(MapFetcher.field("fare_id"))
         .field(MapFetcher.field("route_id"))
@@ -169,7 +169,7 @@ public class GraphQLGtfsSchema {
     // Represents rows from fare_attributes.txt
     public static final GraphQLObjectType fareType = newObject()
         .name("fare_attributes")
-        .description("A GTFS agency object")
+        .description("A GTFS fare attributes object")
         .field(MapFetcher.field("id", GraphQLInt))
         .field(MapFetcher.field("agency_id"))
         .field(MapFetcher.field("fare_id"))
