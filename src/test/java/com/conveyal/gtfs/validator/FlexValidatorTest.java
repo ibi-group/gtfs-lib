@@ -477,7 +477,7 @@ class FlexValidatorTest {
     @MethodSource("createBookingRuleChecks")
     void validateBookingRuleTests(BookingRule bookingRule, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = FlexValidator.validateBookingRule(bookingRule);
-        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
+        checkValidationErrorsMatchExpectedStrict(errors, expectedErrors);
     }
 
     private static Stream<Arguments> createBookingRuleChecks() {
@@ -513,6 +513,10 @@ class FlexValidatorTest {
             Arguments.of(
                 createBookingRule(INT_MISSING, INT_MISSING, 30, INT_MISSING, 2, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_START_TIME)
+            ),
+            Arguments.of(
+                createBookingRule(INT_MISSING, 0, INT_MISSING, INT_MISSING, 1, null, null),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
             ),
             Arguments.of(
                 createBookingRule(INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, "19:00:00", null),
@@ -570,6 +574,19 @@ class FlexValidatorTest {
             // No errors expected, so the reported errors should be empty.
             assertTrue(validationErrors.isEmpty());
         }
+    }
+
+    /**
+     * Stricter variation of the above where we check the number of errors too.
+     */
+    private void checkValidationErrorsMatchExpectedStrict(
+        List<NewGTFSError> validationErrors,
+        List<NewGTFSErrorType> expectedErrors
+    ) {
+        if (expectedErrors != null) {
+            assertEquals(expectedErrors.size(), validationErrors.size());
+        }
+        checkValidationErrorsMatchExpectedErrors(validationErrors, expectedErrors);
     }
 
     /**
