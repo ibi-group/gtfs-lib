@@ -499,7 +499,7 @@ class FlexValidatorTest {
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MAX, NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_DAY)
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, 2, INT_MISSING, 1, INT_MISSING, null, null),
+                createBookingRule(30, 1, INT_MISSING, 1, INT_MISSING, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY)
             ),
             Arguments.of(
