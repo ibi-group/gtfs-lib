@@ -44,6 +44,7 @@ public enum NewGTFSErrorType {
     FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE(Priority.HIGH, "prior_notice_start_day is not allowed for booking_type 0 (Real time booking)."),
     FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY(Priority.HIGH, "prior_notice_start_day is not allowed for booking_type 1 (Up to same-day booking with advance notice) if prior_notice_duration_max is defined."),
     FLEX_FORBIDDEN_PRIOR_START_TIME(Priority.HIGH, "prior_notice_start_time is not allowed if prior_notice_start_day is not defined."),
+    FLEX_FORBIDDEN_PRIOR_LAST_TIME(Priority.HIGH, "prior_notice_last_time is not allowed if prior_notice_last_day is not defined."),
     FLEX_FORBIDDEN_STOP_ID(Priority.HIGH, "stop_id is not allowed if a location_group_id or location_id is defined."),
     FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF(Priority.HIGH, "continuous_drop_off other than 1 or empty is not allowed when either start_pickup_drop_off_window or end_pickup_drop_off_window is defined for any trip on this route."),
     FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP(Priority.HIGH, "continuous_pick_up other than 1 or empty is not allowed when either start_pickup_drop_off_window or end_pickup_drop_off_window is defined for any trip on this route."),

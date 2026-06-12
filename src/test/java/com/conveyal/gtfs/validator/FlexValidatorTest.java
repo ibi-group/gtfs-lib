@@ -519,7 +519,7 @@ class FlexValidatorTest {
                 fromBlankBookingRule(rule -> {
                     rule.booking_type = 0;
                     rule.prior_notice_start_day = 1;
-                    rule.prior_notice_last_time = "07:00:00";
+                    rule.prior_notice_start_time = "07:00:00";
                 }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
             ),
@@ -564,6 +564,14 @@ class FlexValidatorTest {
             Arguments.of(
                 fromBlankBookingRule(rule -> rule.prior_notice_start_time = "19:00:00"),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_START_TIME)
+            ),
+            Arguments.of(
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 1;
+                    rule.prior_notice_duration_min = 30;
+                    rule.prior_notice_last_time = "19:00:00";
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_LAST_TIME)
             ),
             Arguments.of(
                 fromBlankBookingRule(rule -> {

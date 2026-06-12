@@ -547,6 +547,14 @@ public class FlexValidator extends FeedValidator {
                 .setBadValue(bookingRule.prior_notice_start_time)
             );
         }
+        if (bookingRule.prior_notice_last_time != null && bookingRule.prior_notice_last_day == INT_MISSING) {
+            // prior_notice_last_time is forbidden if prior_notice_last_day is not defined.
+            errors.add(NewGTFSError.forEntity(
+                    bookingRule,
+                    NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_LAST_TIME)
+                .setBadValue(bookingRule.prior_notice_last_time)
+            );
+        }
         if (StringUtils.isNotBlank(bookingRule.prior_notice_service_id) && bookingRule.booking_type != 2) {
             // prior_notice_service_id is forbidden for all but booking_type 2 (Up to prior day(s) booking).
             errors.add(NewGTFSError.forEntity(
