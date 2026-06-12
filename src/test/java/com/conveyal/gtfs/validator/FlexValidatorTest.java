@@ -510,8 +510,7 @@ class FlexValidatorTest {
             ),
             Arguments.of(
                 fromBlankBookingRule(rule -> {
-                    rule.booking_type = 1;
-                    rule.prior_notice_duration_min = 30;
+                    rule.booking_type = 0;
                     rule.prior_notice_last_day = 1;
                 }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY)
