@@ -454,6 +454,7 @@ public class FlexValidator extends FeedValidator {
     public static List<NewGTFSError> validateBookingRule(BookingRule bookingRule) {
         List<NewGTFSError> errors = new ArrayList<>();
         boolean forbidPriorNoticeStartDay = false;
+        boolean forbidPriorNoticeLastDay = false;
 
         if (bookingRule.prior_notice_duration_min == INT_MISSING && bookingRule.booking_type == 1) {
             // prior_notice_duration_min is required for booking_type 1 (Up to same-day booking with advance notice).
@@ -492,6 +493,7 @@ public class FlexValidator extends FeedValidator {
         }
         if (bookingRule.prior_notice_last_day != INT_MISSING && bookingRule.booking_type != 2) {
             // prior_notice_last_day is forbidden for all but booking_type 2 (Up to prior day(s) booking).
+            forbidPriorNoticeLastDay = true;
             errors.add(NewGTFSError.forEntity(
                     bookingRule,
                     NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY)
@@ -525,6 +527,14 @@ public class FlexValidator extends FeedValidator {
             errors.add(NewGTFSError.forEntity(
                     bookingRule,
                     NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_START_TIME)
+                .setBadValue(bookingRule.prior_notice_start_time)
+            );
+        }
+        if (bookingRule.prior_notice_last_time == null && bookingRule.prior_notice_last_day != INT_MISSING && !forbidPriorNoticeLastDay) {
+            // prior_notice_start_time is required if prior_notice_start_day is defined.
+            errors.add(NewGTFSError.forEntity(
+                    bookingRule,
+                    NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_TIME)
                 .setBadValue(bookingRule.prior_notice_start_time)
             );
         }

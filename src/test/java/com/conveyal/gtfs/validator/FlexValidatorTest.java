@@ -18,6 +18,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF;
@@ -515,6 +516,20 @@ class FlexValidatorTest {
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_START_TIME)
             ),
             Arguments.of(
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 2;
+                    rule.prior_notice_last_day = 2;
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_TIME)
+            ),
+            Arguments.of(
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_last_day = 2;
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY)
+            ),
+            Arguments.of(
                 createBookingRule(INT_MISSING, 0, INT_MISSING, INT_MISSING, 1, null, null),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
             ),
@@ -629,6 +644,22 @@ class FlexValidatorTest {
         bookingRule.prior_notice_start_time = priorNoticeStartTime;
         bookingRule.prior_notice_service_id = priorNoticeServiceId;
         return bookingRule;
+    }
+
+    private static BookingRule blankBookingRule() {
+        BookingRule bookingRule = new BookingRule();
+        bookingRule.booking_type = INT_MISSING;
+        bookingRule.prior_notice_duration_min = INT_MISSING;
+        bookingRule.prior_notice_duration_max = INT_MISSING;
+        bookingRule.prior_notice_last_day = INT_MISSING;
+        bookingRule.prior_notice_start_day = INT_MISSING;
+        return bookingRule;
+    }
+
+    private static BookingRule fromBlankBookingRule(Consumer<BookingRule> ruleModifier) {
+        BookingRule rule = blankBookingRule();
+        ruleModifier.accept(rule);
+        return rule;
     }
 
     private static Location createLocation(String locationId) {

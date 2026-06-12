@@ -50,6 +50,7 @@ public enum NewGTFSErrorType {
     FLEX_REQUIRED_END_PICKUP_DROP_OFF_WINDOW(Priority.HIGH, "end_pickup_drop_off_window is required if a location_group_id, location_id or start_pickup_drop_off_window is defined."),
     FLEX_REQUIRED_PRIOR_NOTICE_DURATION_MIN(Priority.HIGH, "prior_notice_duration_min is required for booking_type 1 (Up to same-day booking with advance notice)."),
     FLEX_REQUIRED_PRIOR_NOTICE_LAST_DAY(Priority.HIGH, "prior_notice_last_day is required if a stop_id refers to a location group or location."),
+    FLEX_REQUIRED_PRIOR_NOTICE_LAST_TIME(Priority.HIGH, "prior_notice_last_time is required if prior_notice_last_day is defined."),
     FLEX_REQUIRED_PRIOR_NOTICE_START_TIME(Priority.HIGH, "prior_notice_start_time is required if prior_notice_start_day is defined."),
     FLEX_REQUIRED_STOP_ID(Priority.HIGH, "A stop_id is required if both location_group_id and location_id are not defined."),
     FLEX_REQUIRED_START_PICKUP_DROP_OFF_WINDOW(Priority.HIGH, "start_pickup_drop_off_window is required if a location_group_id, location_id or end_pickup_drop_off_window is defined."),
