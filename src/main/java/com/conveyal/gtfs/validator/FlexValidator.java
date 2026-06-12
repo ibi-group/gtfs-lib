@@ -524,6 +524,7 @@ public class FlexValidator extends FeedValidator {
         }
         if (bookingRule.prior_notice_start_time == null && bookingRule.prior_notice_start_day != INT_MISSING && !forbidPriorNoticeStartDay) {
             // prior_notice_start_time is required if prior_notice_start_day is defined.
+            // (This error is not raised if FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY applies to this booking rule.)
             errors.add(NewGTFSError.forEntity(
                     bookingRule,
                     NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_START_TIME)
@@ -531,11 +532,11 @@ public class FlexValidator extends FeedValidator {
             );
         }
         if (bookingRule.prior_notice_last_time == null && bookingRule.prior_notice_last_day != INT_MISSING && !forbidPriorNoticeLastDay) {
-            // prior_notice_start_time is required if prior_notice_start_day is defined.
+            // prior_notice_last_time is required if prior_notice_last_day is defined.
             errors.add(NewGTFSError.forEntity(
                     bookingRule,
                     NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_TIME)
-                .setBadValue(bookingRule.prior_notice_start_time)
+                .setBadValue(bookingRule.prior_notice_last_time)
             );
         }
         if (bookingRule.prior_notice_start_time != null && bookingRule.prior_notice_start_day == INT_MISSING) {
