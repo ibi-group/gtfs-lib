@@ -483,6 +483,7 @@ class FlexValidatorTest {
 
     private static Stream<Arguments> createBookingRuleChecks() {
         return Stream.of(
+            // Prior notice duration: min=> cond. required+forbidden, max=>cond. forbidden only.
             Arguments.of(
                 fromBlankBookingRule(rule -> rule.booking_type = 1),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_DURATION_MIN)
@@ -498,6 +499,7 @@ class FlexValidatorTest {
                 }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MAX)
             ),
+            // Prior notice last day: cond. required or forbidden
             Arguments.of(
                 fromBlankBookingRule(rule -> {
                     rule.booking_type = 2;
@@ -514,6 +516,15 @@ class FlexValidatorTest {
                     rule.prior_notice_last_day = 1;
                 }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY)
+            ),
+            // Prior notice start day: cond. forbidden only
+            Arguments.of(
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_start_day = 1;
+                }),
+                // If start day is forbidden, then the start time requirement should be suppressed.
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
             ),
             Arguments.of(
                 fromBlankBookingRule(rule -> {
@@ -533,6 +544,7 @@ class FlexValidatorTest {
                 }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY)
             ),
+            // Prior notice start/last time: cond. required or forbidden
             Arguments.of(
                 fromBlankBookingRule(rule -> {
                     rule.prior_notice_duration_max = 30;
@@ -548,20 +560,6 @@ class FlexValidatorTest {
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_TIME)
             ),
             Arguments.of(
-                fromBlankBookingRule(rule -> {
-                    rule.booking_type = 0;
-                    rule.prior_notice_last_day = 2;
-                }),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY)
-            ),
-            Arguments.of(
-                fromBlankBookingRule(rule -> {
-                    rule.booking_type = 0;
-                    rule.prior_notice_start_day = 1;
-                }),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
-            ),
-            Arguments.of(
                 fromBlankBookingRule(rule -> rule.prior_notice_start_time = "19:00:00"),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_START_TIME)
             ),
@@ -573,6 +571,7 @@ class FlexValidatorTest {
                 }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_LAST_TIME)
             ),
+            // Prior notice service id: cond. forbidden
             Arguments.of(
                 fromBlankBookingRule(rule -> {
                     rule.booking_type = 0;
