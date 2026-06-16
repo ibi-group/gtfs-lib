@@ -225,7 +225,14 @@ public class GraphQLGtfsSchema {
             .dataFetcher(new JDBCFetcher("stop_times", "trip_id", "stop_sequence", false))
             .build()
         )
-        .field(GraphQLUtil.field("frequencies", frequencyType, "frequencies", "trip_id"))
+        .field(newFieldDefinition()
+            .name("frequencies")
+            // forward reference to the as yet undefined stopTimeType (must be defined after tripType)
+            .type(new GraphQLList(frequencyType))
+            .argument(intArg(LIMIT_ARG))
+            .dataFetcher(new JDBCFetcher("frequencies", "trip_id"))
+            .build()
+        )
         .field(GraphQLUtil.field("shape", shapePointType, "shapes", "shape_id"))
         .build();
 

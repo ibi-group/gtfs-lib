@@ -7,6 +7,9 @@ query ($namespace: String, $date: String, $from: Int, $to: Int) {
       route_desc
       trips (date: $date, from: $from, to: $to) {
         trip_id
+        frequencies (limit: -1) {
+          headway_secs
+        }
       }
     }
   }
