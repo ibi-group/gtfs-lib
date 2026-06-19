@@ -569,6 +569,7 @@ public class Table {
         STOPS,
         AREAS,
         RIDER_CATEGORIES,
+        FARE_LEG_JOIN_RULES,
         FARE_RULES,
         PATTERN_STOP,
         TRANSFERS,
