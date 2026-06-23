@@ -58,7 +58,7 @@ public class FareTransferRule extends Entity {
         statement.setString(oneBasedIndex, fare_product_id);
     }
 
-    public static class Loader extends Entity.Loader<FareLegRule> {
+    public static class Loader extends Entity.Loader<FareTransferRule> {
 
         public Loader(GTFSFeed feed) {
             super(feed, TABLE_NAME);

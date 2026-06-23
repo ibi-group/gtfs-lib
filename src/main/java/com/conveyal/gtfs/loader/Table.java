@@ -659,6 +659,7 @@ public class Table {
         LOCATION_GROUP_STOPS,
         AREAS,
         RIDER_CATEGORIES,
+        FARE_LEG_JOIN_RULES,
         FARE_RULES,
         PATTERN_STOP,
         TRANSFERS,
