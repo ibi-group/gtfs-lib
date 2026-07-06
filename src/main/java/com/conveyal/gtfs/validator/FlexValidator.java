@@ -453,6 +453,8 @@ public class FlexValidator extends FeedValidator {
      */
     public static List<NewGTFSError> validateBookingRule(BookingRule bookingRule) {
         List<NewGTFSError> errors = new ArrayList<>();
+        boolean forbidPriorNoticeStartDay = false;
+        boolean forbidPriorNoticeLastDay = false;
 
         if (bookingRule.prior_notice_duration_min == INT_MISSING && bookingRule.booking_type == 1) {
             // prior_notice_duration_min is required for booking_type 1 (Up to same-day booking with advance notice).
@@ -491,6 +493,7 @@ public class FlexValidator extends FeedValidator {
         }
         if (bookingRule.prior_notice_last_day != INT_MISSING && bookingRule.booking_type != 2) {
             // prior_notice_last_day is forbidden for all but booking_type 2 (Up to prior day(s) booking).
+            forbidPriorNoticeLastDay = true;
             errors.add(NewGTFSError.forEntity(
                     bookingRule,
                     NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY)
@@ -499,6 +502,7 @@ public class FlexValidator extends FeedValidator {
         }
         if (bookingRule.prior_notice_start_day != INT_MISSING && bookingRule.booking_type == 0) {
             // prior_notice_start_day is forbidden for booking_type 0 (Real time booking).
+            forbidPriorNoticeStartDay = true;
             errors.add(NewGTFSError.forEntity(
                     bookingRule,
                     NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
@@ -511,18 +515,28 @@ public class FlexValidator extends FeedValidator {
         ) {
             // prior_notice_start_day is forbidden for booking_type 1 (Up to same-day booking with advance notice) if
             // prior_notice_duration_max is defined.
+            forbidPriorNoticeStartDay = true;
             errors.add(NewGTFSError.forEntity(
                     bookingRule,
                     NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY)
                 .setBadValue(Integer.toString(bookingRule.prior_notice_start_day))
             );
         }
-        if (bookingRule.prior_notice_start_time == null && bookingRule.prior_notice_start_day != INT_MISSING) {
+        if (bookingRule.prior_notice_start_time == null && bookingRule.prior_notice_start_day != INT_MISSING && !forbidPriorNoticeStartDay) {
             // prior_notice_start_time is required if prior_notice_start_day is defined.
+            // (This error is not raised if FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY applies to this booking rule.)
             errors.add(NewGTFSError.forEntity(
                     bookingRule,
                     NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_START_TIME)
                 .setBadValue(bookingRule.prior_notice_start_time)
+            );
+        }
+        if (bookingRule.prior_notice_last_time == null && bookingRule.prior_notice_last_day != INT_MISSING && !forbidPriorNoticeLastDay) {
+            // prior_notice_last_time is required if prior_notice_last_day is defined.
+            errors.add(NewGTFSError.forEntity(
+                    bookingRule,
+                    NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_TIME)
+                .setBadValue(bookingRule.prior_notice_last_time)
             );
         }
         if (bookingRule.prior_notice_start_time != null && bookingRule.prior_notice_start_day == INT_MISSING) {
@@ -531,6 +545,14 @@ public class FlexValidator extends FeedValidator {
                     bookingRule,
                     NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_START_TIME)
                 .setBadValue(bookingRule.prior_notice_start_time)
+            );
+        }
+        if (bookingRule.prior_notice_last_time != null && bookingRule.prior_notice_last_day == INT_MISSING) {
+            // prior_notice_last_time is forbidden if prior_notice_last_day is not defined.
+            errors.add(NewGTFSError.forEntity(
+                    bookingRule,
+                    NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_LAST_TIME)
+                .setBadValue(bookingRule.prior_notice_last_time)
             );
         }
         if (StringUtils.isNotBlank(bookingRule.prior_notice_service_id) && bookingRule.booking_type != 2) {

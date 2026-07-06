@@ -18,6 +18,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF;
@@ -477,49 +478,105 @@ class FlexValidatorTest {
     @MethodSource("createBookingRuleChecks")
     void validateBookingRuleTests(BookingRule bookingRule, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = FlexValidator.validateBookingRule(bookingRule);
-        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
+        checkValidationErrorsMatchExpectedStrict(errors, expectedErrors);
     }
 
     private static Stream<Arguments> createBookingRuleChecks() {
         return Stream.of(
+            // Prior notice duration: min=> cond. required+forbidden, max=>cond. forbidden only.
             Arguments.of(
-                createBookingRule(INT_MISSING, 1, INT_MISSING, INT_MISSING, INT_MISSING, null, null),
+                fromBlankBookingRule(rule -> rule.booking_type = 1),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_DURATION_MIN)
             ),
             Arguments.of(
-                createBookingRule(30, INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, null, null),
+                fromBlankBookingRule(rule -> rule.prior_notice_duration_min = 30),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MIN)
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, 0, 30, INT_MISSING, INT_MISSING, null, null),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_duration_max = 30;
+                }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MAX)
             ),
+            // Prior notice last day: cond. required or forbidden
             Arguments.of(
-                createBookingRule(INT_MISSING, 2, 30, INT_MISSING, INT_MISSING, null, null),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MAX, NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_DAY)
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 2;
+                    rule.prior_notice_duration_max = 30;
+                }),
+                Lists.newArrayList(
+                    NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MAX,
+                    NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_DAY
+                )
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, 2, INT_MISSING, 1, INT_MISSING, null, null),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_last_day = 1;
+                }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY)
             ),
+            // Prior notice start day: cond. forbidden only
             Arguments.of(
-                createBookingRule(INT_MISSING, 0, INT_MISSING, INT_MISSING, 1, "07:00:00", null),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_start_day = 1;
+                }),
+                // If start day is forbidden, then the start time requirement should be suppressed.
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
             ),
             Arguments.of(
-                createBookingRule(30, 1, 30, INT_MISSING, 1, "10:30:00", null),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY)
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_start_day = 1;
+                    rule.prior_notice_start_time = "07:00:00";
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, INT_MISSING, 30, INT_MISSING, 2, null, null),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 1;
+                    rule.prior_notice_duration_min = 30;
+                    rule.prior_notice_duration_max = 30;
+                    rule.prior_notice_start_day = 1;
+                    rule.prior_notice_start_time = "10:30:00";
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY)
+            ),
+            // Prior notice start/last time: cond. required or forbidden
+            Arguments.of(
+                fromBlankBookingRule(rule -> {
+                    rule.prior_notice_duration_max = 30;
+                    rule.prior_notice_start_day = 2;
+                }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_START_TIME)
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, "19:00:00", null),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 2;
+                    rule.prior_notice_last_day = 2;
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_TIME)
+            ),
+            Arguments.of(
+                fromBlankBookingRule(rule -> rule.prior_notice_start_time = "19:00:00"),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_START_TIME)
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, 0, INT_MISSING, INT_MISSING, INT_MISSING, null, "1"),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 1;
+                    rule.prior_notice_duration_min = 30;
+                    rule.prior_notice_last_time = "19:00:00";
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_LAST_TIME)
+            ),
+            // Prior notice service id: cond. forbidden
+            Arguments.of(
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_service_id = "1";
+                }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_SERVICE_ID)
             )
         );
@@ -573,6 +630,19 @@ class FlexValidatorTest {
     }
 
     /**
+     * Stricter variation of the above where we check the number of errors too.
+     */
+    private void checkValidationErrorsMatchExpectedStrict(
+        List<NewGTFSError> validationErrors,
+        List<NewGTFSErrorType> expectedErrors
+    ) {
+        if (expectedErrors != null) {
+            assertEquals(expectedErrors.size(), validationErrors.size());
+        }
+        checkValidationErrorsMatchExpectedErrors(validationErrors, expectedErrors);
+    }
+
+    /**
      * Check that validation errors is just one error of a specific type and bad value.
      */
     private void checkSingleError(
@@ -594,24 +664,20 @@ class FlexValidatorTest {
         return fareRule;
     }
 
-    private static BookingRule createBookingRule(
-        int priorNoticeDurationMin,
-        int bookingType,
-        int priorNoticeDurationMax,
-        int priorNoticeLastDay,
-        int priorNoticeStartDay,
-        String priorNoticeStartTime,
-        String priorNoticeServiceId
-    ) {
+    private static BookingRule blankBookingRule() {
         BookingRule bookingRule = new BookingRule();
-        bookingRule.prior_notice_duration_min = priorNoticeDurationMin;
-        bookingRule.booking_type = bookingType;
-        bookingRule.prior_notice_duration_max = priorNoticeDurationMax;
-        bookingRule.prior_notice_last_day = priorNoticeLastDay;
-        bookingRule.prior_notice_start_day = priorNoticeStartDay;
-        bookingRule.prior_notice_start_time = priorNoticeStartTime;
-        bookingRule.prior_notice_service_id = priorNoticeServiceId;
+        bookingRule.booking_type = INT_MISSING;
+        bookingRule.prior_notice_duration_min = INT_MISSING;
+        bookingRule.prior_notice_duration_max = INT_MISSING;
+        bookingRule.prior_notice_last_day = INT_MISSING;
+        bookingRule.prior_notice_start_day = INT_MISSING;
         return bookingRule;
+    }
+
+    private static BookingRule fromBlankBookingRule(Consumer<BookingRule> ruleModifier) {
+        BookingRule rule = blankBookingRule();
+        ruleModifier.accept(rule);
+        return rule;
     }
 
     private static Location createLocation(String locationId) {
