@@ -41,6 +41,7 @@ class GtfsFlexTest {
     private static TestFeed islandTransitFeed;
     private static TestFeed emptyLocationGroupsFeed;
     private static TestFeed badLocGroupRefsFeed;
+    private static TestFeed geolocationFeed;
 
     @BeforeAll
     static void setUpClass() throws IOException {
@@ -53,6 +54,7 @@ class GtfsFlexTest {
 
         emptyLocationGroupsFeed = new TestFeed(getResourceFileName("real-world-gtfs-feeds/bellhop-flex.zip"));
         badLocGroupRefsFeed = new TestFeed(getResourceFileName("real-world-gtfs-feeds/bellhop-flex-comma-content.zip"));
+        geolocationFeed = new TestFeed(TestUtils.zipFolderFiles("fake-agency-with-flex", true));
     }
 
     @AfterAll
@@ -60,6 +62,7 @@ class GtfsFlexTest {
         islandTransitFeed.dropDB();
         emptyLocationGroupsFeed.dropDB();
         badLocGroupRefsFeed.dropDB();
+        geolocationFeed.dropDB();
     }
 
     @Test
@@ -221,8 +224,15 @@ class GtfsFlexTest {
     }
 
     @Test
-    void canLoadFeedWithOneLocationGroups() {
+    void canLoadFeedWithOneLocationGroup() {
         FeedLoadResult loadResult = GTFS.load(badLocGroupRefsFeed.fileName, badLocGroupRefsFeed.dataSource);
         assertEquals(0, loadResult.errorCount);
+    }
+
+    @Test
+    void canLoadFeedWithGeojsonlocations() {
+        FeedLoadResult loadResult = GTFS.load(geolocationFeed.fileName, geolocationFeed.dataSource);
+        // Keep errors regarding unsupported geometry types MULTIPOLYGON and MULTILINESTRING.
+        assertEquals(2, loadResult.errorCount);
     }
 }
