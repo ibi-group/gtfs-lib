@@ -236,10 +236,6 @@ public class GeoJsonUtil {
                     break;
                 // TODO: Add additional geometry types.
                 default:
-                    logErrorMessage(
-                        String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, geometryType),
-                        errors
-                    );
             }
         }
         return locationShapes;
