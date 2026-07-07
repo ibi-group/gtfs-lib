@@ -25,6 +25,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -436,6 +437,8 @@ public class GeoJsonUtil {
     }
 
     public static String createCSVRow(String... columnData) {
-        return String.join(",", columnData) + System.lineSeparator();
+        return Arrays.stream(columnData)
+            .map(col -> col.contains(",") ? String.format("\"%s\"", col) : col)
+            .collect(Collectors.joining(",")) + System.lineSeparator();
     }
 }

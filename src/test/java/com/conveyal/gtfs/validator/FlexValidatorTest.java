@@ -14,13 +14,24 @@ import com.google.common.collect.Lists;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
+import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_OFF_ALLOWED;
+import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED;
+import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_OFF_PHONE;
+import static com.conveyal.gtfs.validator.FlexValidator.CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FlexValidatorTest {
@@ -56,43 +67,57 @@ class FlexValidatorTest {
     }
 
     @ParameterizedTest
-    @MethodSource("createRouteChecks")
-    void validateRouteTests(Route route, List<Trip> trips, List<StopTime> stopTimes, List<NewGTFSErrorType> expectedErrors) {
-        checkValidationErrorsMatchExpectedErrors(FlexValidator.validateRoute(route, trips, stopTimes), expectedErrors);
+    @MethodSource("createValidRouteContinuousStoppingChecks")
+    void validRouteContinuousStoppingTests(Route route, List<StopTime> stopTimes) {
+        List<Trip> trips = Lists.newArrayList(createTrip());
+        assertTrue(FlexValidator.validateRoute(route, trips, stopTimes).isEmpty());
     }
 
-    private static Stream<Arguments> createRouteChecks() {
+    private static Stream<Arguments> createValidRouteContinuousStoppingChecks() {
         return Stream.of(
             Arguments.of(
-                creeateRoute(INT_MISSING, INT_MISSING),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                null
+                createRoute(INT_MISSING, INT_MISSING),
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1))
             ),
             Arguments.of(
-                creeateRoute(1, INT_MISSING),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF)
+                createRoute(CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED, INT_MISSING),
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1))
             ),
             Arguments.of(
-                creeateRoute(INT_MISSING, 1),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", 1, 1)),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP)
+                createRoute(INT_MISSING, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED),
+                Lists.newArrayList(createStopTime("trip-id-1", 1, 1))
             ),
             Arguments.of(
-                creeateRoute(INT_MISSING, 1),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING)),
-                null
+                createRoute(INT_MISSING, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED),
+                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING))
             ),
             Arguments.of(
-                creeateRoute(1, INT_MISSING),
-                Lists.newArrayList(createTrip()),
-                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING)),
-                null
+                createRoute(CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED, INT_MISSING),
+                Lists.newArrayList(createStopTime("trip-id-1", INT_MISSING, INT_MISSING))
             )
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {
+        CONTINUOUS_PICKUP_DROP_OFF_ALLOWED,
+        CONTINUOUS_PICKUP_DROP_OFF_PHONE,
+        CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER
+    })
+    void invalidRouteContinuousStoppingTests(int continuousPickupDropOff) {
+        checkInvalidRouteContinuousStopping(INT_MISSING, continuousPickupDropOff, FLEX_FORBIDDEN_ROUTE_CONTINUOUS_PICKUP);
+        checkInvalidRouteContinuousStopping(continuousPickupDropOff, INT_MISSING, FLEX_FORBIDDEN_ROUTE_CONTINUOUS_DROP_OFF);
+    }
+
+    void checkInvalidRouteContinuousStopping(int dropOff, int pickup, NewGTFSErrorType errorType) {
+        Route route = createRoute(dropOff, pickup);
+        List<Trip> trips = Lists.newArrayList(createTrip());
+        List<StopTime> stopTimes = Lists.newArrayList(createStopTime("trip-id-1", 1, 1));
+
+        checkSingleError(
+            FlexValidator.validateRoute(route, trips, stopTimes),
+            errorType,
+            pickup == INT_MISSING ? dropOff : pickup
         );
     }
 
@@ -406,88 +431,152 @@ class FlexValidatorTest {
     }
 
     @ParameterizedTest
-    @MethodSource("createContinuousPickupTests")
-    void validateContinuousPickupTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
+    @MethodSource("createValidContinuousStopValues")
+    void validContinuousPickupTest(StopTime stopTime) {
         List<NewGTFSError> errors = new ArrayList<>();
         FlexValidator.validateContinuousPickup(stopTime, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
+        assertTrue(errors.isEmpty());
     }
 
-    private static Stream<Arguments> createContinuousPickupTests() {
+    @ParameterizedTest
+    @MethodSource("createValidContinuousStopValues")
+    void validContinuousDropOffTest(StopTime stopTime) {
+        List<NewGTFSError> errors = new ArrayList<>();
+        FlexValidator.validateContinuousDropOff(stopTime, errors);
+        assertTrue(errors.isEmpty());
+    }
+
+    private static Stream<Arguments> createValidContinuousStopValues() {
         return Stream.of(
-            Arguments.of(createStopTimeForContinuousPickupTest(INT_MISSING), null),
-            Arguments.of(
-                createStopTimeForContinuousPickupTest(1300),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_PICKUP)
-            )
+            Arguments.of(createContinuousStopTime(INT_MISSING, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED)),
+            Arguments.of(createContinuousStopTime(INT_MISSING, INT_MISSING)),
+            // Permitted values for continuous_pickup/continuous_drop_off if the pickup/dropoff window is defined.
+            Arguments.of(createContinuousStopTime(1300, INT_MISSING)),
+            Arguments.of(createContinuousStopTime(1300, CONTINUOUS_PICKUP_DROP_OFF_DISALLOWED))
         );
     }
 
     @ParameterizedTest
-    @MethodSource("createContinuousDropOffTests")
-    void validateContinuousDropOffTest(StopTime stopTime, List<NewGTFSErrorType> expectedErrors) {
-        List<NewGTFSError> errors = new ArrayList<>();
-        FlexValidator.validateContinuousDropOff(stopTime, errors);
-        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
-    }
+    @ValueSource(ints = {
+        CONTINUOUS_PICKUP_DROP_OFF_ALLOWED,
+        CONTINUOUS_PICKUP_DROP_OFF_PHONE,
+        CONTINUOUS_PICKUP_DROP_OFF_TELL_DRIVER
+    })
+    void invalidContinuousStopTimeTest(int continuousPickupDropOff) {
+        StopTime stopTime = createContinuousStopTime(1300, continuousPickupDropOff);
 
-    private static Stream<Arguments> createContinuousDropOffTests() {
-        return Stream.of(
-            Arguments.of(createStopTimeForContinuousPickupTest(INT_MISSING), null),
-            Arguments.of(
-                createStopTimeForContinuousPickupTest(1300),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF)
-            )
-        );
+        List<NewGTFSError> pickupErrors = new ArrayList<>();
+        FlexValidator.validateContinuousPickup(stopTime, pickupErrors);
+        checkSingleError(pickupErrors, FLEX_FORBIDDEN_CONTINUOUS_PICKUP, continuousPickupDropOff);
+
+        List<NewGTFSError> dropOffErrors = new ArrayList<>();
+        FlexValidator.validateContinuousDropOff(stopTime, dropOffErrors);
+        checkSingleError(dropOffErrors, FLEX_FORBIDDEN_CONTINUOUS_DROP_OFF, continuousPickupDropOff);
     }
 
     @ParameterizedTest
     @MethodSource("createBookingRuleChecks")
     void validateBookingRuleTests(BookingRule bookingRule, List<NewGTFSErrorType> expectedErrors) {
         List<NewGTFSError> errors = FlexValidator.validateBookingRule(bookingRule);
-        checkValidationErrorsMatchExpectedErrors(errors, expectedErrors);
+        checkValidationErrorsMatchExpectedStrict(errors, expectedErrors);
     }
 
     private static Stream<Arguments> createBookingRuleChecks() {
         return Stream.of(
+            // Prior notice duration: min=> cond. required+forbidden, max=>cond. forbidden only.
             Arguments.of(
-                createBookingRule(INT_MISSING, 1, INT_MISSING, INT_MISSING, INT_MISSING, null, null),
+                fromBlankBookingRule(rule -> rule.booking_type = 1),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_DURATION_MIN)
             ),
             Arguments.of(
-                createBookingRule(30, INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, null, null),
+                fromBlankBookingRule(rule -> rule.prior_notice_duration_min = 30),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MIN)
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, 0, 30, INT_MISSING, INT_MISSING, null, null),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_duration_max = 30;
+                }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MAX)
             ),
+            // Prior notice last day: cond. required or forbidden
             Arguments.of(
-                createBookingRule(INT_MISSING, 2, 30, INT_MISSING, INT_MISSING, null, null),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MAX, NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_DAY)
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 2;
+                    rule.prior_notice_duration_max = 30;
+                }),
+                Lists.newArrayList(
+                    NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_DURATION_MAX,
+                    NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_DAY
+                )
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, 2, INT_MISSING, 1, INT_MISSING, null, null),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_last_day = 1;
+                }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_LAST_DAY)
             ),
+            // Prior notice start day: cond. forbidden only
             Arguments.of(
-                createBookingRule(INT_MISSING, 0, INT_MISSING, INT_MISSING, 1, "07:00:00", null),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_start_day = 1;
+                }),
+                // If start day is forbidden, then the start time requirement should be suppressed.
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
             ),
             Arguments.of(
-                createBookingRule(30, 1, 30, INT_MISSING, 1, "10:30:00", null),
-                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY)
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_start_day = 1;
+                    rule.prior_notice_start_time = "07:00:00";
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY_FOR_BOOKING_TYPE)
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, INT_MISSING, 30, INT_MISSING, 2, null, null),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 1;
+                    rule.prior_notice_duration_min = 30;
+                    rule.prior_notice_duration_max = 30;
+                    rule.prior_notice_start_day = 1;
+                    rule.prior_notice_start_time = "10:30:00";
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_START_DAY)
+            ),
+            // Prior notice start/last time: cond. required or forbidden
+            Arguments.of(
+                fromBlankBookingRule(rule -> {
+                    rule.prior_notice_duration_max = 30;
+                    rule.prior_notice_start_day = 2;
+                }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_START_TIME)
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, INT_MISSING, "19:00:00", null),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 2;
+                    rule.prior_notice_last_day = 2;
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_REQUIRED_PRIOR_NOTICE_LAST_TIME)
+            ),
+            Arguments.of(
+                fromBlankBookingRule(rule -> rule.prior_notice_start_time = "19:00:00"),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_START_TIME)
             ),
             Arguments.of(
-                createBookingRule(INT_MISSING, 0, INT_MISSING, INT_MISSING, INT_MISSING, null, "1"),
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 1;
+                    rule.prior_notice_duration_min = 30;
+                    rule.prior_notice_last_time = "19:00:00";
+                }),
+                Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_LAST_TIME)
+            ),
+            // Prior notice service id: cond. forbidden
+            Arguments.of(
+                fromBlankBookingRule(rule -> {
+                    rule.booking_type = 0;
+                    rule.prior_notice_service_id = "1";
+                }),
                 Lists.newArrayList(NewGTFSErrorType.FLEX_FORBIDDEN_PRIOR_NOTICE_SERVICE_ID)
             )
         );
@@ -540,6 +629,33 @@ class FlexValidatorTest {
         }
     }
 
+    /**
+     * Stricter variation of the above where we check the number of errors too.
+     */
+    private void checkValidationErrorsMatchExpectedStrict(
+        List<NewGTFSError> validationErrors,
+        List<NewGTFSErrorType> expectedErrors
+    ) {
+        if (expectedErrors != null) {
+            assertEquals(expectedErrors.size(), validationErrors.size());
+        }
+        checkValidationErrorsMatchExpectedErrors(validationErrors, expectedErrors);
+    }
+
+    /**
+     * Check that validation errors is just one error of a specific type and bad value.
+     */
+    private void checkSingleError(
+        List<NewGTFSError> validationErrors,
+        NewGTFSErrorType errorType,
+        int badValue
+    ) {
+        assertFalse(validationErrors.isEmpty());
+        assertEquals(1, validationErrors.size());
+        assertEquals(errorType, validationErrors.get(0).errorType);
+        assertEquals(Integer.toString(badValue), validationErrors.get(0).badValue);
+    }
+
     private static FareRule createFareRule(String containsId, String destinationId, String originId) {
         FareRule fareRule = new FareRule();
         fareRule.contains_id = containsId;
@@ -548,24 +664,20 @@ class FlexValidatorTest {
         return fareRule;
     }
 
-    private static BookingRule createBookingRule(
-        int priorNoticeDurationMin,
-        int bookingType,
-        int priorNoticeDurationMax,
-        int priorNoticeLastDay,
-        int priorNoticeStartDay,
-        String priorNoticeStartTime,
-        String priorNoticeServiceId
-    ) {
+    private static BookingRule blankBookingRule() {
         BookingRule bookingRule = new BookingRule();
-        bookingRule.prior_notice_duration_min = priorNoticeDurationMin;
-        bookingRule.booking_type = bookingType;
-        bookingRule.prior_notice_duration_max = priorNoticeDurationMax;
-        bookingRule.prior_notice_last_day = priorNoticeLastDay;
-        bookingRule.prior_notice_start_day = priorNoticeStartDay;
-        bookingRule.prior_notice_start_time = priorNoticeStartTime;
-        bookingRule.prior_notice_service_id = priorNoticeServiceId;
+        bookingRule.booking_type = INT_MISSING;
+        bookingRule.prior_notice_duration_min = INT_MISSING;
+        bookingRule.prior_notice_duration_max = INT_MISSING;
+        bookingRule.prior_notice_last_day = INT_MISSING;
+        bookingRule.prior_notice_start_day = INT_MISSING;
         return bookingRule;
+    }
+
+    private static BookingRule fromBlankBookingRule(Consumer<BookingRule> ruleModifier) {
+        BookingRule rule = blankBookingRule();
+        ruleModifier.accept(rule);
+        return rule;
     }
 
     private static Location createLocation(String locationId) {
@@ -653,11 +765,14 @@ class FlexValidatorTest {
         return stopTime;
     }
 
-    private static StopTime createStopTimeForContinuousPickupTest(
-        int startPickupDropOffWindow
+    private static StopTime createContinuousStopTime(
+        int startPickupDropOffWindow,
+        int continuousPickupOrDropOff
     ) {
         StopTime stopTime = new StopTime();
         stopTime.start_pickup_drop_off_window = startPickupDropOffWindow;
+        stopTime.continuous_pickup = continuousPickupOrDropOff;
+        stopTime.continuous_drop_off = continuousPickupOrDropOff;
         return stopTime;
     }
 
@@ -688,7 +803,7 @@ class FlexValidatorTest {
         return stopTime;
     }
 
-    private static Route creeateRoute(int continuousDropOff, int continuousPickup) {
+    private static Route createRoute(int continuousDropOff, int continuousPickup) {
         Route route = new Route();
         route.route_id = "route-id-1";
         route.continuous_drop_off = continuousDropOff;
