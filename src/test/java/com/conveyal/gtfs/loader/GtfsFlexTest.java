@@ -15,7 +15,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -23,7 +22,6 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.conveyal.gtfs.GTFS.load;
 import static com.conveyal.gtfs.GTFS.validate;
 import static com.conveyal.gtfs.TestUtils.assertThatSqlCountQueryYieldsExpectedCount;
 import static com.conveyal.gtfs.TestUtils.getResourceFileName;
@@ -37,58 +35,49 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  * Load in a GTFS feed with GTFS flex features, and ensure all needed fields are imported correctly.
  */
 class GtfsFlexTest {
-    private static String islandTransitTestDBName;
-    private static DataSource islandTransitTestDataSource;
     private static String islandTransitTestNamespace;
-    private static String islandTransitGtfsZipFileName;
     private static String unexpectedGeoJsonZipFileName;
-    private static String flexFeedWithEmptyLocationGroups;
-    private static String flexFeedWithEmptyLocationGroupsDBName;
-    private static DataSource flexFeedWithEmptyLocationGroupsDataSource;
-    private static String flexFeedWithBadLocationGroupRefs;
-    private static String flexFeedWithBadLocationGroupRefsDBName;
-    private static DataSource flexFeedWithBadLocationGroupRefsDataSource;
+
+    private static TestFeed islandTransitFeed;
+    private static TestFeed emptyLocationGroupsFeed;
+    private static TestFeed badLocGroupRefsFeed;
 
     @BeforeAll
     static void setUpClass() throws IOException {
-        islandTransitTestDBName = TestUtils.generateNewDB();
-        islandTransitTestDataSource = TestUtils.createTestDataSource(String.format("jdbc:postgresql://localhost/%s", islandTransitTestDBName));
-        islandTransitGtfsZipFileName = getResourceFileName("real-world-gtfs-feeds/islandtransit-wa-us--flex-v2.zip");
-        FeedLoadResult feedLoadResult = load(islandTransitGtfsZipFileName, islandTransitTestDataSource);
-        islandTransitTestNamespace = feedLoadResult.uniqueIdentifier;
-        validate(islandTransitTestNamespace, islandTransitTestDataSource);
         unexpectedGeoJsonZipFileName = TestUtils.zipFolderFiles("fake-agency-unexpected-geojson", true);
-        flexFeedWithEmptyLocationGroups = getResourceFileName("real-world-gtfs-feeds/bellhop-flex.zip");
-        flexFeedWithEmptyLocationGroupsDBName = TestUtils.generateNewDB();
-        flexFeedWithEmptyLocationGroupsDataSource = TestUtils.createTestDataSource(String.format("jdbc:postgresql://localhost/%s", flexFeedWithEmptyLocationGroupsDBName));
-        flexFeedWithBadLocationGroupRefs = getResourceFileName("real-world-gtfs-feeds/bellhop-flex-comma-content.zip");
-        flexFeedWithBadLocationGroupRefsDBName = TestUtils.generateNewDB();
-        flexFeedWithBadLocationGroupRefsDataSource = TestUtils.createTestDataSource(String.format("jdbc:postgresql://localhost/%s", flexFeedWithBadLocationGroupRefsDBName));
+
+        islandTransitFeed = new TestFeed(getResourceFileName("real-world-gtfs-feeds/islandtransit-wa-us--flex-v2.zip"));
+        FeedLoadResult feedLoadResult = GTFS.load(islandTransitFeed.fileName, islandTransitFeed.dataSource);
+        islandTransitTestNamespace = feedLoadResult.uniqueIdentifier;
+        validate(islandTransitTestNamespace, islandTransitFeed.dataSource);
+
+        emptyLocationGroupsFeed = new TestFeed(getResourceFileName("real-world-gtfs-feeds/bellhop-flex.zip"));
+        badLocGroupRefsFeed = new TestFeed(getResourceFileName("real-world-gtfs-feeds/bellhop-flex-comma-content.zip"));
     }
 
     @AfterAll
     static void tearDownClass() {
-        TestUtils.dropDB(islandTransitTestDBName);
-        TestUtils.dropDB(flexFeedWithEmptyLocationGroupsDBName);
-        TestUtils.dropDB(flexFeedWithBadLocationGroupRefsDBName);
+        islandTransitFeed.dropDB();
+        emptyLocationGroupsFeed.dropDB();
+        badLocGroupRefsFeed.dropDB();
     }
 
     @Test
     void hasLoadedExpectedNumberOfBookingRules() {
         String query = buildQuery(islandTransitTestNamespace, "booking_rules","booking_rule_id","booking_route_32584");
-        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 1);
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitFeed.dataSource, query, 1);
     }
 
     @Test
     void hasLoadedExpectedNumberOfStopTimes() {
         String query = buildQuery(islandTransitTestNamespace, "stop_times","pickup_booking_rule_id","booking_route_32584");
-        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 16);
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitFeed.dataSource, query, 16);
     }
 
     @Test
     void hasLoadedExpectedNumberOfLocationGroups() {
         String query = buildQuery(islandTransitTestNamespace, "location_groups","location_group_id","4209757");
-        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 1);
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitFeed.dataSource, query, 1);
     }
 
     @Test
@@ -96,19 +85,19 @@ class GtfsFlexTest {
         // There are 16 rows for location_group_id 4209757 in the location_group_stops.txt file. These are compress into
         // a single database entry, one location_group_id with many stop ids.
         String query = buildQuery(islandTransitTestNamespace, "location_group_stops","location_group_id","4209757");
-        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 1);
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitFeed.dataSource, query, 1);
     }
 
     @Test
     void hasLoadedExpectedNumberOfLocations() {
         String query = buildQuery(islandTransitTestNamespace, "locations","geometry_type","polygon");
-        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 3);
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitFeed.dataSource, query, 3);
     }
 
     @Test
     void hasLoadedExpectedNumberOfPatternStops() {
         String query = buildQuery(islandTransitTestNamespace, "pattern_stops","pattern_id","1");
-        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, 67);
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitFeed.dataSource, query, 67);
     }
 
     @ParameterizedTest
@@ -118,7 +107,7 @@ class GtfsFlexTest {
             namespace,
             field,
             value);
-        assertThatSqlCountQueryYieldsExpectedCount(islandTransitTestDataSource, query, expectedCount);
+        assertThatSqlCountQueryYieldsExpectedCount(islandTransitFeed.dataSource, query, expectedCount);
     }
 
     private static Stream<Arguments> createLocationShapeChecks() {
@@ -157,7 +146,7 @@ class GtfsFlexTest {
     void canLoadAndWriteToFlexContentZipFile() throws IOException {
         // create a temp file for this test
         File outZip = File.createTempFile("islandtransit-wa-us--flex-v2", ".zip");
-        GTFSFeed feed = GTFSFeed.fromFile(islandTransitGtfsZipFileName);
+        GTFSFeed feed = GTFSFeed.fromFile(islandTransitFeed.fileName);
         feed.toFile(outZip.getAbsolutePath());
         feed.close();
         assertThat(outZip.exists(), is(true));
@@ -227,13 +216,13 @@ class GtfsFlexTest {
 
     @Test
     void canLoadFeedWithEmptyLocationGroups() {
-        FeedLoadResult loadResult = GTFS.load(flexFeedWithEmptyLocationGroups, flexFeedWithEmptyLocationGroupsDataSource);
+        FeedLoadResult loadResult = GTFS.load(emptyLocationGroupsFeed.fileName, emptyLocationGroupsFeed.dataSource);
         assertEquals(0, loadResult.errorCount);
     }
 
     @Test
     void canLoadFeedWithOneLocationGroups() {
-        FeedLoadResult loadResult = GTFS.load(flexFeedWithBadLocationGroupRefs, flexFeedWithBadLocationGroupRefsDataSource);
+        FeedLoadResult loadResult = GTFS.load(badLocGroupRefsFeed.fileName, badLocGroupRefsFeed.dataSource);
         assertEquals(0, loadResult.errorCount);
     }
 }
