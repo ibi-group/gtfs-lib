@@ -83,7 +83,7 @@ public class GeoJsonUtil {
      * The front end uses (for now) geometry types defined by react-leaflet-draw rather than those explicitly in the
      * flex spec. Here we'll just convert the flex spec types to those used by the front end.
      */
-    private static String getGeometryType(String geometryType, List<String> errors) {
+    private static String getGeometryType(String geometryType) {
         switch (geometryType) {
             case "LINESTRING":
                 return GEOMETRY_TYPE_POLYLINE;
@@ -112,7 +112,7 @@ public class GeoJsonUtil {
         ArrayList<Location> locations = new ArrayList<>();
         Set<String> seenLocationIds = new HashSet<>();
         for (Feature feature : featureCollection.getFeatures()) {
-            String geometryType = getGeometryType(feature.getGeometryType().getName(), errors);
+            String geometryType = getGeometryType(feature.getGeometryType().getName());
             Location location = new Location();
             String locationId = feature.getId();
 
@@ -202,7 +202,7 @@ public class GeoJsonUtil {
         Set<String> seenLocationIds = new HashSet<>();
         for (Feature feature : featureCollection.getFeatures()) {
             Geometry geometry = feature.getFeature().getGeometry();
-            String geometryType = getGeometryType(geometry.getGeometryType().getName(), errors);
+            String geometryType = getGeometryType(geometry.getGeometryType().getName());
             String locationId = feature.getId();
             if (!isValidLocation(locationId, geometryType, seenLocationIds)) continue;
             switch (geometryType) {
