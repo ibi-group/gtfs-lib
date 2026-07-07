@@ -5,10 +5,12 @@ import com.conveyal.gtfs.error.NewGTFSErrorType;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.storage.StorageException;
 import com.conveyal.gtfs.util.CsvReaderUtil;
+import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
+import mil.nga.sf.geojson.FeatureCollection;
 import org.apache.commons.dbutils.DbUtils;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
@@ -23,6 +25,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.*;
+import static com.conveyal.gtfs.loader.Table.LOCATION_GEO_JSON_FILE_NAME;
+import static com.conveyal.gtfs.loader.Table.isLocationTable;
 import static com.conveyal.gtfs.model.Entity.human;
 import static com.conveyal.gtfs.util.Util.randomIdString;
 
@@ -87,6 +91,9 @@ public class JdbcGtfsLoader {
 
     // Contains references to unique entity IDs during load stage used for referential integrity check.
     private ReferenceTracker referenceTracker = new ReferenceTracker();
+
+    // Caching of geojson locations
+    private FeatureCollection geojsonLocations;
 
     public JdbcGtfsLoader(String gtfsFilePath, DataSource dataSource) {
         this.gtfsFilePath = gtfsFilePath;
@@ -324,12 +331,33 @@ public class JdbcGtfsLoader {
     }
 
     /**
+     * One-time load of the locations.geojson file, so that its content is not validated multiple times.
+     */
+    private FeatureCollection loadLocationsGeojson(Table table) {
+        LOG.info("Loading data for {}, first supporting table {}", LOCATION_GEO_JSON_FILE_NAME, table.name);
+        final String tableFileName = LOCATION_GEO_JSON_FILE_NAME;
+        ZipEntry zipEntry = CsvReaderUtil.getZipEntry(table, tableFileName, zip, errorStorage);
+        List<String> errors = new ArrayList<>();
+        FeatureCollection features = GeoJsonUtil.getGeoJsonLocations(zip, zipEntry, errors);
+        // TODO refactor below
+        if (!errors.isEmpty() && errorStorage != null) {
+            NewGTFSErrorType errorType = CsvReaderUtil.getErrorTypeForTable(tableFileName);
+            errors.forEach(error -> errorStorage.storeError(NewGTFSError.forFeed(errorType, error)));
+        }
+        return features;
+    }
+
+    /**
      * This function will throw any exception that occurs. Those exceptions will be handled by the outer load method.
      *
      * @return number of rows that were loaded.
      */
     private int loadInternal(Table table) throws Exception {
         CsvReader csvReader = null;
+        if (isLocationTable(table.name) && geojsonLocations == null) {
+            geojsonLocations = loadLocationsGeojson(table);
+        }
+
         try {
             csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(table, zip, errorStorage);
             if (csvReader == null) {

@@ -6,6 +6,7 @@ import com.conveyal.gtfs.model.LocationShape;
 import com.csvreader.CsvReader;
 import com.google.common.collect.ImmutableSet;
 import mil.nga.sf.Geometry;
+import mil.nga.sf.GeometryType;
 import mil.nga.sf.LineString;
 import mil.nga.sf.Point;
 import mil.nga.sf.Polygon;
@@ -91,11 +92,6 @@ public class GeoJsonUtil {
                 return GEOMETRY_TYPE_POLYGON;
             // TODO: Add additional geometry types.
             default:
-                // Effectively, MultiPolygon, Polygon and MultiLineString types aren't supported yet.
-                logErrorMessage(
-                    String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, geometryType),
-                    errors
-                );
                 return null;
         }
     }
@@ -264,6 +260,40 @@ public class GeoJsonUtil {
         shape.geometry_pt_lat = geometryPtLat;
         shape.geometry_pt_lon = geometryPtLon;
         return shape;
+    }
+
+    /**
+     * Get the geojson locations and perform basic checks.
+     */
+    public static FeatureCollection getGeoJsonLocations(
+        ZipFile zipFile,
+        ZipEntry entry,
+        List<String> errors
+    ) {
+        FeatureCollection features = getFeaturesFromGeoJson(zipFile, entry, errors);
+        flagUnsupportedGeometryTypes(features, errors);
+        return features;
+    }
+
+    private static void flagUnsupportedGeometryTypes(FeatureCollection features, List<String> errors) {
+        if (features != null) {
+            for (Feature feature : features.getFeatures()) {
+                GeometryType geometryType = feature.getGeometryType();
+                switch (geometryType.name()) {
+                    case "LINESTRING":
+                    case "POLYGON":
+                        break;
+                    default:
+                        // Effectively, MultiPolygon, Polygon and MultiLineString types aren't supported yet.
+                        logErrorMessage(
+                            String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE,
+                                String.format("%s:%s", feature.getId(), geometryType)
+                            ),
+                            errors
+                        );
+                }
+            }
+        }
     }
 
     /**
