@@ -27,7 +27,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -316,22 +315,6 @@ public class GeoJsonUtil {
             locationShapes.forEach(locationShape -> csvContent.append(locationShape.toCsvRow()));
         }
         return new CsvReader(new StringReader(csvContent.toString()));
-    }
-
-    /**
-     * Extract the locations from GeoJSON.
-     */
-    public static List<Location> getLocationsFromGeoJson(ZipFile zipFile, ZipEntry entry, List<String> errors) {
-        FeatureCollection features = getFeaturesFromGeoJson(zipFile, entry, errors);
-        return (features == null) ? Collections.emptyList() : GeoJsonUtil.unpackLocations(features, errors);
-    }
-
-    /**
-     * Extract the location shapes from GeoJSON.
-     */
-    public static List<LocationShape> getLocationShapesFromGeoJson(ZipFile zipFile, ZipEntry entry, List<String> errors) {
-        FeatureCollection features = getFeaturesFromGeoJson(zipFile, entry, errors);
-        return (features == null) ? Collections.emptyList() : GeoJsonUtil.unpackLocationShapes(features, errors);
     }
 
     /**
