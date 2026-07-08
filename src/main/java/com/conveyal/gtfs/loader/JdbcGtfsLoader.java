@@ -331,33 +331,12 @@ public class JdbcGtfsLoader {
     }
 
     /**
-     * One-time load of the locations.geojson file, so that its content is not validated multiple times.
-     */
-    private FeatureCollection loadLocationsGeojson(Table table) {
-        LOG.info("Loading data for {}, first supporting table {}", LOCATION_GEO_JSON_FILE_NAME, table.name);
-        final String tableFileName = LOCATION_GEO_JSON_FILE_NAME;
-        ZipEntry zipEntry = CsvReaderUtil.getZipEntry(table, tableFileName, zip, errorStorage);
-        List<String> errors = new ArrayList<>();
-        FeatureCollection features = GeoJsonUtil.getGeoJsonLocations(zip, zipEntry, errors);
-        // TODO refactor below
-        if (!errors.isEmpty() && errorStorage != null) {
-            NewGTFSErrorType errorType = CsvReaderUtil.getErrorTypeForTable(tableFileName);
-            errors.forEach(error -> errorStorage.storeError(NewGTFSError.forFeed(errorType, error)));
-        }
-        return features;
-    }
-
-    /**
      * This function will throw any exception that occurs. Those exceptions will be handled by the outer load method.
      *
      * @return number of rows that were loaded.
      */
     private int loadInternal(Table table) throws Exception {
         CsvReader csvReader = null;
-        if (isLocationTable(table.name) && geojsonLocations == null) {
-            geojsonLocations = loadLocationsGeojson(table);
-        }
-
         try {
             csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(table, zip, errorStorage);
             if (csvReader == null) {

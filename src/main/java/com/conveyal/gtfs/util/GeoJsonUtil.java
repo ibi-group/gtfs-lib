@@ -120,6 +120,9 @@ public class GeoJsonUtil {
             Location location = new Location();
             String locationId = feature.getId();
 
+            // Flag invalid locations here only and not in unpackLocationShapes
+            // to avoid duplicate errors about unsupported geometry types.
+            flagUnsupportedGeometryType(feature, errors);
             if (!isValidLocation(locationId, geometryType, seenLocationIds)) continue;
 
             location.location_id = locationId;
@@ -261,37 +264,20 @@ public class GeoJsonUtil {
         return shape;
     }
 
-    /**
-     * Get the geojson locations and perform basic checks.
-     */
-    public static FeatureCollection getGeoJsonLocations(
-        ZipFile zipFile,
-        ZipEntry entry,
-        List<String> errors
-    ) {
-        FeatureCollection features = getFeaturesFromGeoJson(zipFile, entry, errors);
-        flagUnsupportedGeometryTypes(features, errors);
-        return features;
-    }
-
-    private static void flagUnsupportedGeometryTypes(FeatureCollection features, List<String> errors) {
-        if (features != null) {
-            for (Feature feature : features.getFeatures()) {
-                GeometryType geometryType = feature.getGeometryType();
-                switch (geometryType.name()) {
-                    case "LINESTRING":
-                    case "POLYGON":
-                        break;
-                    default:
-                        // Effectively, MultiPolygon, Polygon and MultiLineString types aren't supported yet.
-                        logErrorMessage(
-                            String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE,
-                                String.format("%s:%s", feature.getId(), geometryType)
-                            ),
-                            errors
-                        );
-                }
-            }
+    private static void flagUnsupportedGeometryType(Feature feature, List<String> errors) {
+        GeometryType geometryType = feature.getGeometryType();
+        switch (geometryType.name()) {
+            case "LINESTRING":
+            case "POLYGON":
+                break;
+            default:
+                // Effectively, MultiPolygon, Polygon and MultiLineString types aren't supported yet.
+                logErrorMessage(
+                    String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE,
+                        String.format("%s:%s", feature.getId(), geometryType)
+                    ),
+                    errors
+                );
         }
     }
 
