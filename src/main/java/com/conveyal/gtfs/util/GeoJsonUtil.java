@@ -49,6 +49,7 @@ public class GeoJsonUtil {
     private static final Logger LOG = LoggerFactory.getLogger(GeoJsonUtil.class);
     public static final String GEOMETRY_TYPE_POLYLINE = "polyline";
     public static final String GEOMETRY_TYPE_POLYGON = "polygon";
+    public static final String GEOMETRY_TYPE_UNKNOWN = "UNKNOWN";
     public static final String UNSUPPORTED_GEOMETRY_TYPE_MESSAGE = "Geometry type %s unknown or not supported.";
     private static final String STOP_NAME = "stop_name";
     private static final String STOP_DESC = "stop_desc";
@@ -89,6 +90,9 @@ public class GeoJsonUtil {
                 return GEOMETRY_TYPE_POLYLINE;
             case "POLYGON":
                 return GEOMETRY_TYPE_POLYGON;
+            case "MULTIPOLYGON":
+            case "MULTILINESTRING":
+                return GEOMETRY_TYPE_UNKNOWN;
             // TODO: Add additional geometry types.
             default:
                 return null;
