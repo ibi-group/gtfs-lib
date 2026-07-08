@@ -5,12 +5,10 @@ import com.conveyal.gtfs.error.NewGTFSErrorType;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.storage.StorageException;
 import com.conveyal.gtfs.util.CsvReaderUtil;
-import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
-import mil.nga.sf.geojson.FeatureCollection;
 import org.apache.commons.dbutils.DbUtils;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
@@ -25,8 +23,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.conveyal.gtfs.error.NewGTFSErrorType.*;
-import static com.conveyal.gtfs.loader.Table.LOCATION_GEO_JSON_FILE_NAME;
-import static com.conveyal.gtfs.loader.Table.isLocationTable;
 import static com.conveyal.gtfs.model.Entity.human;
 import static com.conveyal.gtfs.util.Util.randomIdString;
 
@@ -90,10 +86,7 @@ public class JdbcGtfsLoader {
     private SQLErrorStorage errorStorage;
 
     // Contains references to unique entity IDs during load stage used for referential integrity check.
-    private final ReferenceTracker referenceTracker = new ReferenceTracker();
-
-    // Caching of geojson locations
-    private FeatureCollection geojsonLocations;
+    private ReferenceTracker referenceTracker = new ReferenceTracker();
 
     public JdbcGtfsLoader(String gtfsFilePath, DataSource dataSource) {
         this.gtfsFilePath = gtfsFilePath;
