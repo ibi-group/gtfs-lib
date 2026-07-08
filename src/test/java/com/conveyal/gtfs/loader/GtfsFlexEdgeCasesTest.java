@@ -24,23 +24,21 @@ class GtfsFlexEdgeCasesTest {
      */
     @Test
     void canHandleUnexpectedGeoJsonValues() throws IOException {
-        GTFSFeed feed = GTFSFeed.fromFile(TestUtils.zipFolderFiles("fake-agency-unexpected-geojson", true));
-        assertEquals("loc_1", feed.locations.entrySet().iterator().next().getKey());
-        assertEquals("Plymouth Metrolink", feed.locations.values().iterator().next().stop_name);
-        assertEquals("743", feed.locations.values().iterator().next().zone_id);
-        assertEquals("http://www.test.com", feed.locations.values().iterator().next().stop_url.toString());
-        assertNull(feed.locations.values().iterator().next().stop_desc);
+        try (GTFSFeed feed = GTFSFeed.fromFile(TestUtils.zipFolderFiles("fake-agency-unexpected-geojson", true))) {
+            assertEquals("loc_1", feed.locations.entrySet().iterator().next().getKey());
+            assertEquals("Plymouth Metrolink", feed.locations.values().iterator().next().stop_name);
+            assertEquals("743", feed.locations.values().iterator().next().zone_id);
+            assertEquals("http://www.test.com", feed.locations.values().iterator().next().stop_url.toString());
+            assertNull(feed.locations.values().iterator().next().stop_desc);
+        }
     }
 
     @ParameterizedTest
     @MethodSource("createSpecialCaseFeeds")
     void canLoadSpecialCaseFeed(String fileName, int errorCount) {
-        TestFeed testFeed = new TestFeed(fileName);
-        try {
+        try (TestFeed testFeed = new TestFeed(fileName)) {
             FeedLoadResult loadResult = GTFS.load(testFeed.fileName, testFeed.dataSource);
             assertEquals(errorCount, loadResult.errorCount);
-        } finally {
-            testFeed.dropDB();
         }
     }
 
