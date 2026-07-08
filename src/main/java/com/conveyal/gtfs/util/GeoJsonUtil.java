@@ -92,6 +92,8 @@ public class GeoJsonUtil {
                 return GEOMETRY_TYPE_POLYGON;
             case "MULTIPOLYGON":
             case "MULTILINESTRING":
+                // Although these types are not supported yet, return a not-null geometry type,
+                // so that the feature id can be registered and used for reference integrity checks.
                 return GEOMETRY_TYPE_UNKNOWN;
             // TODO: Add additional geometry types.
             default:
