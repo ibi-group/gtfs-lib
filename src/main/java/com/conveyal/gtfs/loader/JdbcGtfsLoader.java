@@ -90,7 +90,7 @@ public class JdbcGtfsLoader {
     private SQLErrorStorage errorStorage;
 
     // Contains references to unique entity IDs during load stage used for referential integrity check.
-    private ReferenceTracker referenceTracker = new ReferenceTracker();
+    private final ReferenceTracker referenceTracker = new ReferenceTracker();
 
     // Caching of geojson locations
     private FeatureCollection geojsonLocations;
