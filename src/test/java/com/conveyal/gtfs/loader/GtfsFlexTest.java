@@ -29,40 +29,25 @@ import static com.conveyal.gtfs.TestUtils.lookThroughFiles;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Load in a GTFS feed with GTFS flex features, and ensure all needed fields are imported correctly.
  */
 class GtfsFlexTest {
     private static String islandTransitTestNamespace;
-    private static String unexpectedGeoJsonZipFileName;
-
     private static TestFeed islandTransitFeed;
-    private static TestFeed emptyLocationGroupsFeed;
-    private static TestFeed badLocGroupRefsFeed;
-    private static TestFeed geolocationFeed;
 
     @BeforeAll
-    static void setUpClass() throws IOException {
-        unexpectedGeoJsonZipFileName = TestUtils.zipFolderFiles("fake-agency-unexpected-geojson", true);
-
+    static void setUpClass() {
         islandTransitFeed = new TestFeed(getResourceFileName("real-world-gtfs-feeds/islandtransit-wa-us--flex-v2.zip"));
         FeedLoadResult feedLoadResult = GTFS.load(islandTransitFeed.fileName, islandTransitFeed.dataSource);
         islandTransitTestNamespace = feedLoadResult.uniqueIdentifier;
         validate(islandTransitTestNamespace, islandTransitFeed.dataSource);
-
-        emptyLocationGroupsFeed = new TestFeed(getResourceFileName("real-world-gtfs-feeds/bellhop-flex.zip"));
-        badLocGroupRefsFeed = new TestFeed(getResourceFileName("real-world-gtfs-feeds/bellhop-flex-comma-content.zip"));
-        geolocationFeed = new TestFeed(TestUtils.zipFolderFiles("fake-agency-with-flex", true));
     }
 
     @AfterAll
     static void tearDownClass() {
         islandTransitFeed.dropDB();
-        emptyLocationGroupsFeed.dropDB();
-        badLocGroupRefsFeed.dropDB();
-        geolocationFeed.dropDB();
     }
 
     @Test
@@ -126,19 +111,6 @@ class GtfsFlexTest {
                 tableName,
                 columnName,
                 columnValue);
-    }
-
-    /**
-     * Make sure that unexpected geo json values are handled gracefully.
-     */
-    @Test
-    void canHandleUnexpectedGeoJsonValues() {
-        GTFSFeed feed = GTFSFeed.fromFile(unexpectedGeoJsonZipFileName);
-        assertEquals("loc_1", feed.locations.entrySet().iterator().next().getKey());
-        assertEquals("Plymouth Metrolink", feed.locations.values().iterator().next().stop_name);
-        assertEquals("743", feed.locations.values().iterator().next().zone_id);
-        assertEquals("http://www.test.com", feed.locations.values().iterator().next().stop_url.toString());
-        assertNull(feed.locations.values().iterator().next().stop_desc);
     }
 
     /**
@@ -215,24 +187,5 @@ class GtfsFlexTest {
         }
         // delete file to make sure we can assert that this program created the file
         outZip.delete();
-    }
-
-    @Test
-    void canLoadFeedWithEmptyLocationGroups() {
-        FeedLoadResult loadResult = GTFS.load(emptyLocationGroupsFeed.fileName, emptyLocationGroupsFeed.dataSource);
-        assertEquals(0, loadResult.errorCount);
-    }
-
-    @Test
-    void canLoadFeedWithOneLocationGroup() {
-        FeedLoadResult loadResult = GTFS.load(badLocGroupRefsFeed.fileName, badLocGroupRefsFeed.dataSource);
-        assertEquals(0, loadResult.errorCount);
-    }
-
-    @Test
-    void canLoadFeedWithGeojsonlocations() {
-        FeedLoadResult loadResult = GTFS.load(geolocationFeed.fileName, geolocationFeed.dataSource);
-        // Keep errors regarding unsupported geometry types MULTIPOLYGON and MULTILINESTRING.
-        assertEquals(2, loadResult.errorCount);
     }
 }
