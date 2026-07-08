@@ -47,8 +47,26 @@ public class CsvReaderUtil {
      */
     public static CsvReader getCsvReaderAccordingToFileName(Table table, ZipFile zipFile, SQLErrorStorage sqlErrorStorage) {
         final String tableFileName = getTableFileNameWithExtension(table.name);
-        ZipEntry entry = getZipEntry(table, tableFileName, zipFile, sqlErrorStorage);
-        if (entry == null) return null;
+        ZipEntry entry = zipFile.getEntry(tableFileName);
+        if (entry == null) {
+            // Table was not found, check if it is in a subdirectory.
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry e = entries.nextElement();
+                // Include the file separator prefix to force the complete file name to be considered.
+                // This prevents stop_areas.txt from being loaded instead of areas.txt.
+                if (e.getName().endsWith(String.format("%s%s", File.separator, tableFileName))) {
+                    entry = e;
+                    if (sqlErrorStorage != null) {
+                        sqlErrorStorage.storeError(NewGTFSError.forTable(table, TABLE_IN_SUBDIRECTORY));
+                    }
+                    break;
+                }
+            }
+        }
+        if (entry == null) {
+            return null;
+        }
 
         try {
             List<String> errors = new ArrayList<>();
@@ -70,35 +88,6 @@ public class CsvReaderUtil {
             e.printStackTrace();
             return null;
         }
-    }
-
-    /**
-     * Helper for getting the zip entry for the given table and table file name.
-     */
-    public static ZipEntry getZipEntry(
-        Table table,
-        String tableFileName,
-        ZipFile zipFile,
-        SQLErrorStorage sqlErrorStorage
-    ) {
-        ZipEntry entry = zipFile.getEntry(tableFileName);
-        if (entry == null) {
-            // Table was not found, check if it is in a subdirectory.
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry e = entries.nextElement();
-                // Include the file separator prefix to force the complete file name to be considered.
-                // This prevents stop_areas.txt from being loaded instead of areas.txt.
-                if (e.getName().endsWith(String.format("%s%s", File.separator, tableFileName))) {
-                    entry = e;
-                    if (sqlErrorStorage != null) {
-                        sqlErrorStorage.storeError(NewGTFSError.forTable(table, TABLE_IN_SUBDIRECTORY));
-                    }
-                    break;
-                }
-            }
-        }
-        return entry;
     }
 
     /**
