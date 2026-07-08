@@ -275,12 +275,7 @@ public class GeoJsonUtil {
                 break;
             default:
                 // Effectively, MultiPolygon and MultiLineString types aren't supported yet.
-                logErrorMessage(
-                    String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE,
-                        String.format("%s:%s", feature.getId(), geometryType)
-                    ),
-                    errors
-                );
+                logErrorMessage(String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, geometryType), errors);
         }
     }
 
