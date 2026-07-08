@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
- * Load in a GTFS feed with GTFS flex features, and ensure all needed fields are imported correctly.
+ * Edge-case tests for GTFS flex feeds.
  */
 class GtfsFlexEdgeCasesTest {
     /**
