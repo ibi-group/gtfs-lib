@@ -1,8 +1,6 @@
 package com.conveyal.gtfs.storage;
 
-import com.conveyal.gtfs.error.NewGTFSError;
 import com.conveyal.gtfs.error.NewGTFSErrorType;
-import org.apache.http.util.ExceptionUtils;
 
 /**
  * Some errors are detected way down the call stack where we don't have a reference to the errorStorage object.
