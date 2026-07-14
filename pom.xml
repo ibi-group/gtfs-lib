@@ -51,6 +51,7 @@
   <!-- Define some variables to be used elsewhere in the build. -->
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jackson.version>2.18.6</jackson.version>
   </properties>
 
   <!-- Define where the artifacts produced by this build will be deployed -->
@@ -291,13 +292,32 @@
       <artifactId>commons-dbutils</artifactId>
       <version>1.6</version>
     </dependency>
-    <!-- For uploading / downloading things from Amazon S3.
-         We should really eliminate this functionality, it's out of scope for this gtfs-lib library. -->
+    <!-- Note: Unless we are explicit with the jackson dependencies listed below, other versions included in other
+    dependencies may cause conflicts. Specifically, there is an issue with the JsonAlias annotation (used in
+    com.conveyal.datatools.manager.models.Snapshot) not working properly.-->
     <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk-s3</artifactId>
-      <version>1.11.18</version>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>${jackson.version}</version>
     </dependency>
+    <!-- Handles parsing yaml config -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+
     <!-- Very efficient collections of primitive data types for Java. -->
     <dependency>
       <groupId>net.sf.trove4j</groupId>
