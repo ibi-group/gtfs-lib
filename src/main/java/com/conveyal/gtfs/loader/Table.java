@@ -939,12 +939,19 @@ public class Table {
      * tables return the table name with the .txt file extension.
      */
     public static String getTableFileNameWithExtension(String tableName) {
-        if (tableName.equals(Table.LOCATIONS.name) || tableName.equals(Table.LOCATION_SHAPES.name)) {
+        if (isLocationTable(tableName)) {
             LOG.info("Loading data for {}, into supporting table {}", LOCATION_GEO_JSON_FILE_NAME, tableName);
             return LOCATION_GEO_JSON_FILE_NAME;
         } else {
             return getTableFileName(tableName, ".txt");
         }
+    }
+
+    /**
+     * Whether the given table name deals with locations.
+     */
+    public static boolean isLocationTable(String tableName) {
+        return tableName.equals(Table.LOCATIONS.name) || tableName.equals(Table.LOCATION_SHAPES.name);
     }
 
     public static String getTableFileName(String tableName) {

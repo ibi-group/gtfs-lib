@@ -6,6 +6,7 @@ import com.conveyal.gtfs.model.LocationShape;
 import com.csvreader.CsvReader;
 import com.google.common.collect.ImmutableSet;
 import mil.nga.sf.Geometry;
+import mil.nga.sf.GeometryType;
 import mil.nga.sf.LineString;
 import mil.nga.sf.Point;
 import mil.nga.sf.Polygon;
@@ -49,6 +50,7 @@ public class GeoJsonUtil {
     private static final Logger LOG = LoggerFactory.getLogger(GeoJsonUtil.class);
     public static final String GEOMETRY_TYPE_POLYLINE = "polyline";
     public static final String GEOMETRY_TYPE_POLYGON = "polygon";
+    public static final String GEOMETRY_TYPE_UNKNOWN = "UNKNOWN";
     public static final String UNSUPPORTED_GEOMETRY_TYPE_MESSAGE = "Geometry type %s unknown or not supported.";
     private static final String STOP_NAME = "stop_name";
     private static final String STOP_DESC = "stop_desc";
@@ -83,19 +85,19 @@ public class GeoJsonUtil {
      * The front end uses (for now) geometry types defined by react-leaflet-draw rather than those explicitly in the
      * flex spec. Here we'll just convert the flex spec types to those used by the front end.
      */
-    private static String getGeometryType(String geometryType, List<String> errors) {
+    private static String getGeometryType(String geometryType) {
         switch (geometryType) {
             case "LINESTRING":
                 return GEOMETRY_TYPE_POLYLINE;
             case "POLYGON":
                 return GEOMETRY_TYPE_POLYGON;
+            case "MULTIPOLYGON":
+            case "MULTILINESTRING":
+                // Although these types are not supported yet, return a not-null geometry type,
+                // so that the feature id can be registered and used for reference integrity checks.
+                return GEOMETRY_TYPE_UNKNOWN;
             // TODO: Add additional geometry types.
             default:
-                // Effectively, MultiPolygon, Polygon and MultiLineString types aren't supported yet.
-                logErrorMessage(
-                    String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, geometryType),
-                    errors
-                );
                 return null;
         }
     }
@@ -117,10 +119,13 @@ public class GeoJsonUtil {
         ArrayList<Location> locations = new ArrayList<>();
         Set<String> seenLocationIds = new HashSet<>();
         for (Feature feature : featureCollection.getFeatures()) {
-            String geometryType = getGeometryType(feature.getGeometryType().getName(), errors);
+            String geometryType = getGeometryType(feature.getGeometryType().getName());
             Location location = new Location();
             String locationId = feature.getId();
 
+            // Flag invalid locations here only and not in unpackLocationShapes
+            // to avoid duplicate errors about unsupported geometry types.
+            flagUnsupportedGeometryType(feature, errors);
             if (!isValidLocation(locationId, geometryType, seenLocationIds)) continue;
 
             location.location_id = locationId;
@@ -207,7 +212,7 @@ public class GeoJsonUtil {
         Set<String> seenLocationIds = new HashSet<>();
         for (Feature feature : featureCollection.getFeatures()) {
             Geometry geometry = feature.getFeature().getGeometry();
-            String geometryType = getGeometryType(geometry.getGeometryType().getName(), errors);
+            String geometryType = getGeometryType(geometry.getGeometryType().getName());
             String locationId = feature.getId();
             if (!isValidLocation(locationId, geometryType, seenLocationIds)) continue;
             switch (geometryType) {
@@ -240,10 +245,6 @@ public class GeoJsonUtil {
                     break;
                 // TODO: Add additional geometry types.
                 default:
-                    logErrorMessage(
-                        String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, geometryType),
-                        errors
-                    );
             }
         }
         return locationShapes;
@@ -264,6 +265,18 @@ public class GeoJsonUtil {
         shape.geometry_pt_lat = geometryPtLat;
         shape.geometry_pt_lon = geometryPtLon;
         return shape;
+    }
+
+    private static void flagUnsupportedGeometryType(Feature feature, List<String> errors) {
+        GeometryType geometryType = feature.getGeometryType();
+        switch (geometryType.name()) {
+            case "LINESTRING":
+            case "POLYGON":
+                break;
+            default:
+                // Effectively, MultiPolygon and MultiLineString types aren't supported yet.
+                logErrorMessage(String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, geometryType), errors);
+        }
     }
 
     /**

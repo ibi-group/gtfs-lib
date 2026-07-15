@@ -302,7 +302,7 @@ public abstract class Entity implements Serializable {
          */
         public void loadTable(ZipFile zip) throws IOException {
             String tableFileName = tableName + ".txt";
-            if (tableName.equals(Table.LOCATIONS.name) || tableName.equals(Table.LOCATION_SHAPES.name)) {
+            if (Table.isLocationTable(tableName)) {
                 tableFileName = LOCATION_GEO_JSON_FILE_NAME;
                 LOG.info("Loading data for {}, into supporting table {}", tableFileName, tableName);
             }
