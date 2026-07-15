@@ -1,0 +1,26 @@
+{
+  "data" : {
+    "feed" : {
+      "fare_transfer_rule" : [ {
+        "duration_limit" : "7200",
+        "duration_limit_type" : "1",
+        "fare_product_id" : "prod_rapid_transit_quick_subway",
+        "fare_transfer_type" : "0",
+        "from_leg_group_id" : "leg_airport_rapid_transit_quick_subway",
+        "id" : 2,
+        "to_leg_group_id" : "leg_local_bus_quick_subway",
+        "transfer_count" : null
+      }, {
+        "duration_limit" : null,
+        "duration_limit_type" : null,
+        "fare_product_id" : "prod_rapid_transit_quick_subway",
+        "fare_transfer_type" : "0",
+        "from_leg_group_id" : "leg_airport_rapid_transit_quick_subway",
+        "id" : 3,
+        "to_leg_group_id" : "leg_rapid_transit_quick_subway",
+        "transfer_count" : null
+      } ],
+      "feed_version" : "1.0"
+    }
+  }
+}

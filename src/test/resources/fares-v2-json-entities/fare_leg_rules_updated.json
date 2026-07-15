@@ -1,0 +1,12 @@
+{
+  "id": 1,
+  "leg_group_id": "leg_airport_rapid_transit_quick_subway updated",
+  "network_id": "rapid_transit updated",
+  "from_area_id": "area_bl_airport updated",
+  "to_area_id": "",
+  "fare_product_id": "prod_rapid_transit_quick_subway updated",
+  "from_timeframe_group_id": "timeframe_regular updated",
+  "to_timeframe_group_id": "",
+  "transfer_only": "",
+  "rule_priority": ""
+}

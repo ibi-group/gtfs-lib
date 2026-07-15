@@ -40,7 +40,13 @@ public class GTFSGraphQLTest {
     private static DataSource testInjectionDataSource;
     private static String testInjectionNamespace;
     private static String badCalendarDateNamespace;
+
+    public static String faresDBName;
+    private static DataSource faresDataSource;
+    private static String faresNamespace;
+
     private static final int TEST_TIMEOUT = 5000;
+    private static final Duration testDuration = Duration.ofMillis(TEST_TIMEOUT);
 
     @BeforeAll
     public static void setUpClass() throws IOException {
@@ -75,18 +81,31 @@ public class GTFSGraphQLTest {
         testInjectionNamespace = injectionFeedLoadResult.uniqueIdentifier;
         // validate feed to create additional tables
         validate(testInjectionNamespace, testInjectionDataSource);
+
+        String folderName = "fake-agency-with-fares-v2";
+        String faresZipFileName = TestUtils.zipFolderFiles(folderName, true);
+        // create a new database
+        faresDBName = TestUtils.generateNewDB();
+        String faresConnectionUrl = String.format("jdbc:postgresql://localhost/%s", faresDBName);
+        faresDataSource = TestUtils.createTestDataSource(faresConnectionUrl);
+        // load feed into db
+        FeedLoadResult faresFeedLoadResult = load(faresZipFileName, faresDataSource);
+        faresNamespace = faresFeedLoadResult.uniqueIdentifier;
+        // validate feed to create additional tables
+        validate(faresNamespace, faresDataSource);
     }
 
     @AfterAll
     public static void tearDownClass() {
         TestUtils.dropDB(testDBName);
         TestUtils.dropDB(testInjectionDBName);
+        TestUtils.dropDB(faresDBName);
     }
 
     /** Tests that the graphQL schema can initialize. */
     @Test
     void canInitialize() {
-        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
+        assertTimeout(testDuration, () -> {
             GTFSGraphQL.initialize(testDataSource);
             GTFSGraphQL.getGraphQl();
         });
@@ -132,7 +151,7 @@ public class GTFSGraphQLTest {
         });
     }
 
-    /** Tests that the patterns of a feed can be fetched. */
+    /** Tests that the poly lines of a feed can be fetched. */
     @Test
     void canFetchPolylines() {
         assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
@@ -236,6 +255,12 @@ public class GTFSGraphQLTest {
         });
     }
 
+    void canFetchStopsFaresV2() {
+        assertTimeout(testDuration, () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedStopsFaresV2.txt"), matchesSnapshot());
+        });
+    }
+
     /** Tests that the trips of a feed can be fetched. */
     @Test
     void canFetchTrips() {
@@ -270,7 +295,7 @@ public class GTFSGraphQLTest {
         });
     }
 
-    /** Tests that the stop times of a feed can be fetched. */
+    /** Tests that the services of a feed can be fetched. */
     @Test
     void canFetchServices() {
         assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
@@ -278,7 +303,69 @@ public class GTFSGraphQLTest {
         });
     }
 
-    /** Tests that the stop times of a feed can be fetched. */
+    @Test
+    void canFetchAreas() {
+        assertTimeout(testDuration, () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedAreas.txt"), matchesSnapshot());
+        });
+    }
+
+    @Test
+    void canFetchFareTransferRules() {
+        assertTimeout(testDuration, () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedFareTransferRules.txt"), matchesSnapshot());
+        });
+    }
+
+    @Test
+    void canFetchFareProducts() {
+        assertTimeout(testDuration, () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedFareProducts.txt"), matchesSnapshot());
+        });
+    }
+
+    @Test
+    void canFetchFareMedias() {
+        assertTimeout(testDuration, () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedFareMedias.txt"), matchesSnapshot());
+        });
+    }
+
+    @Test
+    void canFetchFareLegRules() {
+        assertTimeout(testDuration, () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedFareLegRules.txt"), matchesSnapshot());
+        });
+    }
+
+    @Test
+    void canFetchFareLegJoinRules() {
+        assertTimeout(testDuration, () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedFareLegJoinRules.txt"), matchesSnapshot());
+        });
+    }
+
+    @Test
+    void canFetchTimeFrames() {
+        assertTimeout(testDuration, () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedTimeFrames.txt"), matchesSnapshot());
+        });
+    }
+
+    @Test
+    void canFetchNetworks() {
+        assertTimeout(testDuration, () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedNetworks.txt"), matchesSnapshot());
+        });
+    }
+
+    @Test
+    void canFetchRiderCategories() {
+        assertTimeout(testDuration, () -> {
+            MatcherAssert.assertThat(queryFaresV2GraphQL("feedRiderCategories.txt"), matchesSnapshot());
+        });
+    }
+
     @Test
     void canFetchRoutesAndFilterTripsByDateAndTime() {
         Map<String, Object> variables = new HashMap<>();
@@ -286,7 +373,7 @@ public class GTFSGraphQLTest {
         variables.put("date", "20170915");
         variables.put("from", 24000);
         variables.put("to", 28000);
-        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
+        assertTimeout(testDuration, () -> {
             MatcherAssert.assertThat(
                 queryGraphQL("feedRoutesAndTripsByTime.graphql", variables, testDataSource),
                 matchesSnapshot()
@@ -294,7 +381,7 @@ public class GTFSGraphQLTest {
         });
     }
 
-    /** Tests that the limit argument applies properly to a fetcher defined with autolimit set to false. */
+    /** Tests that the limit argument applies properly to a fetcher defined with auto limit set to false. */
     @Test
     void canFetchNestedEntityWithLimit() {
         assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
@@ -312,9 +399,9 @@ public class GTFSGraphQLTest {
     }
 
     /**
-     * Tests whether a graphQL query that has superflous and redundant nesting can find the right result.
+     * Tests whether a graphQL query that has superfluous and redundant nesting can find the right result.
      * If the graphQL dataloader is enabled correctly, there will not be any repeating sql queries in the logs.
-     * Furthermore, some queries should have been combined together.
+     * Furthermore, some queries should have been combined.
      */
     @Test
     void canFetchMultiNestedEntitiesWithoutLimits() {
@@ -330,7 +417,7 @@ public class GTFSGraphQLTest {
     void canFetchStopsWithoutParentStationColumn() {
         Map<String, Object> variables = new HashMap<>();
         variables.put("namespace", badCalendarDateNamespace);
-        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
+        assertTimeout(testDuration, () -> {
             MatcherAssert.assertThat(
                 queryGraphQL(
                     "feedStopWithChildren.graphql",
@@ -351,7 +438,7 @@ public class GTFSGraphQLTest {
         Map<String, Object> variables = new HashMap<>();
         variables.put("namespace", testInjectionNamespace);
         variables.put("stop_id", Arrays.asList("' OR 1=1;"));
-        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
+        assertTimeout(testDuration, () -> {
             MatcherAssert.assertThat(
                 queryGraphQL(
                     "feedStopsByStopId.graphql",
@@ -369,7 +456,7 @@ public class GTFSGraphQLTest {
      */
     @Test
     void canSanitizeSQLInjectionSentAsKeyValue() {
-        assertTimeout(Duration.ofMillis(TEST_TIMEOUT), () -> {
+        assertTimeout(testDuration, () -> {
             // manually update the route_id key in routes and patterns
             String injection = "'' OR 1=1; Select ''99";
             Connection connection = testInjectionDataSource.getConnection();
@@ -398,6 +485,18 @@ public class GTFSGraphQLTest {
         Map<String, Object> variables = new HashMap<>();
         variables.put("namespace", testNamespace);
         return queryGraphQL(queryFilename, variables, testDataSource);
+    }
+
+    /**
+     * Helper method to make a fares V2 query with default variables.
+     *
+     * @param queryFilename the filename that should be used to generate the GraphQL query.  This file must be present
+     *                      in the `src/test/resources/graphql` folder
+     */
+    private Map<String, Object> queryFaresV2GraphQL(String queryFilename) throws IOException {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("namespace", faresNamespace);
+        return queryGraphQL(queryFilename, variables, faresDataSource);
     }
 
     /**

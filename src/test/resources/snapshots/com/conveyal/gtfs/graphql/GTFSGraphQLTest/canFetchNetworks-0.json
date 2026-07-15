@@ -1,0 +1,11 @@
+{
+  "data" : {
+    "feed" : {
+      "feed_version" : "1.0",
+      "network" : [ {
+        "network_id" : "1",
+        "network_name" : "Forbidden because network id is defined in routes"
+      } ]
+    }
+  }
+}

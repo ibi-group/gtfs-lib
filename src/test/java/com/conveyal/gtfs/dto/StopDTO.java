@@ -17,6 +17,7 @@ public class StopDTO {
     public Integer location_type;
     public Integer wheelchair_boarding;
     public String platform_code;
+    public String stop_area_ids;
 
     public static StopDTO create(String stopId, String stopName, double latitude, double longitude) {
         StopDTO stopDTO = new StopDTO();

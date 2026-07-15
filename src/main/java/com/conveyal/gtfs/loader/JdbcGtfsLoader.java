@@ -157,8 +157,17 @@ public class JdbcGtfsLoader {
             result.agency = load(Table.AGENCY);
             result.calendar = load(Table.CALENDAR);
             result.calendarDates = load(Table.CALENDAR_DATES);
+            result.timeFrames = load(Table.TIME_FRAMES);
             result.routes = load(Table.ROUTES);
             result.fareAttributes = load(Table.FARE_ATTRIBUTES);
+            result.fareMedias = load(Table.FARE_MEDIAS);
+            result.fareProducts = load(Table.FARE_PRODUCTS);
+            result.networks = load(Table.NETWORKS);
+            result.areas = load(Table.AREAS);
+            result.fareLegRules = load(Table.FARE_LEG_RULES);
+            result.fareLegJoinRules = load(Table.FARE_LEG_JOIN_RULES);
+            result.fareTransferRules = load(Table.FARE_TRANSFER_RULES);
+            result.riderCategories = load(Table.RIDER_CATEGORIES);
             result.feedInfo = load(Table.FEED_INFO);
             result.shapes = load(Table.SHAPES);
             result.patterns = load(Table.PATTERNS); // refs shapes and routes.
