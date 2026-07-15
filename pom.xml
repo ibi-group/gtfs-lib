@@ -292,6 +292,7 @@
       <artifactId>commons-dbutils</artifactId>
       <version>1.6</version>
     </dependency>
+    <!-- jackson handles serialization and code annotations -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
@@ -302,7 +303,6 @@
       <artifactId>jackson-databind</artifactId>
       <version>${jackson.version}</version>
     </dependency>
-
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
