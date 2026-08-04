@@ -1,5 +1,7 @@
 package com.conveyal.gtfs.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -14,7 +16,7 @@ public class CsvUtil {
 
     public static String createCSVRow(String... columnData) {
         return Arrays.stream(columnData)
-            .map(col -> col.contains(",") ? String.format("\"%s\"", col) : col)
+            .map(col -> col.contains(",") ? StringUtils.wrap(col, "\"") : col)
             .collect(Collectors.joining(",")) + System.lineSeparator();
     }
 }
