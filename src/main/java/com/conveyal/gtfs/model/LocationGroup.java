@@ -2,7 +2,6 @@ package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.graphql.fetchers.MapFetcher;
-import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
 import graphql.schema.GraphQLObjectType;
 
@@ -138,7 +137,7 @@ public class LocationGroup extends Entity {
     private static CsvReader produceCsvPayload(SortedMap<String, String> locationGroups) {
         StringBuilder csvContent = new StringBuilder();
         csvContent.append(CSV_HEADER);
-        locationGroups.forEach((key, value) -> csvContent.append(GeoJsonUtil.createCSVRow(key, value)));
+        locationGroups.forEach((key, value) -> csvContent.append(createRow(key, value)));
         return new CsvReader(new StringReader(csvContent.toString()));
     }
 
