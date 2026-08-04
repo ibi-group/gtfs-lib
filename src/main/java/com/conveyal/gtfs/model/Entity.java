@@ -550,7 +550,9 @@ public abstract class Entity implements Serializable {
      * Create a CSV row by combining an array of values plus another one.
      */
     protected static String createRow(String[] values, String extraValue) {
-        return String.format("%s,%s%n", String.join(",", values), extraValue);
+        String[] allValues = Arrays.copyOf(values, values.length + 1);
+        allValues[values.length] = extraValue;
+        return createRow(allValues);
     }
 
     /**
