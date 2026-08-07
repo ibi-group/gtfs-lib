@@ -15,6 +15,7 @@ import com.conveyal.gtfs.error.TimeParseError;
 import com.conveyal.gtfs.error.URLParseError;
 import com.conveyal.gtfs.loader.DateField;
 import com.conveyal.gtfs.util.CsvReaderUtil;
+import com.conveyal.gtfs.util.CsvUtil;
 import com.conveyal.gtfs.util.Deduplicator;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
@@ -542,14 +543,16 @@ public abstract class Entity implements Serializable {
      * Create a row from the column values provided.
      */
     protected static String createRow(String... columnValues) {
-        return String.join(",", columnValues) + System.lineSeparator();
+        return CsvUtil.createCSVRow(columnValues);
     }
 
     /**
      * Create a CSV row by combining an array of values plus another one.
      */
     protected static String createRow(String[] values, String extraValue) {
-        return String.format("%s,%s%n", String.join(",", values), extraValue);
+        String[] allValues = Arrays.copyOf(values, values.length + 1);
+        allValues[values.length] = extraValue;
+        return createRow(allValues);
     }
 
     /**
