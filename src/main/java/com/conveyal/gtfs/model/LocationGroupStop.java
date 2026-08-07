@@ -1,7 +1,6 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
 
 import java.io.IOException;
@@ -108,8 +107,8 @@ public class LocationGroupStop extends Entity {
     }
 
     public String toCsvRow() {
-        // GeoJsonUtil will add quotes for content with commas.
-        return GeoJsonUtil.createCSVRow(location_group_id, (stop_id != null) ? stop_id : "");
+        // Underlying call to CsvUtil will add quotes for content with commas.
+        return createRow(location_group_id, (stop_id != null) ? stop_id : "");
     }
 
     /**

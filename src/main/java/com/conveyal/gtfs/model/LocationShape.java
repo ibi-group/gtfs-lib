@@ -1,7 +1,6 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -99,7 +98,7 @@ public class LocationShape extends Entity {
      * as part of the unpacking of GeoJSON data to CSV.
      */
     public static String header() {
-        return GeoJsonUtil.createCSVRow(
+        return createRow(
             LOCATION_ID_NAME,
             GEOMETRY_ID_NAME,
             GEOMETRY_PT_LAT_NAME,
@@ -112,7 +111,7 @@ public class LocationShape extends Entity {
      * as part of the unpacking of GeoJSON data to CSV.
      */
     public String toCsvRow() {
-        return GeoJsonUtil.createCSVRow(
+        return createRow(
             location_id,
             geometry_id,
             Double.toString(geometry_pt_lat),
