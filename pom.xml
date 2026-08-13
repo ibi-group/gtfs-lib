@@ -51,7 +51,7 @@
   <!-- Define some variables to be used elsewhere in the build. -->
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jackson.version>2.13.1</jackson.version>
+    <jackson.version>2.18.6</jackson.version>
   </properties>
 
   <!-- Define where the artifacts produced by this build will be deployed -->
@@ -258,9 +258,9 @@
     </dependency>
     <!-- Snapshotting library for testing -->
     <dependency>
-      <groupId>com.github.ibi-group</groupId>
+      <groupId>com.github.conveyal</groupId>
       <artifactId>java-snapshot-matcher</artifactId>
-      <version>master</version>
+      <version>3495b32f7b4d3f82590e0a2284029214070b6984</version>
       <scope>test</scope>
     </dependency>
     <!-- Disk-backed storage that looks like a Java map. -->
@@ -339,24 +339,6 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-text</artifactId>
       <version>1.10.0</version>
-    </dependency>
-    <!-- Used for GeoJSON packing and unpacking (https://github.com/ngageoint/simple-features-geojson-java) -->
-    <dependency>
-      <groupId>mil.nga.sf</groupId>
-      <artifactId>sf-geojson</artifactId>
-      <version>2.0.5</version>
-    </dependency>
-    <!-- Used to support GeoJSON -->
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-      <version>${jackson.version}</version>
-    </dependency>
-    <!-- Used to support GeoJSON -->
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>${jackson.version}</version>
     </dependency>
   </dependencies>
 </project>
