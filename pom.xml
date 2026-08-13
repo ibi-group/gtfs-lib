@@ -292,6 +292,22 @@
       <artifactId>commons-dbutils</artifactId>
       <version>1.6</version>
     </dependency>
+    <!-- jackson handles serialization and code annotations -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
     <!-- For uploading / downloading things from Amazon S3.
          We should really eliminate this functionality, it's out of scope for this gtfs-lib library. -->
     <dependency>
@@ -339,6 +355,12 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-text</artifactId>
       <version>1.10.0</version>
+    </dependency>
+    <!-- Used for GeoJSON packing and unpacking (https://github.com/ngageoint/simple-features-geojson-java) -->
+    <dependency>
+      <groupId>mil.nga.sf</groupId>
+      <artifactId>sf-geojson</artifactId>
+      <version>2.0.5</version>
     </dependency>
   </dependencies>
 </project>
