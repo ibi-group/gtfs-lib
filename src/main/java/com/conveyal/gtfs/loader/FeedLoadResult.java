@@ -22,15 +22,20 @@ public class FeedLoadResult implements Serializable {
     public String fatalException;
 
     public TableLoadResult agency;
+    public TableLoadResult bookingRules;
     public TableLoadResult calendar;
     public TableLoadResult calendarDates;
     public TableLoadResult fareAttributes;
     public TableLoadResult fareRules;
     public TableLoadResult feedInfo;
     public TableLoadResult frequencies;
+    public TableLoadResult locations;
+    public TableLoadResult locationShapes;
     public TableLoadResult patterns;
     public TableLoadResult routes;
     public TableLoadResult shapes;
+    public TableLoadResult locationGroup;
+    public TableLoadResult locationGroupStops;
     public TableLoadResult stops;
     public TableLoadResult stopTimes;
     public TableLoadResult transfers;
@@ -63,14 +68,19 @@ public class FeedLoadResult implements Serializable {
      */
     public FeedLoadResult (boolean constructTableResults) {
         agency = new TableLoadResult();
+        bookingRules = new TableLoadResult();
         calendar = new TableLoadResult();
         calendarDates = new TableLoadResult();
         fareAttributes = new TableLoadResult();
         fareRules = new TableLoadResult();
         feedInfo = new TableLoadResult();
         frequencies = new TableLoadResult();
+        locations = new TableLoadResult();
+        locationShapes = new TableLoadResult();
         routes = new TableLoadResult();
         shapes = new TableLoadResult();
+        locationGroup = new TableLoadResult();
+        locationGroupStops = new TableLoadResult();
         stops = new TableLoadResult();
         stopTimes = new TableLoadResult();
         transfers = new TableLoadResult();
@@ -90,5 +100,18 @@ public class FeedLoadResult implements Serializable {
         networks = new TableLoadResult();
         routeNetworks = new TableLoadResult();
         riderCategories = new TableLoadResult();
+    }
+
+    /**
+     * Under the GTFS Flex spec, there is no value that definitively defines a flex feed. It is therefore assumed that
+     * if any of these flex only tables are populated, the feed is a GTFS Flex feed.
+     */
+    public boolean isGTFSFlex() {
+        return
+            (bookingRules != null && bookingRules.rowCount > 0) ||
+            (locations != null && locations.rowCount > 0) ||
+            (locationGroup != null && locationGroup.rowCount > 0) ||
+            (locationGroupStops != null && locationGroupStops.rowCount > 0) ||
+            (locationShapes != null && locationShapes.rowCount > 0);
     }
 }

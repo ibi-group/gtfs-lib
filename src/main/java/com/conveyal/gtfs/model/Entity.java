@@ -5,6 +5,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.error.DateParseError;
 import com.conveyal.gtfs.error.EmptyFieldError;
 import com.conveyal.gtfs.error.EmptyTableError;
+import com.conveyal.gtfs.error.LocationParseError;
 import com.conveyal.gtfs.error.MissingColumnError;
 import com.conveyal.gtfs.error.MissingTableError;
 import com.conveyal.gtfs.error.NumberParseError;
@@ -14,12 +15,12 @@ import com.conveyal.gtfs.error.TableInSubdirectoryError;
 import com.conveyal.gtfs.error.TimeParseError;
 import com.conveyal.gtfs.error.URLParseError;
 import com.conveyal.gtfs.loader.DateField;
+import com.conveyal.gtfs.loader.Table;
 import com.conveyal.gtfs.util.CsvReaderUtil;
 import com.conveyal.gtfs.util.CsvUtil;
 import com.conveyal.gtfs.util.Deduplicator;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -51,6 +53,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static com.conveyal.gtfs.loader.Table.LOCATION_GEO_JSON_FILE_NAME;
 import static com.conveyal.gtfs.model.Route.ROUTE_FILE_NAME;
 import static com.conveyal.gtfs.model.Route.packRouteNetworks;
 import static com.conveyal.gtfs.model.Route.packRoutes;
@@ -299,27 +302,39 @@ public abstract class Entity implements Serializable {
          * @param zip the zip file from which to read a table
          */
         public void loadTable(ZipFile zip) throws IOException {
-            String fileName = tableName + ".txt";
-            ZipEntry entry = zip.getEntry(fileName);
+            String tableFileName = tableName + ".txt";
+            if (Table.isLocationTable(tableName)) {
+                tableFileName = LOCATION_GEO_JSON_FILE_NAME;
+                LOG.info("Loading data for {}, into supporting table {}", tableFileName, tableName);
+            }
+            ZipEntry entry = zip.getEntry(tableFileName);
             if (entry == null) {
-                entry = getEntryFromZipFile(zip, fileName);
-                if (entry != null) {
-                    feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(fileName, "")));
-                } else {
-                    /* This GTFS table did not exist in the zip. */
-                    if (this.isRequired()) {
-                        feed.errors.add(new MissingTableError(tableName));
-                    } else {
-                        LOG.info("Table {} was missing but it is not required.", tableName);
+                Enumeration<? extends ZipEntry> entries = zip.entries();
+                // check if table is contained within sub-directory
+                while (entries.hasMoreElements()) {
+                    ZipEntry e = entries.nextElement();
+                    if (e.getName().endsWith(tableName + ".txt")) {
+                        entry = e;
+                        feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(tableFileName, "")));
                     }
-                    return;
                 }
+                /* This GTFS table did not exist in the zip. */
+                if (this.isRequired()) {
+                    feed.errors.add(new MissingTableError(tableName));
+                } else {
+                    LOG.info("Table {} was missing but it is not required.", tableName);
+                }
+
+                if (entry == null) return;
             }
             LOG.info("Loading GTFS table {} from {}", tableName, entry);
             List<String> errors = new ArrayList<>();
             try {
-                reader = CsvReaderUtil.getCsvReaderAccordingToFileName(tableName, zip, entry, errors);
-
+                this.reader = CsvReaderUtil.getCsvReaderAccordingToFileName(tableFileName, tableName, zip, entry, errors);
+                if (!errors.isEmpty()) {
+                    // Error processing locations, location groups or location group stops.
+                    errors.forEach(error -> feed.errors.add(new LocationParseError(tableName, error)));
+                }
                 boolean hasHeaders = reader.readHeaders();
                 if (!hasHeaders) {
                     feed.errors.add(new EmptyTableError(tableName));
@@ -509,12 +524,19 @@ public abstract class Entity implements Serializable {
         }
     }
 
-
     // shared code between reading and writing
     public static final String human (long n) {
         if (n >= 1000000) return String.format("%.1fM", n/1000000.0);
         if (n >= 1000) return String.format("%.1fk", n/1000.0);
         else return String.format("%d", n);
+    }
+
+    public static int getIntValue(String value) {
+        return value == null ? INT_MISSING : Integer.parseInt(value);
+    }
+
+    public static double getDoubleValue(String value) {
+        return value == null ? DOUBLE_MISSING : Double.parseDouble(value);
     }
 
     /**

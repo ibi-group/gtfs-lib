@@ -308,7 +308,13 @@
       <artifactId>jackson-annotations</artifactId>
       <version>${jackson.version}</version>
     </dependency>
-
+    <!-- For uploading / downloading things from Amazon S3.
+         We should really eliminate this functionality, it's out of scope for this gtfs-lib library. -->
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-s3</artifactId>
+      <version>1.11.18</version>
+    </dependency>
     <!-- Very efficient collections of primitive data types for Java. -->
     <dependency>
       <groupId>net.sf.trove4j</groupId>
@@ -349,6 +355,12 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-text</artifactId>
       <version>1.10.0</version>
+    </dependency>
+    <!-- Used for GeoJSON packing and unpacking (https://github.com/ngageoint/simple-features-geojson-java) -->
+    <dependency>
+      <groupId>mil.nga.sf</groupId>
+      <artifactId>sf-geojson</artifactId>
+      <version>2.0.5</version>
     </dependency>
   </dependencies>
 </project>

@@ -176,11 +176,16 @@ public class JdbcGtfsLoader {
             result.trips = load(Table.TRIPS); // refs routes
             result.transfers = load(Table.TRANSFERS); // refs trips.
             result.frequencies = load(Table.FREQUENCIES); // refs trips
-            result.stopTimes = load(Table.STOP_TIMES);
+            result.locations = load(Table.LOCATIONS);
+            result.locationGroup = load(Table.LOCATION_GROUP);
+            result.locationGroupStops = load(Table.LOCATION_GROUP_STOPS);  // refs location groups.
+            result.bookingRules = load(Table.BOOKING_RULES);
+            result.stopTimes = load(Table.STOP_TIMES); // refs booking rules, location groups, locations and stops
             result.translations = load(Table.TRANSLATIONS);
             result.attributions = load(Table.ATTRIBUTIONS);
-
+            result.locationShapes = load(Table.LOCATION_SHAPES);
             result.errorCount = errorStorage.getErrorCount();
+
             // This will commit and close the single connection that has been shared between all preceding load steps.
             errorStorage.commitAndClose();
             zip.close();
@@ -333,14 +338,15 @@ public class JdbcGtfsLoader {
      * @return number of rows that were loaded.
      */
     private int loadInternal(Table table) throws Exception {
-        CsvReader csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(table, zip, errorStorage);
-        if (csvReader == null) {
-            LOG.info("File {} not found in gtfs zip file.", Table.getTableFileNameWithExtension(table.name));
-            // This GTFS table could not be opened in the zip, even in a subdirectory.
-            if (table.isRequired()) errorStorage.storeError(NewGTFSError.forTable(table, MISSING_TABLE));
-            return 0;
-        }
+        CsvReader csvReader = null;
         try {
+            csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(table, zip, errorStorage);
+            if (csvReader == null) {
+                LOG.info("File {} not found in gtfs zip file.", Table.getTableFileNameWithExtension(table.name));
+                // This GTFS table could not be opened in the zip, even in a subdirectory.
+                if (table.isRequired()) errorStorage.storeError(NewGTFSError.forTable(table, MISSING_TABLE));
+                return 0;
+            }
             LOG.info("Loading GTFS table {}", table.name);
             // Use the Postgres text load format if we're connected to that DBMS.
             boolean postgresText = (connection.getMetaData().getDatabaseProductName().equals("PostgreSQL"));
@@ -501,7 +507,7 @@ public class JdbcGtfsLoader {
             LOG.info("Done.");
             return numberOfRecordsLoaded;
         } finally {
-            csvReader.close();
+            if (csvReader != null) csvReader.close();
         }
     }
 

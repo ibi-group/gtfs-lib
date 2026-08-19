@@ -3,8 +3,10 @@ package com.conveyal.gtfs;
 import com.conveyal.gtfs.error.GTFSError;
 import com.conveyal.gtfs.loader.FeedLoadResult;
 import com.conveyal.gtfs.loader.JdbcGTFSFeedConverter;
+import com.conveyal.gtfs.loader.JdbcGtfsExporter;
 import com.conveyal.gtfs.model.*;
 import com.conveyal.gtfs.model.Calendar;
+import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.validator.Validator;
 import com.conveyal.gtfs.util.Util;
 import com.conveyal.gtfs.validator.service.GeoUtils;
@@ -30,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentNavigableMap;
@@ -60,16 +63,22 @@ public class GTFSFeed implements Cloneable, Closeable {
 
     /* Some of these should be multimaps since they don't have an obvious unique key. */
     public final Map<String, Agency> agency;
+    public final Map<String, BookingRule> bookingRules;
+    public final Map<String, Location> locations;
+    public final Map<String, LocationShape> locationShapes;
     public final Map<String, FeedInfo> feedInfo;
     // This is how you do a multimap in mapdb: https://github.com/jankotek/MapDB/blob/release-1.0/src/test/java/examples/MultiMap.java
     public final NavigableSet<Tuple2<String, Frequency>> frequencies;
     public final Map<String, Route> routes;
+    public final Map<String, LocationGroupStop> locationGroupStops;
+    public final Map<String, LocationGroup> locationGroup;
     public final Map<String, StopArea> stop_areas;
     public final Map<String, Stop> stops;
     public final Map<String, Transfer> transfers;
     public final BTreeMap<String, Trip> trips;
     public final Map<String, Translation> translations;
     public final Map<String, Attribution> attributions;
+    public final Map<String, Calendar> calendars;
 
     public final Set<String> transitIds = new HashSet<>();
     /** CRC32 of the GTFS file this was loaded from */
@@ -183,6 +192,13 @@ public class GTFSFeed implements Cloneable, Closeable {
         this.fares.putAll(fares);
         fares = null; // free memory
 
+        // Flex tables. These must be loaded before stop times. If any of these tables contain data it is assumed that
+        // we are working with a flex feed.
+        new BookingRule.Loader(this).loadTable(zip);
+        new LocationGroup.Loader(this).loadTable(zip);
+        new LocationGroupStop.Loader(this).loadTable(zip);
+        new Location.Loader(this).loadTable(zip);
+        new LocationShape.Loader(this).loadTable(zip);
         new Pattern.Loader(this).loadTable(zip);
         new RouteNetwork.Loader(this).loadTable(zip);
         new Route.Loader(this).loadTable(zip);
@@ -230,7 +246,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     public void toFile (String file) {
         File out = new File(file);
         try (
-            OutputStream os = new FileOutputStream(out);
+            OutputStream os = Files.newOutputStream(out.toPath());
             ZipOutputStream zip = new ZipOutputStream(os);
         ) {
             // write everything
@@ -260,6 +276,21 @@ public class GTFSFeed implements Cloneable, Closeable {
             new Trip.Writer(this).writeTable(zip);
             new StopTime.Writer(this).writeTable(zip);
             new Pattern.Writer(this).writeTable(zip);
+
+            if (!this.bookingRules.isEmpty()) new BookingRule.Writer(this).writeTable(zip);
+            if (!this.locationGroup.isEmpty()) new LocationGroup.Writer(this).writeTable(zip);
+            if (!this.locationGroupStops.isEmpty()) {
+                // Export location group stops.
+                JdbcGtfsExporter.writeLocationGroupStopsToFile(zip, new ArrayList<>(locationGroupStops.values()));
+            }
+            if (!this.locations.isEmpty()) {
+                // export locations
+                JdbcGtfsExporter.writeLocationsToFile(
+                    zip,
+                    new ArrayList<>(locations.values()),
+                    new ArrayList<>(locationShapes.values())
+                );
+            }
 
             // Fares v2.
             new Area.Writer(this).writeTable(zip);
@@ -394,6 +425,34 @@ public class GTFSFeed implements Cloneable, Closeable {
     public Shape getShape (String shape_id) {
         Shape shape = new Shape(this, shape_id);
         return shape.shape_dist_traveled.length > 0 ? shape : null;
+    }
+
+    /**
+     * MapDB-based implementation to find patterns.
+     *
+     * FIXME: Remove and make pattern finding happen during validation? We want to share the pattern finder between the
+     * two implementations (MapDB and RDBMS), apply the same validation process to both kinds of storage, and produce
+     * Patterns in the same way in both cases, during validation. This prevents us from iterating over every stopTime
+     * twice, since we're already iterating over all of them in validation. However, in this case it might not be costly
+     * to simply retrieve the stop times from the stop_times map.
+     */
+    public void findPatterns () {
+        PatternFinder patternFinder = new PatternFinder();
+        // Iterate over trips and process each trip and its stop times.
+        for (Trip trip : this.trips.values()) {
+            Iterable<StopTime> orderedStopTimesForTrip = this.getOrderedStopTimesForTrip(trip.trip_id);
+            patternFinder.processTrip(trip, orderedStopTimesForTrip);
+        }
+        Map<TripPatternKey, Pattern> patternObjects = patternFinder.createPatternObjects(
+            this.stops,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+        this.patterns.putAll(patternObjects.values().stream()
+                .collect(Collectors.toMap(Pattern::getId, pattern -> pattern)));
     }
 
     /**
@@ -681,6 +740,14 @@ public class GTFSFeed implements Cloneable, Closeable {
         time_frames = db.getTreeMap("time_frames");
         translations = db.getTreeMap("translations");
         attributions = db.getTreeMap("attributions");
+        calendars = db.getTreeMap("calendars");
+
+        // Flex tables.
+        locationGroup = db.getTreeMap("location_groups");
+        bookingRules = db.getTreeMap("booking_rules");
+        locations = db.getTreeMap("locations");
+        locationGroupStops = db.getTreeMap("location_group_stops");
+        locationShapes = db.getTreeMap("location_shapes");
         rider_categories = db.getTreeMap(RiderCategory.TABLE_NAME);
         feedId = db.getAtomicString("feed_id").get();
         checksum = db.getAtomicLong("checksum").get();
@@ -694,5 +761,17 @@ public class GTFSFeed implements Cloneable, Closeable {
         tripPatternMap = db.getTreeMap("patternForTrip");
 
         errors = db.getTreeSet("errors");
+    }
+
+    /**
+     * If booking rules, location group stops or location shapes have been created and contain data, the assumption is
+     * that this is a GTFS Flex feed. These tables must be loaded before this can be referenced. At the moment
+     * {@link StopTime} references this and is loaded after the check is made on these tables.
+     */
+    public boolean isGTFSFlexFeed() {
+        return
+            !bookingRules.isEmpty() ||
+            !locationGroupStops.isEmpty() ||
+            !locationShapes.isEmpty();
     }
 }

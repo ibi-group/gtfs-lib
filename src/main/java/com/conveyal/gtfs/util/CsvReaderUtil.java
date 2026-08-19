@@ -1,8 +1,11 @@
 package com.conveyal.gtfs.util;
 
 import com.conveyal.gtfs.error.NewGTFSError;
+import com.conveyal.gtfs.error.NewGTFSErrorType;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.loader.Table;
+import com.conveyal.gtfs.model.LocationGroup;
+import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.RouteNetwork;
 import com.conveyal.gtfs.model.Stop;
@@ -11,20 +14,29 @@ import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.conveyal.gtfs.error.NewGTFSErrorType.GEO_JSON_PARSING;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.LOCATION_GROUP_PARSING;
+import static com.conveyal.gtfs.error.NewGTFSErrorType.LOCATION_GROUP_STOPS_PARSING;
 import static com.conveyal.gtfs.error.NewGTFSErrorType.TABLE_IN_SUBDIRECTORY;
+import static com.conveyal.gtfs.loader.Table.LOCATION_GEO_JSON_FILE_NAME;
+import static com.conveyal.gtfs.loader.Table.LOCATION_GROUP_FILE_NAME;
+import static com.conveyal.gtfs.loader.Table.LOCATION_GROUP_STOPS_FILE_NAME;
 import static com.conveyal.gtfs.loader.Table.getTableFileNameWithExtension;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Set;
+
 import static com.conveyal.gtfs.model.Stop.STOPS_FILE_NAME;
 
 public class CsvReaderUtil {
@@ -44,26 +56,35 @@ public class CsvReaderUtil {
     public static CsvReader getCsvReaderAccordingToFileName(Table table, ZipFile zipFile, SQLErrorStorage sqlErrorStorage) {
         final String tableFileName = getTableFileNameWithExtension(table.name);
         ZipEntry entry = zipFile.getEntry(tableFileName);
-
         if (entry == null) {
-            entry = getEntryFromZipFile(zipFile, tableFileName);
-
-            if (entry != null && sqlErrorStorage != null) {
-                sqlErrorStorage.storeError(NewGTFSError.forTable(table, TABLE_IN_SUBDIRECTORY));
+            // Table was not found, check if it is in a subdirectory.
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry e = entries.nextElement();
+                // Include the file separator prefix to force the complete file name to be considered.
+                // This prevents stop_areas.txt from being loaded instead of areas.txt.
+                if (e.getName().endsWith(String.format("%s%s", File.separator, tableFileName))) {
+                    entry = e;
+                    if (sqlErrorStorage != null) {
+                        sqlErrorStorage.storeError(NewGTFSError.forTable(table, TABLE_IN_SUBDIRECTORY));
+                    }
+                    break;
+                }
             }
-            if (entry == null) {
-                return null;
-            }
+        }
+        if (entry == null) {
+            return null;
         }
 
         try {
             List<String> errors = new ArrayList<>();
-            CsvReader csvReader = getCsvReaderAccordingToFileName(tableFileName, zipFile, entry, errors);
+            CsvReader csvReader = getCsvReaderAccordingToFileName(tableFileName, table.name, zipFile, entry, errors);
             if (csvReader == null) {
                 return null;
             }
             if (!errors.isEmpty() && sqlErrorStorage != null) {
-                errors.forEach(error -> sqlErrorStorage.storeError(NewGTFSError.forFeed(null, error)));
+                NewGTFSErrorType errorType = getErrorTypeForTable(tableFileName);
+                errors.forEach(error -> sqlErrorStorage.storeError(NewGTFSError.forFeed(errorType, error)));
             }
             // Don't skip empty records. This is set to true by default on CsvReader. We want to check for empty records
             // during table load, so that they are logged as validation issues (WRONG_NUMBER_OF_FIELDS).
@@ -78,23 +99,59 @@ public class CsvReaderUtil {
     }
 
     /**
+     * Provide the correct error type based on the file being processed.
+     */
+    public static NewGTFSErrorType getErrorTypeForTable(String fileName) {
+        switch (fileName) {
+            case LOCATION_GEO_JSON_FILE_NAME:
+                return GEO_JSON_PARSING;
+            case LOCATION_GROUP_FILE_NAME:
+                return LOCATION_GROUP_PARSING;
+            case LOCATION_GROUP_STOPS_FILE_NAME:
+                return LOCATION_GROUP_STOPS_PARSING;
+            default:
+                return null;
+        }
+    }
+
+    /**
      * Create a {@link CsvReader} depending on the table to be loaded. If the table is location related unpack the data
      * first according to each individual case and load into a CSV reader, else, read the table contents directly into
      * the CSV reader.
      */
     public static CsvReader getCsvReaderAccordingToFileName(
         String tableFileName,
+        String name,
         ZipFile zipFile,
         ZipEntry entry,
         List<String> errors
     ) throws IOException {
-        if (tableFileName.equals(STOPS_FILE_NAME)) {
-            return getCsvReaderFromStopsFile(zipFile, entry, errors);
-        } else if (tableFileName.equals(Route.ROUTE_FILE_NAME)) {
-            return getCsvReaderFromRoutesFile(zipFile, entry, errors);
-        } else {
-            return getCsvReaderFromFile(zipFile, entry);
+        CsvReader defaultCsvReader = new CsvReader(new StringReader(""));
+        CsvReader csvReader;
+        CsvReader initialReader;
+        switch (tableFileName) {
+            case LOCATION_GEO_JSON_FILE_NAME:
+                csvReader = GeoJsonUtil.getCsvReaderFromGeoJson(name, zipFile, entry, errors);
+                break;
+            case LOCATION_GROUP_FILE_NAME:
+                initialReader = CsvReaderUtil.getCsvReaderForFile(zipFile, entry, errors, LocationGroup.NUMBER_OF_HEADERS);
+                csvReader = (initialReader != null) ? LocationGroup.getOrderedData(initialReader, errors) : defaultCsvReader;
+                break;
+            case LOCATION_GROUP_STOPS_FILE_NAME:
+                initialReader = CsvReaderUtil.getCsvReaderForFile(zipFile, entry, errors, LocationGroupStop.NUMBER_OF_HEADERS);
+                csvReader = (initialReader != null) ? LocationGroupStop.getParsedData(initialReader, errors) : defaultCsvReader;
+                break;
+            case STOPS_FILE_NAME:
+                csvReader = getCsvReaderFromStopsFile(zipFile, entry, errors);
+                break;
+            case Route.ROUTE_FILE_NAME:
+                csvReader = getCsvReaderFromRoutesFile(zipFile, entry, errors);
+                break;
+            default:
+                csvReader = getCsvReaderFromFile(zipFile, entry);
+                break;
         }
+        return csvReader;
     }
 
     /**

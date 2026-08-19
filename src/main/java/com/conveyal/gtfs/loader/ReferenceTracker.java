@@ -82,8 +82,29 @@ public class ReferenceTracker {
         // First, handle referential integrity check.
         boolean isOrderField = field.name.equals(orderField);
         if (field.isForeignReference()) {
+            // Check foreign references. If the foreign reference is present in one of the tables, there is no
+            // need to check the remainder. If no matching foreign reference is found, flag integrity error.
+            // Note: The reference table must be loaded before the table/value being currently checked.
+            boolean hasMatchingReference = false;
             TreeSet<String> badValues = new TreeSet<>();
-            if (!hasMatchingReference(field, value, badValues)) {
+            for (Table referenceTable : field.referenceTables) {
+                String referenceField = referenceTable.getKeyFieldName();
+                if (table.name.equals(Table.LOCATION_GROUP_STOPS.name) && field.name.equals("stop_id") && value.contains(",")) {
+                    // Special case for location group stops as the stop id field can be an array of stop ids.
+                    for (String reference : value.split(",")) {
+                        if (checkReference(referenceField, reference, badValues)) {
+                            hasMatchingReference = true;
+                            break;
+                        }
+                    }
+                } else {
+                    if (checkReference(referenceField, value, badValues)) {
+                        hasMatchingReference = true;
+                        break;
+                    }
+                }
+            }
+            if (!hasMatchingReference) {
                 // If the reference tracker does not contain a match.
                 NewGTFSErrorType errorType = (field.referenceTables.size() > 1)
                     ? MISSING_FOREIGN_TABLE_REFERENCE
@@ -156,6 +177,8 @@ public class ReferenceTracker {
     }
 
     /**
+<<<<<<< HEAD
+=======
      * Check foreign references. If the foreign reference is present in one of the tables, there is no
      * need to check the remainder. If no matching foreign reference is found, flag integrity error.
      * Note: The reference table must be loaded before the table/value being currently checked.

@@ -8,6 +8,7 @@ import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
 
@@ -22,6 +23,10 @@ public class TripPatternKey {
     public List<String> stops = new ArrayList<>();
     public TIntList pickupTypes = new TIntArrayList();
     public TIntList dropoffTypes = new TIntArrayList();
+    // Flex additions included in equality check.
+    public TIntList start_pickup_drop_off_window = new TIntArrayList();
+    public TIntList end_pickup_drop_off_window = new TIntArrayList();
+
     // Note, the lists below are not used in the equality check.
     public TIntList arrivalTimes = new TIntArrayList();
     public TIntList departureTimes = new TIntArrayList();
@@ -31,14 +36,30 @@ public class TripPatternKey {
     public TIntList continuous_drop_off = new TIntArrayList();
     public TDoubleList shapeDistances = new TDoubleArrayList();
 
+    // Flex additions
+    public List<Boolean> isFlexStop = new ArrayList<>();
+    public List<String> locationGroupIds = new ArrayList<>();
+    public List<String> locationIds = new ArrayList<>();
+    public List<String> pickup_booking_rule_id = new ArrayList<>();
+    public List<String> drop_off_booking_rule_id = new ArrayList<>();
+
+    /** An ordered list of stop, location group and location ids */
+    public List<String> orderedHalts = new ArrayList<>();
+
     public TripPatternKey (String routeId) {
         this.routeId = routeId;
     }
 
     public void addStopTime (StopTime st) {
+        isFlexStop.add((st.stop_id == null));
         stops.add(st.stop_id);
+        locationGroupIds.add(st.location_group_id);
+        locationIds.add(st.location_id);
+        orderedHalts.add(getStopOrLocationId(st));
         pickupTypes.add(resolvePickupOrDropOffType(st.pickup_type));
         dropoffTypes.add(resolvePickupOrDropOffType(st.drop_off_type));
+        start_pickup_drop_off_window.add(st.start_pickup_drop_off_window);
+        end_pickup_drop_off_window.add(st.end_pickup_drop_off_window);
         // Note, the items listed below are not used in the equality check.
         arrivalTimes.add(st.arrival_time);
         departureTimes.add(st.departure_time);
@@ -47,6 +68,22 @@ public class TripPatternKey {
         shapeDistances.add(st.shape_dist_traveled);
         continuous_pickup.add(st.continuous_pickup);
         continuous_drop_off.add(st.continuous_drop_off);
+        pickup_booking_rule_id.add(st.pickup_booking_rule_id);
+        drop_off_booking_rule_id.add(st.drop_off_booking_rule_id);
+    }
+
+    /**
+     * In order to maintain a continuous and ordered list of ids across stops, location groups, and locations determine
+     * which is populated/defined for this stop time and return.
+     */
+    private String getStopOrLocationId(StopTime st) {
+        if (st.stop_id != null) {
+            return st.stop_id;
+        } else if (st.location_group_id != null) {
+            return st.location_group_id;
+        } else {
+            return st.location_id;
+        }
     }
 
     /**
@@ -66,21 +103,22 @@ public class TripPatternKey {
 
         TripPatternKey that = (TripPatternKey) o;
 
-        if (dropoffTypes != null ? !dropoffTypes.equals(that.dropoffTypes) : that.dropoffTypes != null) return false;
-        if (pickupTypes != null ? !pickupTypes.equals(that.pickupTypes) : that.pickupTypes != null) return false;
-        if (routeId != null ? !routeId.equals(that.routeId) : that.routeId != null) return false;
-        if (stops != null ? !stops.equals(that.stops) : that.stops != null) return false;
+        if (!Objects.equals(dropoffTypes, that.dropoffTypes)) return false;
+        if (!Objects.equals(pickupTypes, that.pickupTypes)) return false;
+        if (!Objects.equals(routeId, that.routeId)) return false;
+        if (!Objects.equals(stops, that.stops)) return false;
+        if (!Objects.equals(locationGroupIds, that.locationGroupIds)) return false;
+        if (!Objects.equals(locationIds, that.locationIds)) return false;
+        if (!Objects.equals(start_pickup_drop_off_window, that.start_pickup_drop_off_window)) return false;
+        if (!Objects.equals(end_pickup_drop_off_window, that.end_pickup_drop_off_window)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = routeId != null ? routeId.hashCode() : 0;
-        result = 31 * result + (stops != null ? stops.hashCode() : 0);
-        result = 31 * result + (pickupTypes != null ? pickupTypes.hashCode() : 0);
-        result = 31 * result + (dropoffTypes != null ? dropoffTypes.hashCode() : 0);
-        return result;
+        return Objects.hash(
+            routeId, stops, locationGroupIds, locationIds, pickupTypes, dropoffTypes, start_pickup_drop_off_window, end_pickup_drop_off_window
+        );
     }
-
 }
