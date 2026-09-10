@@ -184,14 +184,17 @@ public class GTFSFeed implements Cloneable, Closeable {
         fares = null; // free memory
 
         new Pattern.Loader(this).loadTable(zip);
-        new RouteNetwork.Loader(this).loadTable(zip);
+        // Route must be loaded before RouteNetwork because RouteNetwork references Route.
         new Route.Loader(this).loadTable(zip);
+        new RouteNetwork.Loader(this).loadTable(zip);
         if (!route_networks.isEmpty()) {
             Route.mergeRouteNetworks(routes, route_networks);
         }
         new ShapePoint.Loader(this).loadTable(zip);
-        new StopArea.Loader(this).loadTable(zip);
+        // Stop and Area must be loaded before StopArea because StopArea references both of them.
         new Stop.Loader(this).loadTable(zip);
+        new Area.Loader(this).loadTable(zip);
+        new StopArea.Loader(this).loadTable(zip);
         if (!stop_areas.isEmpty()) {
             Stop.mergeStopAreas(stops, stop_areas);
         }
@@ -201,7 +204,6 @@ public class GTFSFeed implements Cloneable, Closeable {
         new StopTime.Loader(this).loadTable(zip); // comment out this line for quick testing using NL feed
 
         // Fares v2.
-        new Area.Loader(this).loadTable(zip);
         new TimeFrame.Loader(this).loadTable(zip);
         new Network.Loader(this).loadTable(zip);
         new FareMedia.Loader(this).loadTable(zip);
