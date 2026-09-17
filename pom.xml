@@ -308,13 +308,6 @@
       <artifactId>jackson-annotations</artifactId>
       <version>${jackson.version}</version>
     </dependency>
-    <!-- For uploading / downloading things from Amazon S3.
-         We should really eliminate this functionality, it's out of scope for this gtfs-lib library. -->
-    <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk-s3</artifactId>
-      <version>1.11.18</version>
-    </dependency>
     <!-- Very efficient collections of primitive data types for Java. -->
     <dependency>
       <groupId>net.sf.trove4j</groupId>

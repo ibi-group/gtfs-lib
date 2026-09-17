@@ -81,7 +81,7 @@ import static com.conveyal.gtfs.model.LocationGroup.TABLE_NAME;
  *
  * TODO associate Table with EntityPopulator (combine read and write sides)
  *
- * Flex spec: https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md
+ * GTFS reference: <a href="https://gtfs.org/documentation/schedule/reference/">...</a>
  */
 public class Table {
 
@@ -419,7 +419,6 @@ public class Table {
         FareLegJoinRule.TO_STOP_ID_NAME
     );
 
-    // GTFS reference: https://developers.google.com/transit/gtfs/reference#fare_rulestxt
     public static final Table FARE_RULES = new Table("fare_rules", FareRule.class, OPTIONAL,
         new StringField("fare_id", REQUIRED).isReferenceTo(FARE_ATTRIBUTES),
         new StringField("route_id", OPTIONAL).isReferenceTo(ROUTES),
@@ -439,7 +438,6 @@ public class Table {
     .addPrimaryKey().keyFieldIsNotUnique()
     .addPrimaryKeyNames("fare_id", "route_id", "origin_id", "destination_id", "contains_id");
 
-    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#locationsgeojson
     public static final Table LOCATIONS = new Table(Location.TABLE_NAME, Location.class, OPTIONAL,
         new StringField(Location.LOCATION_ID_NAME, REQUIRED),
         new StringField(Location.STOP_NAME_NAME, OPTIONAL),
@@ -451,14 +449,12 @@ public class Table {
     .addPrimaryKey()
     .addPrimaryKeyNames(Location.LOCATION_ID_NAME);
 
-    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#location_groupstxt
     public static final Table LOCATION_GROUP = new Table(TABLE_NAME, LocationGroup.class, OPTIONAL,
         new StringField(LocationGroup.LOCATION_GROUP_ID_NAME, REQUIRED),
         new StringField(LocationGroup.LOCATION_GROUP_NAME_NAME, OPTIONAL)
     )
     .addPrimaryKeyNames(LocationGroup.LOCATION_GROUP_ID_NAME);
 
-    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#location_group_stopstxt
     public static final Table LOCATION_GROUP_STOPS = new Table(LocationGroupStop.TABLE_NAME, LocationGroupStop.class, OPTIONAL,
         new StringField(LocationGroupStop.LOCATION_GROUP_ID_NAME, REQUIRED).isReferenceTo(LOCATION_GROUP),
         new StringField(LocationGroupStop.STOP_ID_NAME, REQUIRED).isReferenceTo(STOPS)
@@ -526,7 +522,6 @@ public class Table {
     .hasCompoundKey()
     .addPrimaryKeyNames("from_stop_id", "to_stop_id", "from_trip_id", "to_trip_id", "from_route_id", "to_route_id");
 
-    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#booking_rulestxt
     public static final Table BOOKING_RULES = new Table(BookingRule.TABLE_NAME, BookingRule.class, OPTIONAL,
         new StringField(BookingRule.BOOKING_RULE_ID_NAME, REQUIRED),
         new ShortField(BookingRule.BOOKING_TYPE_NAME, OPTIONAL, 2),
@@ -585,7 +580,6 @@ public class Table {
     .keyFieldIsNotUnique()
     .addPrimaryKeyNames("trip_id", "start_time");
 
-    // GTFS reference: https://developers.google.com/transit/gtfs/reference#attributionstxt
     public static final Table TRANSLATIONS = new Table("translations", Translation.class, OPTIONAL,
             new StringField("table_name", REQUIRED),
             new StringField("field_name", REQUIRED),
@@ -620,7 +614,6 @@ public class Table {
             new StringField("attribution_phone", OPTIONAL)
     ).addPrimaryKeyNames("attribution_id");
 
-    // https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md#locationsgeojson
     public static final Table LOCATION_SHAPES = new Table(LocationShape.TABLE_NAME, LocationShape.class, OPTIONAL,
         new StringField(LocationShape.LOCATION_ID_NAME, REQUIRED).isReferenceTo(LOCATIONS),
         new StringField(LocationShape.GEOMETRY_ID_NAME, REQUIRED),

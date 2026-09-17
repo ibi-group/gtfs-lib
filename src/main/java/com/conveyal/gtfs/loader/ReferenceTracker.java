@@ -177,8 +177,6 @@ public class ReferenceTracker {
     }
 
     /**
-<<<<<<< HEAD
-=======
      * Check foreign references. If the foreign reference is present in one of the tables, there is no
      * need to check the remainder. If no matching foreign reference is found, flag integrity error.
      * Note: The reference table must be loaded before the table/value being currently checked.

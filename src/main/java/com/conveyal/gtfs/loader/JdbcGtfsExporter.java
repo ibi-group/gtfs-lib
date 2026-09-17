@@ -93,8 +93,8 @@ public class JdbcGtfsExporter {
     public boolean exceptionInvolvesService(ScheduleException ex, String serviceId) {
         return (
             ex.addedService.contains(serviceId) ||
-                ex.removedService.contains(serviceId) ||
-                ex.customSchedule.contains(serviceId)
+            ex.removedService.contains(serviceId) ||
+            ex.customSchedule.contains(serviceId)
         );
     }
 
@@ -499,7 +499,6 @@ public class JdbcGtfsExporter {
                 // Surround filter SQL in parentheses.
                 filterSql = String.format("(%s)", filterSql);
             }
-
 
             // Create entry for table
             String textFileName = Table.getTableFileNameWithExtension(table.name);

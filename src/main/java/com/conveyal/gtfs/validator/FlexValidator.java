@@ -30,8 +30,7 @@ import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
 /**
  * Spec validation checks for flex additions as defined here:
- * <a href="https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md">GTFS Reference (with Flex v2)</a>
- *
+ * GTFS reference: <a href="https://gtfs.org/documentation/schedule/reference/">...</a>
  */
 public class FlexValidator extends FeedValidator {
 
