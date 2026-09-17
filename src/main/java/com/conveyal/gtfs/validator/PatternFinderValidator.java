@@ -5,9 +5,12 @@ import com.conveyal.gtfs.PatternFinder;
 import com.conveyal.gtfs.TripPatternKey;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.loader.Feed;
+import com.conveyal.gtfs.model.LocationGroup;
+import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
+import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import org.slf4j.Logger;
@@ -42,7 +45,14 @@ public class PatternFinderValidator extends TripValidator {
     }
 
     @Override
-    public void validateTrip (Trip trip, Route route, List<StopTime> stopTimes, List<Stop> stops) {
+    public void validateTrip(
+        Trip trip,
+        Route route,
+        List<StopTime> stopTimes,
+        List<Stop> stops,
+        List<Location> locations,
+        List<LocationGroup> locationGroups
+    ) {
         // As we hit each trip, accumulate them into the wrapped PatternFinder object.
         patternFinder.processTrip(trip, stopTimes);
     }
@@ -58,12 +68,33 @@ public class PatternFinderValidator extends TripValidator {
         }
         LOG.info("Finding patterns...");
         Map<String, Stop> stopById = new HashMap<>();
+        Map<String, Location> locationById = new HashMap<>();
+        Map<String, LocationGroupStop> locationGroupStopById = new HashMap<>();
+        Map<String, LocationGroup> locationGroupById = new HashMap<>();
         for (Stop stop : feed.stops) {
             stopById.put(stop.stop_id, stop);
         }
+        for (Location location : feed.locations) {
+            locationById.put(location.location_id, location);
+        }
+        for (LocationGroupStop locationGroupStop : feed.locationGroupStops) {
+            locationGroupStopById.put(locationGroupStop.location_group_id, locationGroupStop);
+        }
+        for (LocationGroup locationGroup : feed.locationGroups) {
+            locationGroupById.put(locationGroup.location_group_id, locationGroup);
+        }
         // Although patterns may have already been loaded from file, the trip patterns are still required.
-        Map<TripPatternKey, Pattern> patterns = patternFinder.createPatternObjects(stopById, patternsFromFeed, errorStorage);
-        patternBuilder.create(patterns, patternFinder.canUsePatternsFromFeed(patternsFromFeed));
+        Map<TripPatternKey, Pattern> patterns = patternFinder.createPatternObjects(
+            stopById,
+            locationById,
+            locationGroupStopById,
+            locationGroupById,
+            patternsFromFeed,
+            errorStorage
+        );
+        patternBuilder.create(
+            patterns,
+            patternFinder.canUsePatternsFromFeed(patternsFromFeed)
+        );
     }
 }
-

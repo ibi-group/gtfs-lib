@@ -3,8 +3,11 @@ package com.conveyal.gtfs;
 import com.conveyal.gtfs.error.NewGTFSError;
 import com.conveyal.gtfs.error.NewGTFSErrorType;
 import com.conveyal.gtfs.error.SQLErrorStorage;
+import com.conveyal.gtfs.model.LocationGroup;
+import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.Stop;
+import com.conveyal.gtfs.model.LocationGroupStop;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.common.collect.HashMultimap;
@@ -68,6 +71,9 @@ public class PatternFinder {
      */
     public Map<TripPatternKey, Pattern> createPatternObjects(
         Map<String, Stop> stopById,
+        Map<String, Location> locationById,
+        Map<String, LocationGroupStop> locationGroupStopById,
+        Map<String, LocationGroup> locationGroupById,
         List<Pattern> patternsFromFeed,
         SQLErrorStorage errorStorage
     ) {
@@ -81,7 +87,7 @@ public class PatternFinder {
         // TODO assign patterns sequential small integer IDs (may include route)
         for (TripPatternKey key : tripsForPattern.keySet()) {
             Collection<Trip> trips = tripsForPattern.get(key);
-            Pattern pattern = new Pattern(key.stops, trips, null);
+            Pattern pattern = new Pattern(key.orderedHalts, trips, null);
             if (usePatternsFromFeed) {
                 pattern.pattern_id = patternsFromFeed.get(patternsFromFeedIndex).pattern_id;
                 pattern.name = patternsFromFeed.get(patternsFromFeedIndex).name;
@@ -106,7 +112,7 @@ public class PatternFinder {
         }
         if (!usePatternsFromFeed) {
             // Name patterns before storing in SQL database if they have not already been provided with a feed.
-            renamePatterns(patterns.values(), stopById);
+            renamePatterns(patterns.values(), stopById, locationById, locationGroupStopById, locationGroupById);
         }
         LOG.info("Total patterns: {}", tripsForPattern.keySet().size());
         return patterns;
@@ -117,7 +123,7 @@ public class PatternFinder {
      * the patterns provided by the feed are rejected.
      */
     public boolean canUsePatternsFromFeed(List<Pattern> patternsFromFeed) {
-        boolean usePatternsFromFeed = patternsFromFeed.size() == tripsForPattern.keySet().size();
+        boolean usePatternsFromFeed = patternsFromFeed != null && patternsFromFeed.size() == tripsForPattern.keySet().size();
         LOG.info("Using patterns from feed: {}",  usePatternsFromFeed);
         return usePatternsFromFeed;
     }
@@ -127,13 +133,19 @@ public class PatternFinder {
      * This process requires access to all the stops in the feed.
      * Some validators already cache a map of all the stops. There's probably a cleaner way to do this.
      */
-    private static void renamePatterns(Collection<Pattern> patterns, Map<String, Stop> stopById) {
+    public static void renamePatterns(
+        Collection<Pattern> patterns,
+        Map<String, Stop> stopById,
+        Map<String, Location> locationById,
+        Map<String, LocationGroupStop> locationGroupStopById,
+        Map<String, LocationGroup> locationGroupById
+    ) {
         LOG.info("Generating unique names for patterns");
 
         Map<String, PatternNamingInfo> namingInfoForRoute = new HashMap<>();
 
         for (Pattern pattern : patterns) {
-            if (pattern.associatedTrips.isEmpty() || pattern.orderedStops.isEmpty()) continue;
+            if (pattern.associatedTrips.isEmpty() || pattern.orderedHalts.isEmpty()) continue;
 
             // Each pattern within a route has a unique name (within that route, not across the entire feed)
 
@@ -147,15 +159,16 @@ public class PatternFinder {
             // Stop names, unlike IDs, are not guaranteed to be unique.
             // Therefore we must track used names carefully to avoid duplicates.
 
-            String fromName = stopById.get(pattern.orderedStops.get(0)).stop_name;
-            String toName = stopById.get(pattern.orderedStops.get(pattern.orderedStops.size() - 1)).stop_name;
+            String fromName = getTerminusName(pattern, stopById, locationById, locationGroupStopById, locationGroupById, true);
+            String toName = getTerminusName(pattern, stopById, locationById, locationGroupStopById, locationGroupById, false);
 
             namingInfo.fromStops.put(fromName, pattern);
             namingInfo.toStops.put(toName, pattern);
 
-            for (String stopId : pattern.orderedStops) {
+            for (String stopId : pattern.orderedHalts) {
                 Stop stop = stopById.get(stopId);
-                if (fromName.equals(stop.stop_name) || toName.equals(stop.stop_name)) continue;
+                // If the stop doesn't exist, it's probably a location or location group stop and can be ignored for renaming.
+                if (stop == null || fromName.equals(stop.stop_name) || toName.equals(stop.stop_name)) continue;
                 namingInfo.vias.put(stop.stop_name, pattern);
             }
             namingInfo.patternsOnRoute.add(pattern);
@@ -165,8 +178,8 @@ public class PatternFinder {
         for (PatternNamingInfo info : namingInfoForRoute.values()) {
             for (Pattern pattern : info.patternsOnRoute) {
                 pattern.name = null; // clear this now so we don't get confused later on
-                String fromName = stopById.get(pattern.orderedStops.get(0)).stop_name;
-                String toName = stopById.get(pattern.orderedStops.get(pattern.orderedStops.size() - 1)).stop_name;
+                String fromName = getTerminusName(pattern, stopById, locationById, locationGroupStopById, locationGroupById, true);
+                String toName = getTerminusName(pattern, stopById, locationById, locationGroupStopById, locationGroupById, false);
 
                 // check if combination from, to is unique
                 Set<Pattern> intersection = new HashSet<>(info.fromStops.get(fromName));
@@ -178,14 +191,16 @@ public class PatternFinder {
                 }
 
                 // check for unique via stop
-                pattern.orderedStops.stream().map(stopById::get).forEach(stop -> {
-                    Set<Pattern> viaIntersection = new HashSet<>(intersection);
-                    viaIntersection.retainAll(info.vias.get(stop.stop_name));
-
-                    if (viaIntersection.size() == 1) {
-                        pattern.name = String.format(Locale.US, "from %s to %s via %s", fromName, toName, stop.stop_name);
-                    }
-                });
+                pattern.orderedHalts.stream()
+                    .map(haltId -> getStopType(haltId, stopById, locationById, locationGroupStopById))
+                    .forEach(entity -> {
+                        Set<Pattern> viaIntersection = new HashSet<>(intersection);
+                        String stopName = getStopName(entity, locationGroupById);
+                        viaIntersection.retainAll(info.vias.get(stopName));
+                        if (viaIntersection.size() == 1) {
+                            pattern.name = String.format(Locale.US, "from %s to %s via %s", fromName, toName, stopName);
+                        }
+                    });
 
                 if (pattern.name == null) {
                     // no unique via, one pattern is subset of other.
@@ -193,10 +208,10 @@ public class PatternFinder {
                         Iterator<Pattern> it = intersection.iterator();
                         Pattern p0 = it.next();
                         Pattern p1 = it.next();
-                        if (p0.orderedStops.size() > p1.orderedStops.size()) {
+                        if (p0.orderedHalts.size() > p1.orderedHalts.size()) {
                             p1.name = String.format(Locale.US, "from %s to %s express", fromName, toName);
                             p0.name = String.format(Locale.US, "from %s to %s local", fromName, toName);
-                        } else if (p1.orderedStops.size() > p0.orderedStops.size()){
+                        } else if (p1.orderedHalts.size() > p0.orderedHalts.size()){
                             p0.name = String.format(Locale.US, "from %s to %s express", fromName, toName);
                             p1.name = String.format(Locale.US, "from %s to %s local", fromName, toName);
                         }
@@ -212,9 +227,79 @@ public class PatternFinder {
             // attach a stop and trip count to each
             for (Pattern pattern : info.patternsOnRoute) {
                 pattern.name = String.format(Locale.US, "%s stops %s (%s trips)",
-                        pattern.orderedStops.size(), pattern.name, pattern.associatedTrips.size());
+                        pattern.orderedHalts.size(), pattern.name, pattern.associatedTrips.size());
             }
         }
+    }
+
+    /**
+     * Using the ordered stop or location id, return the object it actually relates to. Under flex, a stop can either be a
+     * stop, location or location group stop, this method decides which.
+     */
+    private static Object getStopType(
+        String orderedHaltId,
+        Map<String, Stop> stopById,
+        Map<String, Location> locationById,
+        Map<String, LocationGroupStop> locationGroupStopById
+    ) {
+        Object stop = stopById.get(orderedHaltId);
+        Object location = locationById.get(orderedHaltId);
+        Object locationGroupStop = locationGroupStopById.get(orderedHaltId);
+        if (stop != null) {
+            return stop;
+        } else if (location != null) {
+            return location;
+        } else {
+            return locationGroupStop;
+        }
+    }
+
+    /**
+     * Extract the 'stop name' from either a stop, location or location group stop depending on the entity type.
+     */
+    private static String getStopName(Object entity, Map<String, LocationGroup> locationGroupById) {
+        if (entity != null) {
+            if (entity instanceof Stop) {
+                return ((Stop) entity).stop_name;
+            } else if (entity instanceof Location) {
+                return ((Location) entity).stop_name;
+            } else if (entity instanceof LocationGroupStop) {
+                LocationGroupStop locationGroupStop = (LocationGroupStop) entity;
+                LocationGroup locationGroup = locationGroupById.get(locationGroupStop.location_group_id);
+                if (locationGroup != null) {
+                    return locationGroup.location_group_name;
+                }
+            }
+        }
+        return "stopNameUnknown";
+    }
+
+    /**
+     * Return either the 'from' or 'to' terminus name. Check the stops followed by locations and then location group
+     * stops. If a match is found return the name (or id if this is no available). If there are no matches return the
+     * default value.
+     */
+    private static String getTerminusName(
+        Pattern pattern,
+        Map<String, Stop> stopById,
+        Map<String, Location> locationById,
+        Map<String, LocationGroupStop> locationGroupStopById,
+        Map<String, LocationGroup> locationGroupById,
+        boolean isFrom
+    ) {
+        int id = isFrom ? 0 : pattern.orderedHalts.size() - 1;
+        String haltId = pattern.orderedHalts.get(id);
+        if (stopById.containsKey(haltId)) {
+            Stop stop = stopById.get(haltId);
+            return stop.stop_name != null ? stop.stop_name : stop.stop_id;
+        } else if (locationById.containsKey(haltId)) {
+            Location location = locationById.get(haltId);
+            return location.stop_name != null ? location.stop_name : location.location_id;
+        } else if (locationGroupStopById.containsKey(haltId)) {
+            LocationGroup locationGroup = locationGroupById.get(haltId);
+            return locationGroup.location_group_name != null ? locationGroup.location_group_name : locationGroup.location_group_id;
+        }
+        return isFrom ? "fromTerminusNameUnknown" : "toTerminusNameUnknown";
     }
 
     /**

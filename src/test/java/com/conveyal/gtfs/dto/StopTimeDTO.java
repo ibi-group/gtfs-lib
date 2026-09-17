@@ -1,8 +1,11 @@
 package com.conveyal.gtfs.dto;
 
 public class StopTimeDTO {
+    public int id;
     public String trip_id;
     public String stop_id;
+    public String location_group_id;
+    public String location_id;
     public Integer stop_sequence;
     public Integer arrival_time;
     public Integer departure_time;
@@ -17,12 +20,15 @@ public class StopTimeDTO {
     /**
      * Empty constructor for deserialization
      */
-    public StopTimeDTO () {}
+    public StopTimeDTO() {
+    }
 
-    public StopTimeDTO (String stopId, Integer arrivalTime, Integer departureTime, Integer stopSequence) {
-        stop_id = stopId;
-        arrival_time = arrivalTime;
-        departure_time = departureTime;
-        stop_sequence = stopSequence;
+    public static StopTimeDTO create() {
+        StopTimeDTO stopTimeDTO = new StopTimeDTO();
+        stopTimeDTO.stop_id = "stop-id-1";
+        stopTimeDTO.arrival_time = 0;
+        stopTimeDTO.departure_time = 0;
+        stopTimeDTO.stop_sequence = 0;
+        return stopTimeDTO;
     }
 }

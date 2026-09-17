@@ -1,6 +1,7 @@
 package com.conveyal.gtfs;
 
 import com.conveyal.gtfs.error.NewGTFSErrorType;
+import com.conveyal.gtfs.loader.FeedLoadResult;
 import com.csvreader.CsvReader;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
@@ -22,7 +23,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static com.conveyal.gtfs.GTFS.load;
+import static com.conveyal.gtfs.GTFS.validate;
 import static com.conveyal.gtfs.util.Util.randomIdString;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -52,8 +56,8 @@ public class TestUtils {
             "AND pid <> pg_backend_pid()", dbName
         ));
         // drop the db
-        if(executeAndClose(String.format("DROP DATABASE %s", dbName))) {
-            LOG.info(String.format("Successfully dropped database: %s", dbName));
+        if (executeAndClose(String.format("DROP DATABASE %s", dbName))) {
+            LOG.debug(String.format("Successfully dropped database: %s", dbName));
         } else {
             LOG.error(String.format("Failed to drop database: %s", dbName));
         }
@@ -96,7 +100,7 @@ public class TestUtils {
         }
     }
 
-    public static DataSource createTestDataSource (String dbUrl) {
+    public static DataSource createTestDataSource(String dbUrl) {
         return GTFS.createDataSource(dbUrl, PG_TEST_USER, PG_TEST_PASSWORD);
     }
 
@@ -160,6 +164,7 @@ public class TestUtils {
 
     /**
      * Convenience method for zipping a directory.
+     *
      * @param nestDirectory whether nested folders should be preserved as subdirectories
      */
     private static void compressDirectoryToZipfile(String rootDir, String sourceDir, ZipOutputStream out, boolean nestDirectory) throws IOException {
@@ -188,7 +193,7 @@ public class TestUtils {
     /**
      * Asserts that the result of a SQL count statement is equal to an expected value
      *
-     * @param sql A SQL statement in the form of `SELECT count(*) FROM ...`
+     * @param sql           A SQL statement in the form of `SELECT count(*) FROM ...`
      * @param expectedCount The expected count that is returned from the result of the SQL statement.
      */
     public static void assertThatSqlCountQueryYieldsExpectedCount(DataSource dataSource, String sql, int expectedCount) {
@@ -233,6 +238,14 @@ public class TestUtils {
         if (badValue != null) sql += String.format(" and bad_value = '%s'", badValue);
 
         assertThatSqlCountQueryYieldsExpectedCount(testDataSource, sql, expectedNumberOfErrors);
+    }
+
+    /**
+     * Load feed from zip file into a database and validate.
+     */
+    public static String loadFeedAndValidate(DataSource dataSource, String zipFolderName) throws IOException {
+        String zipFileName = TestUtils.zipFolderFiles(zipFolderName, true);
+        return loadFeedFromZipFileAndValidate(dataSource, zipFileName);
     }
 
     public static class FileTestCase {
@@ -331,4 +344,53 @@ public class TestUtils {
         return tempFile;
     }
 
+    public static String loadFeedFromZipFileAndValidate(DataSource dataSource, String zipFileName) {
+        FeedLoadResult feedLoadResult = load(zipFileName, dataSource);
+        String namespace = feedLoadResult.uniqueIdentifier;
+        validate(namespace, dataSource);
+        // return name space.
+        return namespace;
+    }
+
+    /**
+     * Look through the list of file test cases provided and confirm correct content in provided zip file.
+     */
+    public static void lookThroughFiles(FileTestCase[] fileTestCases, ZipFile zip) throws IOException {
+        // look through all written files in the zipfile
+        for (FileTestCase fileTestCase : fileTestCases) {
+            ZipEntry entry = zip.getEntry(fileTestCase.filename);
+
+            // make sure the file exists within the zipfile
+            assertThat(entry, notNullValue());
+
+            // create csv reader for file
+            InputStream zis = zip.getInputStream(entry);
+            InputStream bis = new BOMInputStream(zis);
+            CsvReader reader = new CsvReader(bis, ',', StandardCharsets.UTF_8);
+
+            // make sure the file has headers
+            boolean hasHeaders = reader.readHeaders();
+            assertThat(hasHeaders, is(true));
+
+            // make sure that the record matching the expected row exists in this table
+            boolean recordFound = false;
+            while (reader.readRecord() && !recordFound) {
+                boolean allExpectationsMetForThisRecord = true;
+                for (DataExpectation dataExpectation : fileTestCase.expectedColumnData) {
+                    if (!reader.get(dataExpectation.columnName).equals(dataExpectation.expectedValue)) {
+                        allExpectationsMetForThisRecord = false;
+                        break;
+                    }
+                }
+                if (allExpectationsMetForThisRecord) {
+                    recordFound = true;
+                }
+            }
+            assertThat(
+                String.format("Data Expectation record not found in %s", fileTestCase.filename),
+                recordFound,
+                is(true)
+            );
+        }
+    }
 }

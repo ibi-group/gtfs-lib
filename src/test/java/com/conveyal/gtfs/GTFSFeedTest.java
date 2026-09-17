@@ -2,6 +2,8 @@ package com.conveyal.gtfs;
 
 import com.conveyal.gtfs.model.StopTime;
 import org.hamcrest.comparator.ComparatorMatcherBuilder;
+import com.conveyal.gtfs.TestUtils.DataExpectation;
+import com.conveyal.gtfs.TestUtils.FileTestCase;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -19,14 +21,15 @@ import static org.hamcrest.number.IsCloseTo.closeTo;
  * Test suite for the GTFSFeed class.
  */
 public class GTFSFeedTest {
+
     private static String simpleGtfsZipFileName;
+    private static String simpleFlexGtfsZipFileName;
 
     @BeforeAll
     public static void setUpClass() {
-        //executed only once, before the first test
-        simpleGtfsZipFileName = null;
         try {
             simpleGtfsZipFileName = TestUtils.zipFolderFiles("fake-agency", true);
+            simpleFlexGtfsZipFileName = TestUtils.zipFolderFiles("fake-agency-with-flex", true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -48,19 +51,17 @@ public class GTFSFeedTest {
         feed.close();
         assertThat(outZip.exists(), is(true));
 
-        // assert that rows of data were written to files within the zipfile
-        ZipFile zip = new ZipFile(outZip);
-
-        TestUtils.FileTestCase[] fileTestCases = {
+        // assert that rows of data were written to files within the zip file.
+        FileTestCase[] fileTestCases = {
             // agency.txt
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "agency.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("agency_id", "1"),
                     new TestUtils.DataExpectation("agency_name", "Fake Transit")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "calendar.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57"),
@@ -68,7 +69,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("end_date", "20170917")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "calendar_dates.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("service_id", "calendar-date-service"),
@@ -76,7 +77,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("exception_type", "1")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "routes.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("agency_id", "1"),
@@ -84,7 +85,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("route_long_name", "Route 1")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "shapes.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e"),
@@ -92,7 +93,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("shape_pt_lon", "-122.0074332")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "stop_times.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("trip_id", "a30277f8-e50a-4a85-9141-b1e0da9d429d"),
@@ -100,7 +101,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("stop_id", "4u6g")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "trips.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("route_id", "1"),
@@ -108,7 +109,7 @@ public class GTFSFeedTest {
                     new TestUtils.DataExpectation("service_id", "04100312-8fe1-46a5-a9f2-556f39478f57")
                 }
             ),
-            new TestUtils.FileTestCase(
+            new FileTestCase(
                 "datatools_patterns.txt",
                 new TestUtils.DataExpectation[] {
                     new TestUtils.DataExpectation("pattern_id", "1"),
@@ -119,7 +120,113 @@ public class GTFSFeedTest {
                 }
             )
         };
-        checkFileTestCases(zip, fileTestCases);
+        loadAndWriteToZipFile(simpleGtfsZipFileName, fileTestCases);
+    }
+
+    /**
+     * Make sure a round-trip of loading a GTFS flex zip file and then writing another zip file can be performed.
+     */
+    @Test
+    void canDoRoundTripLoadAndWriteToFlexZipFile() throws IOException {
+        FileTestCase[] fileTestCases = {
+            new FileTestCase(
+                "agency.txt",
+                new TestUtils.DataExpectation[]{
+                    new TestUtils.DataExpectation("agency_id", "1"),
+                    new TestUtils.DataExpectation("agency_name", "Fake Transit")
+                }
+            ),
+            new FileTestCase(
+                "booking_rules.txt",
+                new TestUtils.DataExpectation[]{
+                    new TestUtils.DataExpectation("booking_rule_id", "1"),
+                    new TestUtils.DataExpectation("booking_type", "1"),
+                    new TestUtils.DataExpectation("pickup_message", "This is a pickup message")
+                }
+            ),
+            new FileTestCase(
+                "calendar.txt",
+                new DataExpectation[]{
+                    new DataExpectation("service_id", "flex-04100312-8fe1-46a5-a9f2-556f39478f57"),
+                    new DataExpectation("start_date", "20170915"),
+                    new DataExpectation("end_date", "20170917")
+                }
+            ),
+            new FileTestCase(
+                "routes.txt",
+                new DataExpectation[]{
+                    new DataExpectation("agency_id", "1"),
+                    new DataExpectation("route_id", "1"),
+                    new DataExpectation("route_long_name", "Route 1")
+                }
+            ),
+            new FileTestCase(
+                "shapes.txt",
+                new DataExpectation[]{
+                    new DataExpectation("shape_id", "5820f377-f947-4728-ac29-ac0102cbc34e"),
+                    new DataExpectation("shape_pt_lat", "37.0612132"),
+                    new DataExpectation("shape_pt_lon", "-122.0074332")
+                }
+            ),
+            new FileTestCase(
+                "location_groups.txt",
+                new TestUtils.DataExpectation[]{
+                    new TestUtils.DataExpectation("location_group_id", "1"),
+                    new TestUtils.DataExpectation("location_group_name", "Location group name")
+                }
+            ),
+            new FileTestCase(
+                "location_group_stops.txt",
+                new DataExpectation[]{
+                    new DataExpectation("location_group_id", "1"),
+                    new DataExpectation("stop_id", "123")
+                }
+            ),
+            new FileTestCase(
+                "stop_times.txt",
+                new DataExpectation[]{
+                    new DataExpectation("trip_id", "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"),
+                    new DataExpectation("departure_time", "07:00:00"),
+                    new DataExpectation("stop_id", "4u6g")
+                }
+            ),
+            new FileTestCase(
+                "trips.txt",
+                new DataExpectation[]{
+                    new DataExpectation("route_id", "1"),
+                    new DataExpectation("trip_id", "flex-a30277f8-e50a-4a85-9141-b1e0da9d429d"),
+                    new DataExpectation("service_id", "flex-04100312-8fe1-46a5-a9f2-556f39478f57")
+                }
+            )
+        };
+        loadAndWriteToZipFile(simpleFlexGtfsZipFileName, fileTestCases);
+    }
+
+    /**
+     * Load feed and then write to zip file. Once complete, perform tests.
+     */
+    void loadAndWriteToZipFile(String zipFileName, FileTestCase[] fileTestCases) throws IOException {
+        try (
+            GTFSFeed feed = GTFSFeed.fromFile(zipFileName);
+        ) {
+            // create a temp file for this test
+            File outZip = File.createTempFile(zipFileName, ".zip");
+
+            // delete file to make sure we can assert that this program created the file
+            outZip.delete();
+
+            feed.toFile(outZip.getAbsolutePath());
+            assertThat(outZip.exists(), is(true));
+
+            // assert that rows of data were written to files within the zip file.
+            ZipFile zip = new ZipFile(outZip);
+
+            TestUtils.lookThroughFiles(fileTestCases, zip);
+            // Close the zip file so it can be deleted.
+            zip.close();
+            // delete file to make sure we can assert that this program created the file
+            outZip.delete();
+        }
     }
 
     /**

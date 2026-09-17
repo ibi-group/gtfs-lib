@@ -39,7 +39,8 @@ public class Pattern extends Entity {
     // The percentage in [0..1] along the line segment at which each stop in the sequence falls.
     public double[] segmentFraction;
 
-    public List<String> orderedStops;
+    /** An ordered list of stop, location group and location ids */
+    public List<String> orderedHalts;
     // TODO: change list of trips to set
     public List<String> associatedTrips;
     // TODO: add set of shapes
@@ -57,18 +58,18 @@ public class Pattern extends Entity {
 
     /**
      *
-     * @param orderedStops
+     * @param orderedHalts
      * @param trips the first trip will serve as an exemplar for all the others.
      * @param patternGeometry
      */
-    public Pattern (List<String> orderedStops, Collection<Trip> trips, LineString patternGeometry){
+    public Pattern (List<String> orderedHalts, Collection<Trip> trips, LineString patternGeometry){
 
         // Temporarily make a random ID for the pattern, which might be overwritten in a later step ?
         this.pattern_id = UUID.randomUUID().toString();
 
-        // Assign ordered list of stop IDs to be the key of this pattern.
+        // Assign ordered list of stop and location IDs to be the key of this pattern.
         // FIXME what about pickup / dropoff type?
-        this.orderedStops = orderedStops;
+        this.orderedHalts = orderedHalts;
 
         // Save the string IDs of the trips on this pattern.
         this.associatedTrips = trips.stream().map(t -> t.trip_id).collect(Collectors.toList());
@@ -99,7 +100,7 @@ public class Pattern extends Entity {
             name = String.valueOf(exemplarTrip.direction_id);
         }
         else{
-            name = joiner.join(orderedStops);
+            name = joiner.join(orderedHalts);
         }
 
         // TODO: Implement segmentIndex using JTS to segment out LineString by stops.

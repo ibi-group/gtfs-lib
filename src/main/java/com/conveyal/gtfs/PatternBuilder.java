@@ -19,47 +19,76 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.conveyal.gtfs.loader.JdbcGtfsLoader.copyFromFile;
 import static com.conveyal.gtfs.model.Entity.INT_MISSING;
-import static com.conveyal.gtfs.model.Entity.setDoubleParameter;
-import static com.conveyal.gtfs.model.Entity.setIntParameter;
 
 public class PatternBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(PatternBuilder.class);
 
-    private final Feed feed;
     private static final String TEMP_FILE_NAME = "pattern_for_trips";
 
     private final Connection connection;
+
+    private String patternsTableName;
+
+    private String tripsTableName;
+
+    private String patternStopsTableName;
+
+    private Table patternsTable;
+
+    private Table patternStopsTable;
+
+    private PreparedStatement insertPatternStopStatement;
+
     public PatternBuilder(Feed feed) throws SQLException {
-        this.feed = feed;
+        patternsTableName = feed.getTableNameWithSchemaPrefix("patterns");
+        tripsTableName = feed.getTableNameWithSchemaPrefix("trips");
+        patternStopsTableName = feed.getTableNameWithSchemaPrefix("pattern_stops");
+
+        patternsTable = new Table(
+            patternsTableName,
+            Pattern.class,
+            Requirement.EDITOR,
+            Table.PATTERNS.fields
+        );
+        patternStopsTable = new Table(
+            patternStopsTableName,
+            PatternStop.class,
+            Requirement.EDITOR,
+            Table.PATTERN_STOP.fields
+        );
         connection = feed.getConnection();
+
+        insertPatternStopStatement = connection.prepareStatement(
+            patternStopsTable.generateInsertSql(true)
+        );
+
     }
 
-    public void create(Map<TripPatternKey, Pattern> patterns, boolean usePatternsFromFeed) {
-        String patternsTableName = feed.getTableNameWithSchemaPrefix("patterns");
-        String tripsTableName = feed.getTableNameWithSchemaPrefix("trips");
-        String patternStopsTableName = feed.getTableNameWithSchemaPrefix("pattern_stops");
+    public PatternBuilder() {
+        // Constructor for unit tests.
+        connection = null;
+    }
 
-        Table patternsTable = new Table(patternsTableName, Pattern.class, Requirement.EDITOR, Table.PATTERNS.fields);
-        Table patternStopsTable = new Table(patternStopsTableName, PatternStop.class, Requirement.EDITOR, Table.PATTERN_STOP.fields);
-
+    public void create(Map<TripPatternKey,Pattern> patterns, boolean usePatternsFromFeed) {
         try {
             File tempPatternForTripsTextFile = File.createTempFile(TEMP_FILE_NAME, "text");
             LOG.info("Creating pattern and pattern stops tables.");
             Statement statement = connection.createStatement();
             statement.execute(String.format("alter table %s add column pattern_id varchar", tripsTableName));
-            if (!usePatternsFromFeed) {
-                // If no patterns were loaded from file, create the pattern table. Conversely, if the patterns loaded
-                // from file have been superseded by generated patterns, recreate the table to start afresh.
-                patternsTable.createSqlTable(connection, null, true);
-            }
-            patternStopsTable.createSqlTable(connection, null, true);
+            createDatabaseTables(usePatternsFromFeed);
             try (PrintStream patternForTripsFileStream = createTempPatternForTripsTable(tempPatternForTripsTextFile, statement)) {
-                processPatternAndPatternStops(patternsTable, patternStopsTable, patternForTripsFileStream, patterns, usePatternsFromFeed);
+                processPatternAndPatternStops(
+                    patternForTripsFileStream,
+                    patterns,
+                    usePatternsFromFeed
+                );
             }
             updateTripPatternIds(tempPatternForTripsTextFile, statement, tripsTableName);
             createIndexes(statement, patternsTableName, patternStopsTableName, tripsTableName);
@@ -75,17 +104,25 @@ public class PatternBuilder {
         }
     }
 
+    private void createDatabaseTables(boolean usePatternsFromFeed) {
+        if (!usePatternsFromFeed) {
+            // If no patterns were loaded from file, create the pattern table. Conversely, if the patterns loaded
+            // from file have been superseded by generated patterns, recreate the table to start afresh.
+            patternsTable.createSqlTable(connection, null, true);
+        }
+        patternStopsTable.createSqlTable(connection, null, true);
+    }
+
     private void processPatternAndPatternStops(
-        Table patternsTable,
-        Table patternStopsTable,
         PrintStream patternForTripsFileStream,
         Map<TripPatternKey, Pattern> patterns,
         boolean usePatternsFromFeed
     ) throws SQLException {
+
         // Generate prepared statements for inserts.
-        String insertPatternSql = patternsTable.generateInsertSql(true);
-        PreparedStatement insertPatternStatement = connection.prepareStatement(insertPatternSql);
+        PreparedStatement insertPatternStatement = connection.prepareStatement(patternsTable.generateInsertSql(true));
         BatchTracker patternTracker = new BatchTracker("pattern", insertPatternStatement);
+
         LOG.info("Storing patterns and pattern stops.");
         for (Map.Entry<TripPatternKey, Pattern> entry : patterns.entrySet()) {
             Pattern pattern = entry.getValue();
@@ -95,7 +132,7 @@ public class PatternBuilder {
                 pattern.setStatementParameters(insertPatternStatement, true);
                 patternTracker.addBatch();
             }
-            createPatternStops(entry.getKey(), pattern.pattern_id, patternStopsTable);
+            createPatternStops(entry.getKey(), pattern.pattern_id);
             updateTripPatternReferences(patternForTripsFileStream, pattern);
         }
         // Send any remaining prepared statement calls to the database backend.
@@ -188,48 +225,115 @@ public class PatternBuilder {
     /**
      * Construct pattern stops based on values in trip pattern key.
      */
-    private void createPatternStops(TripPatternKey key, String patternId, Table patternStopsTable) throws SQLException {
-        String insertPatternStopSql = patternStopsTable.generateInsertSql(true);
-        PreparedStatement insertPatternStopStatement = connection.prepareStatement(insertPatternStopSql);
+    private void createPatternStops(
+        TripPatternKey key,
+        String patternId
+    ) throws SQLException {
         BatchTracker patternStopTracker = new BatchTracker("pattern stop", insertPatternStopStatement);
 
-        int lastValidDeparture = key.departureTimes.get(0);
-        for (int i = 0; i < key.stops.size(); i++) {
-            int travelTime = 0;
-            String stopId = key.stops.get(i);
-            int arrival = key.arrivalTimes.get(i);
-            if (i > 0) {
-                int prevDeparture = key.departureTimes.get(i - 1);
-                // Set travel time for all stops except the first.
-                if (prevDeparture != INT_MISSING) {
-                    // Update the previous departure if it's not missing. Otherwise, base travel time based on the
-                    // most recent valid departure.
-                    lastValidDeparture = prevDeparture;
-                }
-                travelTime = arrival == INT_MISSING || lastValidDeparture == INT_MISSING
-                    ? INT_MISSING
-                    : arrival - lastValidDeparture;
-            }
-            int departure = key.departureTimes.get(i);
-            int dwellTime = arrival == INT_MISSING || departure == INT_MISSING
-                ? INT_MISSING
-                : departure - arrival;
-
-            insertPatternStopStatement.setString(1, patternId);
-            // Stop sequence is zero-based.
-            setIntParameter(insertPatternStopStatement, 2, i);
-            insertPatternStopStatement.setString(3, stopId);
-            insertPatternStopStatement.setString(4, key.stopHeadsigns.get(i));
-            setIntParameter(insertPatternStopStatement,5, travelTime);
-            setIntParameter(insertPatternStopStatement,6, dwellTime);
-            setIntParameter(insertPatternStopStatement,7, key.dropoffTypes.get(i));
-            setIntParameter(insertPatternStopStatement,8, key.pickupTypes.get(i));
-            setDoubleParameter(insertPatternStopStatement, 9, key.shapeDistances.get(i));
-            setIntParameter(insertPatternStopStatement,10, key.timepoints.get(i));
-            setIntParameter(insertPatternStopStatement,11, key.continuous_pickup.get(i));
-            setIntParameter(insertPatternStopStatement,12, key.continuous_drop_off.get(i));
-            patternStopTracker.addBatch();
+        // Determine departure times based on the stop type.
+        List<Integer> previousDepartureTimes = calculatePreviousDepartureTimes(key);
+        // Construct pattern stops based on values in trip pattern key.
+        for (int stopSequence = 0; stopSequence < key.orderedHalts.size(); stopSequence++) {
+            int lastValidDepartureTime = previousDepartureTimes.get(stopSequence);
+            insertPatternType(
+                stopSequence,
+                key,
+                lastValidDepartureTime,
+                patternId,
+                patternStopTracker
+            );
         }
         patternStopTracker.executeRemaining();
     }
+
+    /**
+     * Calculate previous departure times, needed for all patterns. This is done by defining the 'last valid departure
+     * time' for all stops. The previous departure time for the first stop will always be zero.
+     */
+    public List<Integer> calculatePreviousDepartureTimes(TripPatternKey key) {
+        List<Integer> previousDepartureTimes = new ArrayList<>();
+        // Determine initial departure time based on the stop type.
+        boolean isFirstStopFlex = key.isFlexStop.get(0);
+        int lastValidDepartureTime = isFirstStopFlex
+            ? key.end_pickup_drop_off_window.get(0)
+            : key.departureTimes.get(0);
+        // Set the previous departure time for the first stop, which will always be zero.
+        previousDepartureTimes.add(0);
+        // Construct pattern stops based on values in trip pattern key.
+        for (int stopSequence = 1; stopSequence < key.orderedHalts.size(); stopSequence++) {
+            boolean prevIsFlexStop = key.isFlexStop.get(stopSequence - 1);
+            boolean currentIsFlexStop = key.isFlexStop.get(stopSequence);
+            // Set travel time for all stops except the first.
+            if (prevIsFlexStop && currentIsFlexStop) {
+                // Previous and current are flex stops. There is no departure time between flex stops.
+                lastValidDepartureTime = 0;
+            } else {
+                int prevDepartureStop = prevIsFlexStop
+                    ? key.end_pickup_drop_off_window.get(stopSequence - 1)
+                    : key.departureTimes.get(stopSequence - 1);
+                if (prevDepartureStop > lastValidDepartureTime) {
+                    // Update the last valid departure if the previous departure is after this. Otherwise, continue to
+                    // use the most recent valid departure.
+                    lastValidDepartureTime = prevDepartureStop;
+                }
+            }
+            previousDepartureTimes.add(lastValidDepartureTime);
+        }
+        return previousDepartureTimes;
+    }
+
+
+    /**
+     * Insert pattern types. This covers pattern stops, locations and stop areas.
+     */
+    private void insertPatternType(
+        int stopSequence,
+        TripPatternKey tripPattern,
+        int lastValidDeparture,
+        String patternId,
+        BatchTracker batchTracker
+    ) throws SQLException {
+        boolean isFlexStop = tripPattern.isFlexStop.get(stopSequence);
+        boolean prevIsFlexStop = stopSequence > 0 && tripPattern.isFlexStop.get(stopSequence - 1);
+
+        int travelTime = 0;
+        if (!isFlexStop) {
+            travelTime = getTravelTime(travelTime, stopSequence, tripPattern.arrivalTimes.get(stopSequence), lastValidDeparture);
+        } else if (!prevIsFlexStop) {
+            // If the previous stop is not flex, calculate travel time. If the previous stop is flex the travel time will
+            // be zero.
+            travelTime = getTravelTime(travelTime, stopSequence, tripPattern.start_pickup_drop_off_window.get(stopSequence), lastValidDeparture);
+        }
+        int timeInLocation = (!isFlexStop)
+            ? getTimeInLocation(tripPattern.arrivalTimes.get(stopSequence), tripPattern.departureTimes.get(stopSequence))
+            : getTimeInLocation(tripPattern.start_pickup_drop_off_window.get(stopSequence), tripPattern.end_pickup_drop_off_window.get(stopSequence));
+
+        PatternStop patternStop = new PatternStop(patternId, stopSequence, tripPattern, travelTime, timeInLocation);
+        patternStop.setStatementParameters(insertPatternStopStatement, true);
+        batchTracker.addBatch();
+    }
+
+    /**
+     * Get the travel time from previous to current stop for pattern stops or travel time within a flex location or
+     * stop area.
+     */
+    private int getTravelTime(int travelTime, int stopSequence, int pickupStart, int lastValidDeparture) {
+        if (stopSequence > 0) {
+            travelTime = pickupStart == INT_MISSING || lastValidDeparture == INT_MISSING
+                ? INT_MISSING
+                : pickupStart - lastValidDeparture;
+        }
+        return travelTime;
+    }
+
+    /**
+     * Get dwell time for pattern stops or time within a flex location or stop area.
+     */
+    private int getTimeInLocation(int pickupStart, int pickupEnd) {
+        return pickupStart == INT_MISSING || pickupEnd == INT_MISSING
+            ? INT_MISSING
+            : pickupEnd - pickupStart;
+    }
+
 }

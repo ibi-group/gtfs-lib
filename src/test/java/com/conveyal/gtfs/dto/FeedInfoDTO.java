@@ -17,4 +17,21 @@ public class FeedInfoDTO {
     public String default_lang;
     public String feed_contact_email;
     public String feed_contact_url;
+
+    public static FeedInfoDTO create() {
+        FeedInfoDTO feedInfoDTO = new FeedInfoDTO();
+        feedInfoDTO.feed_id = "fake_id";
+        feedInfoDTO.feed_publisher_name = "' OR 1 = 1; SELECT '1";
+        feedInfoDTO.feed_publisher_url = "example.com";
+        feedInfoDTO.feed_lang = "en";
+        feedInfoDTO.feed_start_date = "07052021";
+        feedInfoDTO.feed_end_date = "09052021";
+        feedInfoDTO.feed_lang = "en";
+        feedInfoDTO.default_route_color = "1c8edb";
+        feedInfoDTO.default_route_type = "3";
+        feedInfoDTO.default_lang = "en";
+        feedInfoDTO.feed_contact_email = "a@b.com";
+        feedInfoDTO.feed_contact_url = "example.com";
+        return feedInfoDTO;
+    }
 }

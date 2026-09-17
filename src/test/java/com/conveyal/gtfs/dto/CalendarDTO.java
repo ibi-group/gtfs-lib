@@ -13,4 +13,20 @@ public class CalendarDTO {
     public String start_date;
     public String end_date;
     public String description;
+
+    public static CalendarDTO create(String serviceId, String startDate, String endDate) {
+        CalendarDTO calendarDTO = new CalendarDTO();
+        calendarDTO.service_id = serviceId;
+        calendarDTO.monday = 1;
+        calendarDTO.tuesday = 1;
+        calendarDTO.wednesday = 1;
+        calendarDTO.thursday = 1;
+        calendarDTO.friday = 1;
+        calendarDTO.saturday = 0;
+        calendarDTO.sunday = 0;
+        calendarDTO.start_date = startDate;
+        calendarDTO.end_date = endDate;
+        return calendarDTO;
+    }
+
 }
