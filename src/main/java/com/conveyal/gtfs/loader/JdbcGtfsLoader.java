@@ -341,7 +341,6 @@ public class JdbcGtfsLoader {
         CsvReader csvReader = null;
         try {
             csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(table, zip, errorStorage);
-            csvReader.setSafetySwitch(false);
             if (csvReader == null) {
                 LOG.info("File {} not found in gtfs zip file.", Table.getTableFileNameWithExtension(table.name));
                 // This GTFS table could not be opened in the zip, even in a subdirectory.
@@ -352,6 +351,8 @@ public class JdbcGtfsLoader {
             // Use the Postgres text load format if we're connected to that DBMS.
             boolean postgresText = (connection.getMetaData().getDatabaseProductName().equals("PostgreSQL"));
 
+            csvReader.setSafetySwitch(false);
+            
             // TODO Strip out line returns, tabs in field contents.
             // By default the CSV reader trims leading and trailing whitespace in fields.
             // Build up a list of fields in the same order they appear in this GTFS CSV file.
