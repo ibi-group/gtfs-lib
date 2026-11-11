@@ -351,6 +351,8 @@ public class JdbcGtfsLoader {
             // Use the Postgres text load format if we're connected to that DBMS.
             boolean postgresText = (connection.getMetaData().getDatabaseProductName().equals("PostgreSQL"));
 
+            csvReader.setSafetySwitch(false);
+            
             // TODO Strip out line returns, tabs in field contents.
             // By default the CSV reader trims leading and trailing whitespace in fields.
             // Build up a list of fields in the same order they appear in this GTFS CSV file.
