@@ -341,6 +341,7 @@ public class JdbcGtfsLoader {
         CsvReader csvReader = null;
         try {
             csvReader = CsvReaderUtil.getCsvReaderAccordingToFileName(table, zip, errorStorage);
+            csvReader.setSafetySwitch(false);
             if (csvReader == null) {
                 LOG.info("File {} not found in gtfs zip file.", Table.getTableFileNameWithExtension(table.name));
                 // This GTFS table could not be opened in the zip, even in a subdirectory.
