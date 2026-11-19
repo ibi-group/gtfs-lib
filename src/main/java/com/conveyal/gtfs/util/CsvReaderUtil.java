@@ -143,6 +143,9 @@ public class CsvReaderUtil {
             case LOCATION_GROUP_STOPS_FILE_NAME:
                 initialReader = CsvReaderUtil.getCsvReaderForFile(zipFile, entry, errors, LocationGroupStop.NUMBER_OF_HEADERS);
                 csvReader = (initialReader != null) ? LocationGroupStop.getParsedData(initialReader, errors) : defaultCsvReader;
+                if (csvReader != null) {
+                    csvReader.setSafetySwitch(false);
+                }
                 break;
             case STOPS_FILE_NAME:
                 csvReader = getCsvReaderFromStopsFile(zipFile, entry, errors);
