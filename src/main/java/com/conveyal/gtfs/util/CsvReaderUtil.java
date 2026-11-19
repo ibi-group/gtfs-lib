@@ -132,6 +132,9 @@ public class CsvReaderUtil {
         switch (tableFileName) {
             case LOCATION_GEO_JSON_FILE_NAME:
                 csvReader = GeoJsonUtil.getCsvReaderFromGeoJson(name, zipFile, entry, errors);
+                if (csvReader != null) {
+                    csvReader.setSafetySwitch(false);
+                }
                 break;
             case LOCATION_GROUP_FILE_NAME:
                 initialReader = CsvReaderUtil.getCsvReaderForFile(zipFile, entry, errors, LocationGroup.NUMBER_OF_HEADERS);
