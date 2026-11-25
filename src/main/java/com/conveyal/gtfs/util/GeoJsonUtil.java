@@ -50,7 +50,7 @@ public class GeoJsonUtil {
     public static final String GEOMETRY_TYPE_POLYLINE = "polyline";
     public static final String GEOMETRY_TYPE_POLYGON = "polygon";
     public static final String GEOMETRY_TYPE_UNKNOWN = "UNKNOWN";
-    public static final String UNSUPPORTED_GEOMETRY_TYPE_MESSAGE = "Geometry type %s unknown or not supported.";
+    public static final String UNSUPPORTED_GEOMETRY_TYPE_MESSAGE = "Geometry type %s unknown or not supported by DataTools.";
     private static final String STOP_NAME = "stop_name";
     private static final String STOP_DESC = "stop_desc";
     private static final String ZONE_ID = "zone_id";
@@ -273,8 +273,8 @@ public class GeoJsonUtil {
             case "POLYGON":
                 break;
             default:
-                // Effectively, MultiPolygon and MultiLineString types aren't supported yet.
-                logErrorMessage(String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, geometryType), errors);
+                // Effectively, MultiPolygon and MultiLineString types aren't supported yet by DataTools.
+                LOG.warn(String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, geometryType));
         }
     }
 
@@ -368,10 +368,8 @@ public class GeoJsonUtil {
                     break;
                 // TODO: Add additional geometry types.
                 default:
-                    // Effectively, MultiPolygon and MultiLineString types which aren't supported yet.
-                    String message = String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, location.geometry_type);
-                    LOG.warn(message);
-                    if (errors != null) errors.add(message);
+                    // Effectively, MultiPolygon and MultiLineString types which aren't supported yet by DataTools.
+                    LOG.warn(String.format(UNSUPPORTED_GEOMETRY_TYPE_MESSAGE, location.geometry_type));
             }
         }
 
