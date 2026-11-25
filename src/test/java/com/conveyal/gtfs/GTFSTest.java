@@ -116,8 +116,6 @@ public class GTFSTest {
     void canLoadAndExportSimpleAgency() {
         ErrorExpectation[] fakeAgencyErrorExpectations = ErrorExpectation.list(
             new ErrorExpectation(NewGTFSErrorType.MISSING_FIELD),
-            new ErrorExpectation(NewGTFSErrorType.GEO_JSON_PARSING),
-            new ErrorExpectation(NewGTFSErrorType.GEO_JSON_PARSING),
             new ErrorExpectation(NewGTFSErrorType.REFERENTIAL_INTEGRITY),
             new ErrorExpectation(NewGTFSErrorType.ROUTE_LONG_NAME_CONTAINS_SHORT_NAME),
             new ErrorExpectation(NewGTFSErrorType.VALIDATOR_INCOMPLETE),
@@ -310,8 +308,6 @@ public class GTFSTest {
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
-            new ErrorExpectation(NewGTFSErrorType.GEO_JSON_PARSING),
-            new ErrorExpectation(NewGTFSErrorType.GEO_JSON_PARSING),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),
             new ErrorExpectation(NewGTFSErrorType.TABLE_IN_SUBDIRECTORY),

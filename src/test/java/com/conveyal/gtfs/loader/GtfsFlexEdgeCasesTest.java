@@ -49,8 +49,7 @@ class GtfsFlexEdgeCasesTest {
             // Bad location group refs
             Arguments.of(getResourceFileName("real-world-gtfs-feeds/bellhop-flex-comma-content.zip"), 0),
             // Geojson locations,
-            // Keep 2 errors regarding unsupported geometry types MULTIPOLYGON and MULTILINESTRING.
-            Arguments.of(TestUtils.zipFolderFiles("fake-agency-with-flex", true), 2)
+            Arguments.of(TestUtils.zipFolderFiles("fake-agency-with-flex", true), 0)
         );
     }
 }
